@@ -19,12 +19,12 @@ cd cognisec-platform
 
 ### 3. Setup the Virtual Environment
 Always isolate your dependencies. Do not install packages globally.
-# Create the virtual environment
+#### Create the virtual environment
 ``` python -m venv venv ```
 
-# Activate it (Windows)
+#### Activate it (Windows)
 ``` venv\Scripts\activate ```
-# Activate it (Mac/Linux)
+#### Activate it (Mac/Linux)
 ``` source venv/bin/activate ```
 
 ### 4. Install Dependencies
@@ -48,25 +48,25 @@ Note: Ensure the username and password in cognisec/settings.py match your local 
 python manage.py migrate
 ``` 
 
-# Start the development server
+## Start the development server
 ``` python manage.py runserver
 Visit http://127.0.0.1:8000/ in your browser to see the Landing Page.
 Visit http://127.0.0.1:8000/ui-kit/ to access the Master Component Catalog.
 ```
 
-Team Architecture & Workflow
+## Team Architecture & Workflow
 To prevent Git merge conflicts, our platform is divided into isolated Django apps. You will work primarily within your assigned app but will inherit the global design from the core app.
 
-App Assignments
-core (Shared) - Global UI Kit, Authentication, Base Layouts.
+### App Assignments
+**core (Shared)** - Global UI Kit, Authentication, Base Layouts.
 
-training (Person 1) - Web-based Sensibilisation, QCMs, and courses.
+**training (Person 1)** - Web-based Sensibilisation, QCMs, and courses.
 
-announced_drills (Person 2) - AI spear-phishing generation and tracking.
+**announced_drills (Person 2)** - AI spear-phishing generation and tracking.
 
-silent_drills (Person 3) - C2 Agent WebSockets, Honeytokens, Shadow AI.
+**silent_drills (Person 3)** - C2 Agent WebSockets, Honeytokens, Shadow AI.
 
-ml_engine (Person 4) - Isolation Forest models, HRN scoring, Data processing.
+**ml_engine (Person 4)** - Isolation Forest models, HRN scoring, Data processing.
 
 How to Create Your App
 When you are ready to start building your section, run:
@@ -77,7 +77,7 @@ python manage.py startapp your_app_name
 Don't forget to add your new app to INSTALLED_APPS in cognisec/settings.py!
 
 
-Using the UI System
+### Using the UI System
 Do not write custom CSS unless absolutely necessary.
 To build a new page, extend the base template and copy components from the UI Kit:
 
@@ -88,7 +88,7 @@ HTML
     {% endblock %}
 
 ***
-### Important !!!
+# Important !!!
 we may need to chnage the name of the tests to : 
 - Évaluations de connaissances 
 - Scénarios d’attaque simulée 
