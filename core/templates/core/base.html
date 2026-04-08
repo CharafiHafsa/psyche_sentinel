@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark"> <head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Psyche Sentinel</title>
+    
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <header class="kit-topbar">
+        <div class="topbar-brand">
+            <div class="topbar-logo-icon">
+                <i data-lucide="brain-circuit"></i>
+            </div>
+            <div>
+                <div class="topbar-title">PSYCHE SENTINEL</div>
+            </div>
+        </div>
+
+        <div class="topbar-right">
+            <label class="theme-toggle-wrap">
+                <span id="themeLabel">Dark</span>
+                <label class="theme-toggle">
+                    <input type="checkbox" id="themeSwitch" />
+                    <div class="toggle-track"></div>
+                    <div class="toggle-thumb">
+                        <i data-lucide="sun" id="themeIcon"></i>
+                    </div>
+                </label>
+                <span>Light</span>
+            </label>
+        </div>
+    </header>
+
+    <div class="kit-layout">
+        <nav class="kit-sidenav" id="kitSidenav">
+            <div class="sidenav-section">
+                <div class="sidenav-label">Platform Tools</div>
+                <a class="sidenav-link active" href="#">
+                    <i data-lucide="layout-dashboard"></i> Dashboard
+                </a>
+                <a class="sidenav-link" href="#">
+                    <i data-lucide="list-checks"></i> Sensibilisation
+                </a>
+                <a class="sidenav-link" href="#">
+                    <i data-lucide="mouse-pointer-click"></i> Announced Drills
+                </a>
+                <a class="sidenav-link" href="#">
+                    <i data-lucide="shield-alert"></i> Silent Drills
+                </a>
+            </div>
+        </nav>
+
+        <div class="kit-content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+
+    <script src="{% static 'js/main.js' %}"></script>
+    <script>
+      // Initialize icons
+      lucide.createIcons();
+    </script>
+</body>
+</html>

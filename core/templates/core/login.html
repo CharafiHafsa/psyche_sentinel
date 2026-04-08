@@ -1,0 +1,48 @@
+{% extends 'core/base_public.html' %}
+{% block content %}
+
+<div style="display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 20px;">
+    
+    <div class="glass-card" style="width: 100%; max-width: 440px; padding: 40px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+            <div style="color: var(--color-primary); margin-bottom: 16px;">
+                <i data-lucide="shield-check" style="width: 48px; height: 48px;"></i>
+            </div>
+            <h2 class="h2">Admin Access</h2>
+            <p class="body-sm" style="color: var(--text-muted);">Authenticate to access the command center.</p>
+        </div>
+
+        <form method="POST" action="">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label class="form-label">Admin Identifier (Email)</label>
+                <div class="input-icon-wrap">
+                    <div class="input-icon"><i data-lucide="user"></i></div>
+                    <input type="email" name="email" class="form-input" placeholder="admin@enterprise.com" required />
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 32px;">
+                <label class="form-label">Security Credential</label>
+                <div class="input-icon-wrap">
+                    <div class="input-icon"><i data-lucide="lock"></i></div>
+                    <input type="password" name="password" class="form-input" placeholder="••••••••••••" required />
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                <i data-lucide="log-in"></i> INITIALIZE SESSION
+            </button>
+        </form>
+
+        <div style="margin-top: 24px; text-align: center;">
+            <a href="#" class="body-xs" style="color: var(--text-muted); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--color-primary)'" onmouseout="this.style.color='var(--text-muted)'">
+                Forgot Credential?
+            </a>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

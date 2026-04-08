@@ -1,0 +1,106 @@
+{% extends 'core/base.html' %}
+{% block content %}
+
+<div class="section-header" style="margin-bottom: 32px;">
+    <span class="section-number"><i data-lucide="crosshair"></i></span>
+    <div class="section-title-group">
+        <div class="section-title">Deployment Hub</div>
+        <div class="section-desc">Select an assessment module to deploy to your active agents.</div>
+    </div>
+</div>
+
+<div class="metric-4up" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+
+    <div class="glass-card info-card card-danger" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <div class="info-card-header" style="margin-bottom: 16px;">
+                <div class="info-card-icon" style="background:var(--color-danger-bg);color:var(--color-danger);">
+                    <i data-lucide="ghost"></i>
+                </div>
+                <span class="badge badge-danger badge-dot">C2 Agent Required</span>
+            </div>
+            <div class="h3" style="margin-bottom: 8px;">Silent Drills</div>
+            <p class="body-sm" style="color: var(--text-muted); margin-bottom: 16px;">
+                Background OS-level traps. Deploys Shadow AI clipboard monitors, Honeytoken files, and Zero-Knowledge credential traps seamlessly.
+            </p>
+        </div>
+        <button class="btn btn-danger" style="width: 100%; justify-content: center;">
+            <i data-lucide="zap"></i> Configure Silent Drill
+        </button>
+    </div>
+
+    <div class="glass-card info-card card-violet" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <div class="info-card-header" style="margin-bottom: 16px;">
+                <div class="info-card-icon" style="background:var(--color-primary-bg);color:var(--color-primary);">
+                    <i data-lucide="mail-warning"></i>
+                </div>
+                <span class="badge badge-violet">AI Engine Active</span>
+            </div>
+            <div class="h3" style="margin-bottom: 8px;">Announced Drills</div>
+            <p class="body-sm" style="color: var(--text-muted); margin-bottom: 16px;">
+                Active network testing. Generates and dispatches hyper-realistic, AI-personalized spear-phishing payloads to target inboxes.
+            </p>
+        </div>
+        <button class="btn btn-primary" style="width: 100%; justify-content: center;">
+            <i data-lucide="target"></i> Launch Phishing Campaign
+        </button>
+    </div>
+
+    <div class="glass-card info-card card-cyan" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <div class="info-card-header" style="margin-bottom: 16px;">
+                <div class="info-card-icon" style="background:var(--color-secondary-bg);color:var(--color-secondary);">
+                    <i data-lucide="graduation-cap"></i>
+                </div>
+                <span class="badge badge-cyan">Web-Based</span>
+            </div>
+            <div class="h3" style="margin-bottom: 8px;">Sensibilisation</div>
+            <p class="body-sm" style="color: var(--text-muted); margin-bottom: 16px;">
+                Deploy standard web-based compliance training and QCM (Multiple Choice) knowledge checks via email links.
+            </p>
+        </div>
+        <button class="btn btn-secondary" style="width: 100%; justify-content: center;">
+            <i data-lucide="list-checks"></i> Create Assessment
+        </button>
+    </div>
+
+</div>
+
+<div class="section-header" style="margin-top: 48px; margin-bottom: 24px;">
+    <div class="section-title-group">
+        <div class="section-title" style="font-size: 1.2rem;">Recent Deployments</div>
+    </div>
+</div>
+
+<div class="data-table-wrap" style="border-radius:var(--radius-lg);border:none;">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Drill Name</th>
+                <th>Type</th>
+                <th>Target Dept</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="font-weight: 600;">ShadowProbe-Alpha</td>
+                <td><span class="badge badge-danger">Silent</span></td>
+                <td>Engineering</td>
+                <td><span class="badge badge-violet badge-dot">Live</span></td>
+                <td><button class="btn btn-ghost btn-sm">View Stats</button></td>
+            </tr>
+            <tr>
+                <td style="font-weight: 600;">Q3 Phish Test</td>
+                <td><span class="badge badge-violet">Announced</span></td>
+                <td>Finance</td>
+                <td><span class="badge badge-success">Completed</span></td>
+                <td><button class="btn btn-ghost btn-sm">View Stats</button></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

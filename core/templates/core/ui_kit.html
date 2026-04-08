@@ -1,0 +1,1020 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+
+  <div class="kit-hero">
+    <div class="hero-eyebrow">// Design System — Reference Document</div>
+    <h1 class="hero-title">
+      Master<br>
+      <span class="text-gradient">UI Component Kit</span>
+    </h1>
+    <p class="hero-desc">
+      The single source of truth for all Psyche Sentinel UI patterns...
+    </p>
+  </div>
+
+      <!-- ══════════════════════════════════════════════════════════
+           §1 · TYPOGRAPHY
+      ══════════════════════════════════════════════════════════ -->
+      <section class="kit-section" id="section-typography">
+        <div class="section-header">
+          <span class="section-number">01</span>
+          <div class="section-title-group">
+            <div class="section-title">Typography</div>
+            <div class="section-desc">Orbitron for display/headings (Futuristic, tactical), Sora for UI body text (legible, modern), JetBrains Mono for code and data.</div>
+          </div>
+        </div>
+
+        <div class="component-stage">
+          <div class="component-label">Display Headings — Orbitron</div>
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div class="h1">H1 · Mission Control</div>
+            <div class="h2">H2 · Threat Intelligence</div>
+            <div class="h3">H3 · Behavioural Analysis</div>
+            <div class="h4">H4 · Shadow AI Detection</div>
+            <div class="h5">H5 · Agent Heartbeat</div>
+            <div class="h6">H6 · System Status Report</div>
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">Body Text — Sora</div>
+          <div style="display:flex;flex-direction:column;gap:10px;max-width:560px;">
+            <p class="body-lg">Body Large — Psyche Sentinel monitors all endpoints in real-time, building predictive psychological risk profiles through continuous behavioural analysis.</p>
+            <p class="body-md">Body Medium — ML models process event streams at sub-second latency to flag anomalous credential use, shadow AI activity, and exfiltration signals.</p>
+            <p class="body-sm">Body Small — Zero-knowledge credential probes are fired silently across the estate on a rolling schedule to test for credential reuse vulnerabilities.</p>
+            <p class="body-xs">Body XS / Caption — All events are logged immutably and correlated against the global threat graph. Data retention: 90 days by default.</p>
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">Special Styles</div>
+          <div class="flex flex-wrap gap-16 items-center">
+            <span class="mono-text">mono-text · U-014 · 03:42:18</span>
+            <span class="label-text">label-text · Active Drills</span>
+            <span class="h3 text-gradient">Gradient Display Text</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           §2 · COLOR PALETTE
+      ══════════════════════════════════════════════════════════ -->
+      <section class="kit-section" id="section-colors">
+        <div class="section-header">
+          <span class="section-number">02</span>
+          <div class="section-title-group">
+            <div class="section-title">Color Palette</div>
+            <div class="section-desc">All colors are CSS variables. They automatically remap in light mode. Click a swatch to copy its variable name.</div>
+          </div>
+        </div>
+
+        <div class="component-stage">
+          <div class="component-label">Brand Accents</div>
+          <div class="swatch-grid">
+            <div class="swatch-item" onclick="copyToClipboard('--violet-bright', this)">
+              <div class="swatch-box" style="background:#a855f7;box-shadow:0 0 20px rgba(168,85,247,0.4)"></div>
+              <span class="swatch-name">Violet</span>
+              <span class="swatch-hex">--violet-bright</span>
+            </div>
+            <div class="swatch-item" onclick="copyToClipboard('--cyan-bright', this)">
+              <div class="swatch-box" style="background:#22d3ee;box-shadow:0 0 20px rgba(34,211,238,0.35)"></div>
+              <span class="swatch-name">Cyan</span>
+              <span class="swatch-hex">--cyan-bright</span>
+            </div>
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">Semantic Palette</div>
+          <div class="swatch-grid">
+            <div class="swatch-item" onclick="copyToClipboard('--color-primary', this)">
+              <div class="swatch-box" style="background:var(--color-primary)"></div>
+              <span class="swatch-name">Primary</span>
+              <span class="swatch-hex">--color-primary</span>
+            </div>
+            <div class="swatch-item" onclick="copyToClipboard('--color-secondary', this)">
+              <div class="swatch-box" style="background:var(--color-secondary)"></div>
+              <span class="swatch-name">Secondary</span>
+              <span class="swatch-hex">--color-secondary</span>
+            </div>
+            <div class="swatch-item" onclick="copyToClipboard('--color-success', this)">
+              <div class="swatch-box" style="background:var(--color-success)"></div>
+              <span class="swatch-name">Success</span>
+              <span class="swatch-hex">--color-success</span>
+            </div>
+            <div class="swatch-item" onclick="copyToClipboard('--color-warning', this)">
+              <div class="swatch-box" style="background:var(--color-warning)"></div>
+              <span class="swatch-name">Warning</span>
+              <span class="swatch-hex">--color-warning</span>
+            </div>
+            <div class="swatch-item" onclick="copyToClipboard('--color-danger', this)">
+              <div class="swatch-box" style="background:var(--color-danger)"></div>
+              <span class="swatch-name">Danger</span>
+              <span class="swatch-hex">--color-danger</span>
+            </div>
+            <div class="swatch-item" onclick="copyToClipboard('--color-info', this)">
+              <div class="swatch-box" style="background:var(--color-info)"></div>
+              <span class="swatch-name">Info</span>
+              <span class="swatch-hex">--color-info</span>
+            </div>
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">Background Scale</div>
+          <div class="swatch-grid">
+            <div class="swatch-item">
+              <div class="swatch-box" style="background:var(--bg-void);border:1px solid var(--border-default)"></div>
+              <span class="swatch-name">bg-void</span>
+              <span class="swatch-hex">--bg-void</span>
+            </div>
+            <div class="swatch-item">
+              <div class="swatch-box" style="background:var(--bg-surface);border:1px solid var(--border-default)"></div>
+              <span class="swatch-name">bg-surface</span>
+              <span class="swatch-hex">--bg-surface</span>
+            </div>
+            <div class="swatch-item">
+              <div class="swatch-box" style="background:var(--bg-elevated);border:1px solid var(--border-default)"></div>
+              <span class="swatch-name">bg-elevated</span>
+              <span class="swatch-hex">--bg-elevated</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           §3 · BADGES & CHIPS
+      ══════════════════════════════════════════════════════════ -->
+      <section class="kit-section" id="section-icons">
+        <div class="section-header">
+          <span class="section-number">03</span>
+          <div class="section-title-group">
+            <div class="section-title">Badges & Chips</div>
+            <div class="section-desc">Compact status indicators. Use <code style="font-family:var(--font-mono);font-size:.75rem;color:var(--cyan-bright)">.badge-dot</code> class for animated presence dots.</div>
+          </div>
+        </div>
+
+        <div class="component-stage centered">
+          <span class="badge badge-violet">Violet</span>
+          <span class="badge badge-cyan">Cyan</span>
+          <span class="badge badge-success">Passed</span>
+          <span class="badge badge-warning">Elevated</span>
+          <span class="badge badge-danger">Critical</span>
+          <span class="badge badge-info">Info</span>
+          <span class="badge badge-neutral">Neutral</span>
+          <span class="badge badge-violet badge-dot">Live</span>
+          <span class="badge badge-success badge-dot">Online</span>
+          <span class="badge badge-danger badge-dot">Alert</span>
+          <span class="badge badge-violet"><i data-lucide="shield-check" style="width:10px;height:10px;"></i> Protected</span>
+          <span class="badge badge-warning"><i data-lucide="alert-triangle" style="width:10px;height:10px;"></i> Elevated Risk</span>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           §4 · BUTTONS
+      ══════════════════════════════════════════════════════════ -->
+      <section class="kit-section" id="section-buttons">
+        <div class="section-header">
+          <span class="section-number">04</span>
+          <div class="section-title-group">
+            <div class="section-title">Button System</div>
+            <div class="section-desc">All buttons include hover shimmer sweep, active scale-down, and disabled states. Combine size and color modifiers freely.</div>
+          </div>
+        </div>
+
+        <div class="component-stage">
+          <div class="component-label">Filled Buttons</div>
+          <div class="component-row">
+            <button class="btn btn-primary"><i data-lucide="zap"></i> Primary</button>
+            <button class="btn btn-secondary"><i data-lucide="cpu"></i> Secondary</button>
+            <button class="btn btn-success"><i data-lucide="check"></i> Success</button>
+            <button class="btn btn-danger"><i data-lucide="x"></i> Danger</button>
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">Outline & Ghost</div>
+          <div class="component-row">
+            <button class="btn btn-outline"><i data-lucide="shield"></i> Outline Primary</button>
+            <button class="btn btn-outline-secondary">Outline Secondary</button>
+            <button class="btn btn-ghost"><i data-lucide="settings-2"></i> Ghost</button>
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">Sizes</div>
+          <div class="component-row items-center">
+            <button class="btn btn-primary btn-sm">Small</button>
+            <button class="btn btn-primary">Default</button>
+            <button class="btn btn-primary btn-lg">Large</button>
+            <button class="btn btn-primary btn-xl"><i data-lucide="zap"></i> DEPLOY DRILL</button>
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">States</div>
+          <div class="component-row">
+            <button class="btn btn-primary" disabled>Disabled</button>
+            <button class="btn btn-primary btn-loading">
+              <span class="btn-spinner"></span> Loading...
+            </button>
+            <button class="btn btn-outline disabled">Outline Disabled</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           §5 · FORMS & INPUTS
+      ══════════════════════════════════════════════════════════ -->
+      <section class="kit-section" id="section-forms">
+        <div class="section-header">
+          <span class="section-number">05</span>
+          <div class="section-title-group">
+            <div class="section-title">Forms & Inputs</div>
+            <div class="section-desc">All inputs use the same base token variables and include focus, error, and success states.</div>
+          </div>
+        </div>
+
+        <div class="component-stage">
+          <div class="form-grid">
+
+            <!-- Default input -->
+            <div class="form-group">
+              <label class="form-label">User Identifier</label>
+              <input type="text" class="form-input" placeholder="e.g. U-014 or j.doe@acme.com" />
+              <span class="form-hint">Employee ID or corporate email address</span>
+            </div>
+
+            <!-- Input with icon -->
+            <div class="form-group">
+              <label class="form-label">Search Agents</label>
+              <div class="input-icon-wrap">
+                <div class="input-icon"><i data-lucide="search"></i></div>
+                <input type="text" class="form-input" placeholder="Search by hostname, user, dept…" />
+              </div>
+            </div>
+
+            <!-- Error state -->
+            <div class="form-group">
+              <label class="form-label">API Key</label>
+              <input type="text" class="form-input input-error" value="INVALID_KEY_xyz" />
+              <span class="form-hint" style="color:var(--color-danger)">⚠ Invalid key format. Must begin with PSY-.</span>
+            </div>
+
+            <!-- Success state -->
+            <div class="form-group">
+              <label class="form-label">Agent Token</label>
+              <input type="text" class="form-input input-success" value="PSY-A1B2C3D4E5F6" />
+              <span class="form-hint" style="color:var(--color-success)">✓ Token verified and active.</span>
+            </div>
+
+            <!-- Select -->
+            <div class="form-group">
+              <label class="form-label">Target Department</label>
+              <select class="form-select">
+                <option>All Departments</option>
+                <option>Engineering</option>
+                <option>Finance</option>
+                <option>Marketing</option>
+                <option>Legal &amp; HR</option>
+                <option>C-Suite</option>
+              </select>
+            </div>
+
+            <!-- Select 2 -->
+            <div class="form-group">
+              <label class="form-label">Drill Intensity</label>
+              <select class="form-select">
+                <option>Low (Awareness)</option>
+                <option>Medium (Behavioural)</option>
+                <option selected>High (Adversarial)</option>
+              </select>
+            </div>
+
+            <!-- Textarea -->
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label class="form-label">Drill Notes / Briefing</label>
+              <textarea class="form-textarea" placeholder="Describe the drill scenario, target profile, and expected behavioural triggers…"></textarea>
+            </div>
+
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">Checkboxes & Toggles</div>
+          <div class="component-row flex-wrap" style="gap:24px;">
+            <label class="form-checkbox-wrap">
+              <input type="checkbox" class="form-checkbox" checked />
+              <span class="checkbox-label">Enable silent monitoring</span>
+            </label>
+            <label class="form-checkbox-wrap">
+              <input type="checkbox" class="form-checkbox" />
+              <span class="checkbox-label">Notify CISO on critical events</span>
+            </label>
+            <label class="form-checkbox-wrap">
+              <input type="checkbox" class="form-checkbox" checked />
+              <span class="checkbox-label">Auto-escalate HRN ≥ 85</span>
+            </label>
+          </div>
+
+          <div class="mt-16 component-row flex-wrap" style="gap:24px;">
+            <label class="switch-wrap">
+              <div class="switch">
+                <input type="checkbox" checked />
+                <div class="switch-track"></div>
+                <div class="switch-thumb"></div>
+              </div>
+              <span class="switch-label">ML Engine Active</span>
+            </label>
+            <label class="switch-wrap">
+              <div class="switch">
+                <input type="checkbox" />
+                <div class="switch-track"></div>
+                <div class="switch-thumb"></div>
+              </div>
+              <span class="switch-label">Shadow AI Scanner</span>
+            </label>
+            <label class="switch-wrap">
+              <div class="switch">
+                <input type="checkbox" checked />
+                <div class="switch-track"></div>
+                <div class="switch-thumb"></div>
+              </div>
+              <span class="switch-label">Honeytoken Monitoring</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           §6 · CARDS
+      ══════════════════════════════════════════════════════════ -->
+      <section class="kit-section" id="section-cards">
+        <div class="section-header">
+          <span class="section-number">06</span>
+          <div class="section-title-group">
+            <div class="section-title">Cards & Data Display</div>
+            <div class="section-desc">Glass cards with frosted backdrop, hover lift and glow. Combine with color variant classes for metric cards.</div>
+          </div>
+        </div>
+
+        <div class="component-stage">
+          <div class="component-label">Metric Cards (4-up grid)</div>
+          <div class="metric-4up">
+
+            <div class="glass-card info-card card-violet">
+              <div class="info-card-header">
+                <div class="info-card-icon" style="background:var(--color-primary-bg);color:var(--color-primary);">
+                  <i data-lucide="cpu"></i>
+                </div>
+                <span class="badge badge-violet">Live</span>
+              </div>
+              <div class="info-card-title">Monitored Agents</div>
+              <div class="info-card-value">248</div>
+              <div class="info-card-desc">+12 enrolled this week</div>
+            </div>
+
+            <div class="glass-card info-card card-cyan">
+              <div class="info-card-header">
+                <div class="info-card-icon" style="background:var(--color-secondary-bg);color:var(--color-secondary);">
+                  <i data-lucide="crosshair"></i>
+                </div>
+                <span class="badge badge-cyan">Active</span>
+              </div>
+              <div class="info-card-title">Running Drills</div>
+              <div class="info-card-value">7</div>
+              <div class="info-card-desc">2 launching tomorrow</div>
+            </div>
+
+            <div class="glass-card info-card card-warning">
+              <div class="info-card-header">
+                <div class="info-card-icon" style="background:var(--color-warning-bg);color:var(--color-warning);">
+                  <i data-lucide="key-round"></i>
+                </div>
+                <span class="badge badge-warning">Elevated</span>
+              </div>
+              <div class="info-card-title">ZK Cred Fails</div>
+              <div class="info-card-value">31</div>
+              <div class="info-card-desc">+3 from yesterday</div>
+            </div>
+
+            <div class="glass-card info-card card-danger">
+              <div class="info-card-header">
+                <div class="info-card-icon" style="background:var(--color-danger-bg);color:var(--color-danger);">
+                  <i data-lucide="bot"></i>
+                </div>
+                <span class="badge badge-danger">Critical</span>
+              </div>
+              <div class="info-card-title">Shadow AI Hits</div>
+              <div class="info-card-value">12</div>
+              <div class="info-card-desc">-1 vs last week</div>
+            </div>
+
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">Content Card</div>
+          <div class="glass-card" style="padding:24px;max-width:420px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+              <div>
+                <div class="h5" style="margin-bottom:4px;">Agent Profile: J. Doe</div>
+                <div class="body-sm">U-014 · Engineering · High-Risk Tier</div>
+              </div>
+              <div class="avatar avatar-md av-violet">JD</div>
+            </div>
+            <div class="divider" style="margin-bottom:14px;"></div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;justify-content:space-between;font-size:.78rem;">
+                <span style="color:var(--text-secondary)">HRN Score</span>
+                <span style="color:var(--color-danger);font-family:var(--font-display);font-weight:700;">87</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.78rem;">
+                <span style="color:var(--text-secondary)">Last Anomaly</span>
+                <span style="color:var(--text-primary)">After-hours login 02:14 UTC</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.78rem;">
+                <span style="color:var(--text-secondary)">Drill Pass Rate</span>
+                <span style="color:var(--color-warning)">43%</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:16px;">
+              <button class="btn btn-outline btn-sm" style="flex:1;">View Profile</button>
+              <button class="btn btn-danger btn-sm" style="flex:1;">Flag for Review</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           §7 · ALERTS & BANNERS
+      ══════════════════════════════════════════════════════════ -->
+      <section class="kit-section" id="section-alerts">
+        <div class="section-header">
+          <span class="section-number">07</span>
+          <div class="section-title-group">
+            <div class="section-title">Alerts & Banners</div>
+            <div class="section-desc">Four semantic variants. Include <code style="font-family:var(--font-mono);font-size:.75rem;color:var(--cyan-bright)">.alert-dismiss</code> button for closeable banners.</div>
+          </div>
+        </div>
+
+        <div class="component-stage" style="gap:12px;display:flex;flex-direction:column;">
+          <div class="alert alert-info">
+            <i data-lucide="info"></i>
+            <div class="alert-body">
+              <div class="alert-title">System Update Scheduled</div>
+              <div class="alert-msg">ML model retraining is scheduled for Sunday 03:00 UTC. Agent monitoring will remain active during the update window.</div>
+            </div>
+            <button class="alert-dismiss" onclick="this.closest('.alert').remove()">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+
+          <div class="alert alert-success">
+            <i data-lucide="check-circle"></i>
+            <div class="alert-body">
+              <div class="alert-title">Drill Completed Successfully</div>
+              <div class="alert-msg">"ShadowProbe-Alpha" achieved a 72% pass rate across 248 agents. 14 users have been flagged for additional training.</div>
+            </div>
+            <button class="alert-dismiss" onclick="this.closest('.alert').remove()">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+
+          <div class="alert alert-warning">
+            <i data-lucide="alert-triangle"></i>
+            <div class="alert-body">
+              <div class="alert-title">Elevated Risk Detected — Finance Dept</div>
+              <div class="alert-msg">Human Risk Number for the Finance department has exceeded threshold (HRN 74). 3 employees require immediate psychological profile review.</div>
+            </div>
+            <button class="alert-dismiss" onclick="this.closest('.alert').remove()">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+
+          <div class="alert alert-danger">
+            <i data-lucide="shield-alert"></i>
+            <div class="alert-body">
+              <div class="alert-title">CRITICAL — Honeytoken Triggered</div>
+              <div class="alert-msg">User U-014 (J.Doe) accessed classified honeytoken file <strong>/share/Q4_BONUS.xlsx</strong> at 14:27 UTC. Incident response protocol has been activated.</div>
+            </div>
+            <button class="alert-dismiss" onclick="this.closest('.alert').remove()">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           §8 · DATA TABLE
+      ══════════════════════════════════════════════════════════ -->
+      <section class="kit-section" id="section-table">
+        <div class="section-header">
+          <span class="section-number">08</span>
+          <div class="section-title-group">
+            <div class="section-title">Data Table</div>
+            <div class="section-desc">Row-hover highlighting, inline progress bars, risk score colouring, and avatar cells.</div>
+          </div>
+        </div>
+
+        <div class="component-stage" style="padding:0;overflow:hidden;">
+          <div class="data-table-wrap" style="border-radius:var(--radius-lg);border:none;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Department</th>
+                  <th>HRN Score</th>
+                  <th>Drill Progress</th>
+                  <th>Last Event</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="table-user-cell">
+                      <div class="table-avatar">JD</div>
+                      <div>
+                        <div class="table-user-name">J. Doe</div>
+                        <div class="table-user-email">j.doe@acme.com</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-warning">Engineering</span></td>
+                  <td><span class="risk-score risk-high">87</span></td>
+                  <td>
+                    <div class="table-progress">
+                      <div class="table-bar-track">
+                        <div class="table-bar-fill" style="width:43%;background:var(--color-danger)"></div>
+                      </div>
+                      <span class="table-bar-pct">43%</span>
+                    </div>
+                  </td>
+                  <td class="body-sm">Honeytoken access</td>
+                  <td><span class="badge badge-danger badge-dot">Alert</span></td>
+                  <td><button class="btn btn-ghost btn-sm"><i data-lucide="eye"></i></button></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="table-user-cell">
+                      <div class="table-avatar" style="background:linear-gradient(135deg,#0e7490,#059669)">MR</div>
+                      <div>
+                        <div class="table-user-name">M. Rivera</div>
+                        <div class="table-user-email">m.rivera@acme.com</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-cyan">Finance</span></td>
+                  <td><span class="risk-score risk-medium">64</span></td>
+                  <td>
+                    <div class="table-progress">
+                      <div class="table-bar-track">
+                        <div class="table-bar-fill" style="width:70%;background:var(--color-warning)"></div>
+                      </div>
+                      <span class="table-bar-pct">70%</span>
+                    </div>
+                  </td>
+                  <td class="body-sm">Shadow AI usage</td>
+                  <td><span class="badge badge-warning badge-dot">Watch</span></td>
+                  <td><button class="btn btn-ghost btn-sm"><i data-lucide="eye"></i></button></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="table-user-cell">
+                      <div class="table-avatar" style="background:linear-gradient(135deg,#7c3aed,#db2777)">AP</div>
+                      <div>
+                        <div class="table-user-name">A. Patel</div>
+                        <div class="table-user-email">a.patel@acme.com</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-violet">Security Ops</span></td>
+                  <td><span class="risk-score risk-low">22</span></td>
+                  <td>
+                    <div class="table-progress">
+                      <div class="table-bar-track">
+                        <div class="table-bar-fill" style="width:96%;background:var(--color-success)"></div>
+                      </div>
+                      <span class="table-bar-pct">96%</span>
+                    </div>
+                  </td>
+                  <td class="body-sm">Drill completed</td>
+                  <td><span class="badge badge-success badge-dot">Clear</span></td>
+                  <td><button class="btn btn-ghost btn-sm"><i data-lucide="eye"></i></button></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="table-user-cell">
+                      <div class="table-avatar" style="background:linear-gradient(135deg,#d97706,#dc2626)">BK</div>
+                      <div>
+                        <div class="table-user-name">B. Kim</div>
+                        <div class="table-user-email">b.kim@acme.com</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-neutral">Operations</span></td>
+                  <td><span class="risk-score risk-medium">58</span></td>
+                  <td>
+                    <div class="table-progress">
+                      <div class="table-bar-track">
+                        <div class="table-bar-fill" style="width:55%;background:var(--color-warning)"></div>
+                      </div>
+                      <span class="table-bar-pct">55%</span>
+                    </div>
+                  </td>
+                  <td class="body-sm">Large clipboard copy</td>
+                  <td><span class="badge badge-warning">Monitor</span></td>
+                  <td><button class="btn btn-ghost btn-sm"><i data-lucide="eye"></i></button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           §9 · MISC UTILITIES
+      ══════════════════════════════════════════════════════════ -->
+      <section class="kit-section" id="section-misc">
+        <div class="section-header">
+          <span class="section-number">09</span>
+          <div class="section-title-group">
+            <div class="section-title">Misc &amp; Utilities</div>
+            <div class="section-desc">Tooltips, avatars, skeletons, code blocks, and dividers.</div>
+          </div>
+        </div>
+
+        <div class="component-stage">
+          <div class="component-label">Tooltips</div>
+          <div class="component-row">
+            <div class="tooltip-wrap">
+              <button class="btn btn-outline btn-sm">Hover me</button>
+              <div class="tooltip-box">HRN: 87 · Risk Band R-7</div>
+            </div>
+            <div class="tooltip-wrap">
+              <span class="badge badge-danger">Critical</span>
+              <div class="tooltip-box">3 events in last 5 min</div>
+            </div>
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">Avatars & Groups</div>
+          <div class="component-row items-center">
+            <div class="avatar avatar-sm av-violet">JD</div>
+            <div class="avatar avatar-md av-cyan">MR</div>
+            <div class="avatar avatar-lg av-amber">BK</div>
+            <div class="avatar-group" style="margin-left:16px;">
+              <div class="avatar avatar-md av-violet">JD</div>
+              <div class="avatar avatar-md av-cyan">MR</div>
+              <div class="avatar avatar-md av-amber">BK</div>
+              <div class="avatar avatar-md" style="background:var(--bg-elevated);border:1.5px solid var(--border-default);color:var(--text-secondary);font-size:0.6rem;">+9</div>
+            </div>
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">Loading Skeletons</div>
+          <div style="display:flex;flex-direction:column;gap:8px;max-width:320px;">
+            <div class="skeleton" style="height:14px;width:60%;"></div>
+            <div class="skeleton" style="height:14px;width:90%;"></div>
+            <div class="skeleton" style="height:14px;width:75%;"></div>
+            <div class="skeleton" style="height:36px;width:100%;border-radius:var(--radius-sm);margin-top:4px;"></div>
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">Code Block</div>
+          <div class="code-block">
+<span class="code-comment">// POST /api/v2/drills/deploy — Deploy a silent awareness drill</span>
+<span class="code-keyword">const</span> response = <span class="code-keyword">await</span> fetch(<span class="code-string">'/api/v2/drills/deploy'</span>, {
+  method: <span class="code-string">'POST'</span>,
+  headers: { <span class="code-string">'Authorization'</span>: <span class="code-string">'Bearer PSY-TOKEN'</span> },
+  body: JSON.stringify({ scope: <span class="code-string">'engineering'</span>, type: <span class="code-string">'phishing'</span>, intensity: <span class="code-string">'high'</span> })
+});
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">Divider with Label</div>
+          <div class="divider-label">Or continue with SSO</div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           §10 · QCM — RADIO BUTTON ANSWER CARDS
+      ══════════════════════════════════════════════════════════ -->
+      <section class="kit-section" id="section-qcm">
+        <div class="section-header">
+          <span class="section-number">10</span>
+          <div class="section-title-group">
+            <div class="section-title">QCM — Answer Cards</div>
+            <div class="section-desc">Large, tappable radio cards for multiple-choice questions. JS reveals correct/wrong states after submission. Grid adapts to 1 or 2 columns.</div>
+          </div>
+        </div>
+
+        <div class="component-stage">
+          <!-- Question stem -->
+          <div class="qcm-question-meta">
+            <span class="badge badge-violet">Security Awareness</span>
+            <span class="badge badge-neutral">Question 3 of 10</span>
+          </div>
+          <div class="qcm-question">
+            You receive an email from "IT Helpdesk" asking you to verify your credentials via a link.
+            The sender domain is <em>it-helpdesk.acme-corp.net</em>. What is the most appropriate response?
+          </div>
+
+          <!-- Answer options -->
+          <div class="qcm-options" id="qcmOptions">
+
+            <label class="qcm-card">
+              <input type="radio" name="q3" value="a" onchange="selectQCM(this)" />
+              <div class="qcm-card-inner">
+                <div class="qcm-radio-circle"><div class="qcm-radio-dot"></div></div>
+                <div class="qcm-card-content">
+                  <div class="qcm-option-letter">OPTION A</div>
+                  <div class="qcm-option-text">Click the link immediately — it looks like an official IT request.</div>
+                  <div class="qcm-option-sub">Helpdesk requests are always legitimate.</div>
+                </div>
+                <div class="qcm-state-icon"><i data-lucide="x-circle"></i></div>
+              </div>
+            </label>
+
+            <label class="qcm-card">
+              <input type="radio" name="q3" value="b" onchange="selectQCM(this)" />
+              <div class="qcm-card-inner">
+                <div class="qcm-radio-circle"><div class="qcm-radio-dot"></div></div>
+                <div class="qcm-card-content">
+                  <div class="qcm-option-letter">OPTION B</div>
+                  <div class="qcm-option-text">Verify the sender domain against the official company directory before taking any action.</div>
+                  <div class="qcm-option-sub">Correct internal domain is @acme.com</div>
+                </div>
+                <div class="qcm-state-icon"><i data-lucide="check-circle"></i></div>
+              </div>
+            </label>
+
+            <label class="qcm-card">
+              <input type="radio" name="q3" value="c" onchange="selectQCM(this)" />
+              <div class="qcm-card-inner">
+                <div class="qcm-radio-circle"><div class="qcm-radio-dot"></div></div>
+                <div class="qcm-card-content">
+                  <div class="qcm-option-letter">OPTION C</div>
+                  <div class="qcm-option-text">Forward the email to a colleague to see if they received the same one.</div>
+                  <div class="qcm-option-sub">Spreading potentially malicious links is risky.</div>
+                </div>
+                <div class="qcm-state-icon"><i data-lucide="x-circle"></i></div>
+              </div>
+            </label>
+
+            <label class="qcm-card">
+              <input type="radio" name="q3" value="d" onchange="selectQCM(this)" />
+              <div class="qcm-card-inner">
+                <div class="qcm-radio-circle"><div class="qcm-radio-dot"></div></div>
+                <div class="qcm-card-content">
+                  <div class="qcm-option-letter">OPTION D</div>
+                  <div class="qcm-option-text">Report the email immediately to the Security Operations team via the phishing report button.</div>
+                  <div class="qcm-option-sub">Also a valid response — earns partial credit.</div>
+                </div>
+                <div class="qcm-state-icon"><i data-lucide="check-circle"></i></div>
+              </div>
+            </label>
+
+          </div>
+
+          <div class="component-row mt-16" style="justify-content:space-between;">
+            <button class="btn btn-ghost btn-sm"><i data-lucide="chevron-left"></i> Previous</button>
+            <button class="btn btn-primary btn-sm" onclick="revealQCMAnswers()">
+              <i data-lucide="check"></i> Submit Answer
+            </button>
+          </div>
+
+          <!-- Note explaining revealed state -->
+          <p class="body-xs mt-12" id="qcmNote" style="display:none;color:var(--color-success);">
+            ✓ Answers revealed. B and D are both correct. Click "Submit Answer" again to reset.
+          </p>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           §11 · TEST PROGRESS BAR
+      ══════════════════════════════════════════════════════════ -->
+      <section class="kit-section" id="section-progress">
+        <div class="section-header">
+          <span class="section-number">11</span>
+          <div class="section-title-group">
+            <div class="section-title">Test Progress Bar</div>
+            <div class="section-desc">Gradient-filled progress track with individual step dots. JS-driven. Call <code style="font-family:var(--font-mono);font-size:.75rem;color:var(--cyan-bright)">setTestProgress(n, total)</code> to update.</div>
+          </div>
+        </div>
+
+        <div class="component-stage" style="display:flex;flex-direction:column;gap:20px;">
+
+          <!-- Progress bar component -->
+          <div class="test-progress-wrap">
+            <div class="test-progress-header">
+              <span class="test-progress-label">Security Awareness Assessment</span>
+              <span class="test-step-count" id="progressLabel">Question 3 of 10</span>
+            </div>
+            <div class="test-bar-track">
+              <div class="test-bar-fill" id="progressBar" style="width:30%"></div>
+            </div>
+            <div class="test-steps-row" id="stepsRow">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Live demo controls -->
+          <div class="component-row">
+            <span class="body-sm" style="color:var(--text-muted);">Demo controls:</span>
+            <button class="btn btn-ghost btn-sm" onclick="demoProgress(-1)"><i data-lucide="chevron-left"></i> Prev</button>
+            <button class="btn btn-outline btn-sm" onclick="demoProgress(1)">Next <i data-lucide="chevron-right"></i></button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           §12 · COUNTDOWN TIMER BADGE
+      ══════════════════════════════════════════════════════════ -->
+      <section class="kit-section" id="section-timer">
+        <div class="section-header">
+          <span class="section-number">12</span>
+          <div class="section-title-group">
+            <div class="section-title">Countdown Timer Badge</div>
+            <div class="section-desc">Auto-changes style at ≤60s (warning) and ≤15s (critical). The live demo below counts down from 90 seconds.</div>
+          </div>
+        </div>
+
+        <div class="component-stage">
+          <div class="component-label">Static States (for reference)</div>
+          <div class="component-row items-center flex-wrap" style="gap:16px;">
+            <div>
+              <div class="body-xs mb" style="margin-bottom:6px;">Normal (&gt;60s)</div>
+              <span class="countdown-badge cb-normal">
+                <i data-lucide="timer"></i>
+                04:32 remaining
+              </span>
+            </div>
+            <div>
+              <div class="body-xs" style="margin-bottom:6px;">Warning (≤60s)</div>
+              <span class="countdown-badge cb-warning">
+                <i data-lucide="timer"></i>
+                00:42 remaining
+              </span>
+            </div>
+            <div>
+              <div class="body-xs" style="margin-bottom:6px;">Critical (≤15s)</div>
+              <span class="countdown-badge cb-critical">
+                <i data-lucide="timer"></i>
+                00:08 remaining
+              </span>
+            </div>
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="component-label">Live Demo (90 second countdown)</div>
+          <div class="component-row items-center" style="gap:16px;">
+            <span class="countdown-badge cb-normal" id="liveTimer">
+              <i data-lucide="timer"></i>
+              <span id="timerDisplay">01:30</span>
+            </span>
+            <button class="btn btn-ghost btn-sm" onclick="resetTimer()">
+              <i data-lucide="rotate-ccw"></i> Reset
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           §13 · RESULT MODALS (PASS / FAIL)
+      ══════════════════════════════════════════════════════════ -->
+      <section class="kit-section" id="section-results">
+        <div class="section-header">
+          <span class="section-number">13</span>
+          <div class="section-title-group">
+            <div class="section-title">Test Result Modals</div>
+            <div class="section-desc">Two modal variants: Pass (green success) and Fail / Security Risk Detected (red danger). Click the buttons below to preview.</div>
+          </div>
+        </div>
+
+        <div class="component-stage">
+          <div class="component-row" style="gap:16px;">
+            <button class="btn btn-success btn-lg" onclick="openModal('passModal')">
+              <i data-lucide="trophy"></i> Preview: Test Passed
+            </button>
+            <button class="btn btn-danger btn-lg" onclick="openModal('failModal')">
+              <i data-lucide="shield-alert"></i> Preview: Test Failed
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           END OF SECTIONS — Footer
+      ══════════════════════════════════════════════════════════ -->
+      <div style="padding:24px 0;border-top:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <div style="font-family:var(--font-display);font-size:0.6rem;color:var(--text-muted);letter-spacing:.12em;">
+          PSYCHE SENTINEL DESIGN SYSTEM · v1.0.0
+        </div>
+        <div class="component-row" style="gap:8px;">
+          <span class="badge badge-violet">Orbitron</span>
+          <span class="badge badge-cyan">Sora</span>
+          <span class="badge badge-neutral">JetBrains Mono</span>
+          <span class="badge badge-neutral">Lucide Icons</span>
+        </div>
+      </div>
+
+    </div> <!-- /kit-content -->
+  </div> <!-- /kit-layout -->
+
+  <!-- ══════════════════════════════════════════════════════════════
+       RESULT MODALS (outside layout flow, fixed position)
+  ══════════════════════════════════════════════════════════════ -->
+
+  <!-- PASS Modal -->
+  <div class="result-modal-overlay" id="passModal" onclick="handleModalOverlayClick(event,'passModal')">
+    <div class="result-modal modal-pass" onclick="event.stopPropagation()">
+      <div class="result-modal-top"></div>
+      <div class="result-modal-body">
+        <div class="result-icon-ring">
+          <i data-lucide="shield-check"></i>
+        </div>
+        <div class="result-modal-title">ASSESSMENT PASSED</div>
+        <div class="result-modal-sub">
+          Excellent performance. Your security awareness score meets the required threshold. Your results have been recorded and your department leaderboard position has been updated.
+        </div>
+        <div class="result-stats">
+          <div class="result-stat">
+            <div class="result-stat-val">86%</div>
+            <div class="result-stat-label">Score</div>
+          </div>
+          <div class="result-stat">
+            <div class="result-stat-val">8/10</div>
+            <div class="result-stat-label">Correct</div>
+          </div>
+          <div class="result-stat">
+            <div class="result-stat-val">04:21</div>
+            <div class="result-stat-label">Time Taken</div>
+          </div>
+        </div>
+        <div class="result-modal-actions">
+          <button class="btn btn-ghost" style="flex:1;" onclick="closeModal('passModal')">Close</button>
+          <button class="btn btn-success" style="flex:2;">
+            <i data-lucide="arrow-right"></i> View Certificate
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAIL Modal -->
+  <div class="result-modal-overlay" id="failModal" onclick="handleModalOverlayClick(event,'failModal')">
+    <div class="result-modal modal-fail" onclick="event.stopPropagation()">
+      <div class="result-modal-top"></div>
+      <div class="result-modal-body">
+        <div class="result-icon-ring">
+          <i data-lucide="shield-alert"></i>
+        </div>
+        <div class="result-modal-title">SECURITY RISK DETECTED</div>
+        <div class="result-modal-sub">
+          Your score falls below the minimum required threshold. Your risk profile has been updated and your manager has been notified. A mandatory re-assessment has been scheduled within 48 hours.
+        </div>
+        <div class="result-stats">
+          <div class="result-stat">
+            <div class="result-stat-val">38%</div>
+            <div class="result-stat-label">Score</div>
+          </div>
+          <div class="result-stat">
+            <div class="result-stat-val">4/10</div>
+            <div class="result-stat-label">Correct</div>
+          </div>
+          <div class="result-stat">
+            <div class="result-stat-val">+12</div>
+            <div class="result-stat-label">HRN Delta</div>
+          </div>
+        </div>
+        <div class="result-modal-actions">
+          <button class="btn btn-ghost" style="flex:1;" onclick="closeModal('failModal')">Dismiss</button>
+          <button class="btn btn-danger" style="flex:2;">
+            <i data-lucide="rotate-ccw"></i> Review Mistakes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Copy confirmation toast (lightweight) -->
+  <div id="copyToast" style="
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);
+    background:var(--bg-elevated);border:1px solid var(--border-accent);
+    border-radius:var(--radius-full);padding:8px 18px;
+    font-family:var(--font-mono);font-size:0.68rem;color:var(--color-primary);
+    box-shadow:var(--shadow-md);opacity:0;pointer-events:none;
+    transition:opacity 200ms,transform 200ms;z-index:999;white-space:nowrap;
+  ">Copied to clipboard!</div>
+
+{% endblock %}

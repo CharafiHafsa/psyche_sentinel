@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark"> 
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Psyche Sentinel</title>
+    
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <header class="kit-topbar">
+        <div class="topbar-brand">
+            <div class="topbar-logo-icon">
+                <i data-lucide="brain-circuit"></i>
+            </div>
+            <div>
+                <div class="topbar-title">PSYCHE SENTINEL</div>
+            </div>
+        </div>
+
+        <div class="topbar-right">
+            <label class="theme-toggle-wrap">
+                <span id="themeLabel">Dark</span>
+                <label class="theme-toggle">
+                    <input type="checkbox" id="themeSwitch" />
+                    <div class="toggle-track"></div>
+                    <div class="toggle-thumb">
+                        <i data-lucide="sun" id="themeIcon"></i>
+                    </div>
+                </label>
+                <span>Light</span>
+            </label>
+        </div>
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <script src="{% static 'js/main.js' %}"></script>
+    <script>
+      // Initialize icons
+      lucide.createIcons();
+    </script>
+</body>
+</html>
