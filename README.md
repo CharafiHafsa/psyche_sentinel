@@ -13,7 +13,7 @@ Welcome to the team! Follow these exact steps to get the platform running on you
 
 ### 2. Clone the Repository
 ```bash
-git clone [https://github.com/YourUsername/cognisec-platform.git](https://github.com/YourUsername/cognisec-platform.git)
+git clone https://github.com/CharafiHafsa/psyche_sentinel.git
 cd cognisec-platform
 ```
 
@@ -25,11 +25,12 @@ Always isolate your dependencies. Do not install packages globally.
 # Activate it (Windows)
 ``` venv\Scripts\activate ```
 # Activate it (Mac/Linux)
-source venv/bin/activate
+``` source venv/bin/activate ```
 
 ### 4. Install Dependencies
 ``` Bash
-pip install -r requirements.txt ```
+pip install -r requirements.txt
+```
 
 ### 5. Database Configuration
 You must create the local PostgreSQL database before running the app.
@@ -37,19 +38,21 @@ You must create the local PostgreSQL database before running the app.
 Open your Postgres terminal (psql) or pgAdmin.
 
 Run the following SQL command:
-CREATE DATABASE cognisec_db;
+``` CREATE DATABASE cognisec_db; ```
 
 Note: Ensure the username and password in cognisec/settings.py match your local Postgres credentials.
 
 ### 6. Run Migrations & Start the Server
 ``` Bash
 # Apply the database schema
-python manage.py migrate ``` 
+python manage.py migrate
+``` 
 
 # Start the development server
 ``` python manage.py runserver
 Visit http://127.0.0.1:8000/ in your browser to see the Landing Page.
-Visit http://127.0.0.1:8000/ui-kit/ to access the Master Component Catalog.```
+Visit http://127.0.0.1:8000/ui-kit/ to access the Master Component Catalog.
+```
 
 Team Architecture & Workflow
 To prevent Git merge conflicts, our platform is divided into isolated Django apps. You will work primarily within your assigned app but will inherit the global design from the core app.
@@ -68,9 +71,11 @@ ml_engine (Person 4) - Isolation Forest models, HRN scoring, Data processing.
 How to Create Your App
 When you are ready to start building your section, run:
 
-Bash
+``` Bash
 python manage.py startapp your_app_name
+```
 Don't forget to add your new app to INSTALLED_APPS in cognisec/settings.py!
+
 
 Using the UI System
 Do not write custom CSS unless absolutely necessary.
@@ -83,5 +88,8 @@ HTML
     {% endblock %}
 
 ***
-
-Once your team has pulled this down and everyone has it running locally, you will
+### Important !!!
+we may need to chnage the name of the tests to : 
+- Évaluations de connaissances 
+- Scénarios d’attaque simulée 
+- Évaluations comportementales non prédictibles
