@@ -14,15 +14,16 @@ Welcome to the team! Follow these exact steps to get the platform running on you
 ### 2. Clone the Repository
 ```bash
 git clone [https://github.com/YourUsername/cognisec-platform.git](https://github.com/YourUsername/cognisec-platform.git)
-cd cognisec-platform ```
+cd cognisec-platform
+```
 
 ### 3. Setup the Virtual Environment
 Always isolate your dependencies. Do not install packages globally.
 # Create the virtual environment
-python -m venv venv
+``` python -m venv venv ```
 
 # Activate it (Windows)
-venv\Scripts\activate
+``` venv\Scripts\activate ```
 # Activate it (Mac/Linux)
 source venv/bin/activate
 
