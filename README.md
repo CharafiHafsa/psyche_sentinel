@@ -46,7 +46,54 @@ Note: Ensure the username and password in cognisec/settings.py match your local 
 ``` Bash
 # Apply the database schema
 python manage.py migrate
+
+# Start the development server
+python manage.py runserver
 ``` 
+## Git Workflow: Branching & Pushing
+To keep our codebase stable, no one should push directly to the main branch. Every new feature or app should be built in its own branch and then merged.
+
+### Step 1: Pull the Latest Changes
+Before starting your work for the day, always make sure your local main branch is up to date:
+
+``` Bash
+git checkout main
+git pull origin main
+```
+
+### Step 2: Create a New Branch
+Create a branch named after the feature you are building. Use prefixes like feature/, fix/, or ui/:
+
+``` Bash
+git checkout -b feature/your-app-name
+(Example: git checkout -b feature/ml-engine)
+```
+
+### Step 3: Make Changes, Add, and Commit
+Write your code, save your files, and then commit your work, but don't forget to update the requerement file :
+``` pip freeze > requirements.txt ```
+
+``` Bash
+# See which files you changed
+git status
+
+# Add your changed files to the staging area
+git add .
+
+# Commit with a clear, descriptive message
+git commit -m "Added the models and views for the QCM module"
+```
+### Step 4: Push Your Branch to GitHub
+Push your specific branch to the remote repository:
+
+``` Bash
+git push -u origin feature/your-app-name
+```
+
+### Step 5: Create a Pull Request (PR)
+Go to the repository on GitHub.
+You will see a green button that says "Compare & pull request". Click it.
+Add a brief description of what you built and request a review from a teammate before merging it into main.
 
 ## Start the development server
 ``` python manage.py runserver
