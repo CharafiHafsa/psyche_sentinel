@@ -20,12 +20,18 @@ cd cognisec-platform
 ### 3. Setup the Virtual Environment
 Always isolate your dependencies. Do not install packages globally.
 #### Create the virtual environment
-``` python -m venv venv ```
+```bash 
+python -m venv venv
+```
 
 #### Activate it (Windows)
-``` venv\Scripts\activate ```
+```bash 
+venv\Scripts\activate
+```
 #### Activate it (Mac/Linux)
-``` source venv/bin/activate ```
+```bash
+source venv/bin/activate
+```
 
 ### 4. Install Dependencies
 ``` Bash
@@ -38,7 +44,9 @@ You must create the local PostgreSQL database before running the app.
 Open your Postgres terminal (psql) or pgAdmin.
 
 Run the following SQL command:
-``` CREATE DATABASE cognisec_db; ```
+```bash
+CREATE DATABASE cognisec_db;
+```
 
 Note: Ensure the username and password in cognisec/settings.py match your local Postgres credentials.
 
@@ -71,7 +79,9 @@ git checkout -b feature/your-app-name
 
 ### Step 3: Make Changes, Add, and Commit
 Write your code, save your files, and then commit your work, but don't forget to update the requerement file :
-``` pip freeze > requirements.txt ```
+```bash
+pip freeze > requirements.txt
+```
 
 ``` Bash
 # See which files you changed
@@ -96,10 +106,12 @@ You will see a green button that says "Compare & pull request". Click it.
 Add a brief description of what you built and request a review from a teammate before merging it into main.
 
 ## Start the development server
-``` python manage.py runserver
+```bash
+python manage.py runserver
+```
 Visit http://127.0.0.1:8000/ in your browser to see the Landing Page.
 Visit http://127.0.0.1:8000/ui-kit/ to access the Master Component Catalog.
-```
+
 
 ## Team Architecture & Workflow
 To prevent Git merge conflicts, our platform is divided into isolated Django apps. You will work primarily within your assigned app but will inherit the global design from the core app.
