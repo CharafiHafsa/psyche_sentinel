@@ -1,0 +1,2426 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+
+<!--
+  ╔══════════════════════════════════════════════════════════════════════════╗
+  ║   PSYCHE SENTINEL — DATAVIZ UI KIT                                       ║
+  ║   Append this block inside your existing UI Kit page.                    ║
+  ║                                                                          ║
+  ║   CONSTRAINTS MET:                                                       ║
+  ║   ✓ Zero external chart libraries (no D3, Chart.js, Plotly)              ║
+  ║   ✓ All colors via existing CSS variables                                ║
+  ║   ✓ Pure CSS animations + inline SVG rendering                           ║
+  ║   ✓ No <head>, <body>, :root, or global resets included                  ║
+  ║   ✓ Every component is a self-contained section block                    ║
+  ║                                                                          ║
+  ║   TO USE: Drop this file's content directly into your UI Kit HTML,       ║
+  ║   inside your .kit-content div, after the last existing section.         ║
+  ╚══════════════════════════════════════════════════════════════════════════╝
+-->
+
+<!-- =====================================================================
+     SECTION HEADER (matches existing UI Kit section style)
+====================================================================== -->
+<section class="kit-section" id="section-dataviz" style="scroll-margin-top:80px;">
+  <div class="section-header">
+    <span class="section-number">14</span>
+    <div class="section-title-group">
+      <div class="section-title">DataViz UI Kit</div>
+      <div class="section-desc">
+        Seven production-ready chart primitives. Zero dependencies — pure CSS, inline SVG, and
+        vanilla JS only. All colors reference existing design tokens. Call the exported
+        <code class="dv-inline-code">PSY_VIZ.init()</code> after your DOM loads to animate all widgets simultaneously.
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────────
+       CHART GRID LAYOUT — two-column on desktop, single on mobile
+  ───────────────────────────────────────────────────────────────── -->
+  <div class="dv-grid">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         CHART 1 — HRN CIRCULAR GAUGE
+         Technique: SVG circle with stroke-dasharray/dashoffset animation.
+         API: PSY_VIZ.gaugeHRN(elementId, score 0-100)
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="dv-card dv-card--tall">
+      <div class="dv-card-header">
+        <div class="dv-card-title">
+          <i data-lucide="gauge" class="dv-title-icon"></i>
+          HRN Circular Gauge
+        </div>
+        <span class="dv-badge dv-badge--amber">ELEVATED RISK</span>
+      </div>
+
+      <!--
+        [COPY BLOCK START — hrn-gauge]
+        Container must be position:relative with fixed dimensions.
+        The SVG gauge draws a 270° arc; JS animates stroke-dashoffset.
+      -->
+      <div class="dv-gauge-wrap" id="hrn-gauge">
+        <svg class="dv-gauge-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <!-- Multi-stop gradient: violet → cyan → amber for high scores -->
+            <linearGradient id="gaugeGradMain" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%"   stop-color="#7c3aed"/>
+              <stop offset="50%"  stop-color="#06b6d4"/>
+              <stop offset="100%" stop-color="#f59e0b"/>
+            </linearGradient>
+            <!-- Glow filter for the arc -->
+            <filter id="gaugeGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <!-- Tick mark radial clip -->
+            <clipPath id="gaugeClip">
+              <circle cx="120" cy="120" r="119"/>
+            </clipPath>
+          </defs>
+
+          <!-- Background track (full 270° arc, starting bottom-left → bottom-right) -->
+          <!-- r=95; circumference=2π×95≈596.9; 270° portion=596.9×0.75≈447.7 -->
+          <circle
+            class="dv-gauge-track"
+            cx="120" cy="120" r="95"
+            stroke-dasharray="447.7 149.2"
+            stroke-dashoffset="-74.6"
+            transform="rotate(0 120 120)"
+          />
+
+          <!-- Filled arc — JS sets stroke-dashoffset dynamically -->
+          <circle
+            class="dv-gauge-fill"
+            id="hrn-gauge-fill"
+            cx="120" cy="120" r="95"
+            stroke="url(#gaugeGradMain)"
+            stroke-dasharray="447.7 149.2"
+            stroke-dashoffset="447.7"
+            transform="rotate(135 120 120)"
+            filter="url(#gaugeGlow)"
+          />
+
+          <!-- Decorative tick marks (generated by JS into this group) -->
+          <g id="hrn-gauge-ticks" opacity="0.25"></g>
+
+          <!-- Risk zone arc segments (subtle background colour zones) -->
+          <circle class="dv-gauge-zone dv-gauge-zone--low"
+            cx="120" cy="120" r="80"
+            stroke-dasharray="134.3 462.6"
+            stroke-dashoffset="-74.6"
+            transform="rotate(0 120 120)"/>
+          <circle class="dv-gauge-zone dv-gauge-zone--med"
+            cx="120" cy="120" r="80"
+            stroke-dasharray="134.3 462.6"
+            stroke-dashoffset="-208.9"
+            transform="rotate(0 120 120)"/>
+          <circle class="dv-gauge-zone dv-gauge-zone--high"
+            cx="120" cy="120" r="80"
+            stroke-dasharray="179.1 417.8"
+            stroke-dashoffset="-343.2"
+            transform="rotate(0 120 120)"/>
+        </svg>
+
+        <!-- Center overlay (absolute positioned) -->
+        <div class="dv-gauge-center">
+          <span class="dv-gauge-label">ORG RISK</span>
+          <span class="dv-gauge-score" id="hrn-gauge-score">0</span>
+          <span class="dv-gauge-sublabel" id="hrn-gauge-band">COMPUTING…</span>
+        </div>
+
+        <!-- Zone legend (bottom row) -->
+        <div class="dv-gauge-legend">
+          <span class="dv-gauge-legend-item dv-gl--low">Low</span>
+          <span class="dv-gauge-legend-item dv-gl--med">Med</span>
+          <span class="dv-gauge-legend-item dv-gl--high">High</span>
+        </div>
+      </div>
+      <!-- [COPY BLOCK END — hrn-gauge] -->
+
+      <div class="dv-card-meta">
+        <span class="dv-meta-stat"><span class="dv-meta-val" id="hrn-delta">+4.2</span><span class="dv-meta-lbl">7d delta</span></span>
+        <span class="dv-meta-stat"><span class="dv-meta-val dv-meta-val--danger">14</span><span class="dv-meta-lbl">High-Risk Users</span></span>
+        <span class="dv-meta-stat"><span class="dv-meta-val dv-meta-val--cyan">R-7</span><span class="dv-meta-lbl">Band</span></span>
+      </div>
+    </div>
+    <!-- END CHART 1 -->
+
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         CHART 2 — SEGMENTED DONUT CHART
+         Technique: Single SVG circle, segmented via stroke-dasharray gaps.
+         API: PSY_VIZ.donutPsych(elementId, segmentsArray)
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="dv-card dv-card--tall">
+      <div class="dv-card-header">
+        <div class="dv-card-title">
+          <i data-lucide="pie-chart" class="dv-title-icon"></i>
+          Psychological Risk Distribution
+        </div>
+        <span class="dv-badge dv-badge--violet">342 USERS</span>
+      </div>
+
+      <!--
+        [COPY BLOCK START — psych-donut]
+        r=85; circumference=2π×85≈534.1
+        Each segment: stroke-dasharray="(pct*534.1) (remaining)" with progressive offset
+      -->
+      <div class="dv-donut-wrap" id="psych-donut">
+        <svg class="dv-donut-svg" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="donutGlow" x="-15%" y="-15%" width="130%" height="130%">
+              <feGaussianBlur stdDeviation="2.5" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- Background ring -->
+          <circle class="dv-donut-track" cx="110" cy="110" r="85"/>
+
+          <!-- Segments populated dynamically by JS into this group -->
+          <g id="psych-donut-segments" filter="url(#donutGlow)"></g>
+
+          <!-- Center text -->
+          <text x="110" y="102" class="dv-donut-center-val" text-anchor="middle">342</text>
+          <text x="110" y="120" class="dv-donut-center-lbl" text-anchor="middle">USERS</text>
+          <text x="110" y="136" class="dv-donut-center-sub" text-anchor="middle">PROFILED</text>
+        </svg>
+
+        <!-- Legend — populated by JS -->
+        <div class="dv-donut-legend" id="psych-donut-legend"></div>
+      </div>
+      <!-- [COPY BLOCK END — psych-donut] -->
+    </div>
+    <!-- END CHART 2 -->
+
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         CHART 3 — STACKED HORIZONTAL BARS (RISK VECTOR BREAKDOWN)
+         Technique: CSS flex width transitions, no SVG needed.
+         API: PSY_VIZ.riskBars(elementId, vectorsArray)
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="dv-card dv-card--wide">
+      <div class="dv-card-header">
+        <div class="dv-card-title">
+          <i data-lucide="bar-chart-horizontal" class="dv-title-icon"></i>
+          Risk Vector Breakdown
+        </div>
+        <span class="dv-badge dv-badge--cyan">LIVE</span>
+      </div>
+
+      <!--
+        [COPY BLOCK START — risk-bars]
+        Each .dv-hbar-fill width is animated from 0 → target% by JS.
+        data-pct stores the target value for the animation loop.
+      -->
+      <div class="dv-hbars-wrap" id="risk-bars">
+        <!-- Rows injected by JS; static example shown for copy reference -->
+        <div class="dv-hbar-row">
+          <div class="dv-hbar-label-col">
+            <span class="dv-hbar-name">Behavioural Anomaly</span>
+          </div>
+          <div class="dv-hbar-track-col">
+            <div class="dv-hbar-track">
+              <div class="dv-hbar-fill" data-pct="78" style="background:linear-gradient(90deg,#f87171,#a855f7);width:0%"></div>
+              <div class="dv-hbar-threshold" style="left:60%"></div>
+            </div>
+            <span class="dv-hbar-pct">78%</span>
+          </div>
+          <div class="dv-hbar-sparkrow" id="risk-sparkrow-0"></div>
+        </div>
+      </div>
+      <!-- [COPY BLOCK END — risk-bars] -->
+
+      <!-- Threshold legend -->
+      <div class="dv-hbars-footer">
+        <span class="dv-hbars-threshold-legend">
+          <span class="dv-threshold-line-icon"></span>
+          Acceptable threshold (60%)
+        </span>
+        <div class="dv-badge dv-badge--amber">3 vectors above threshold</div>
+      </div>
+    </div>
+    <!-- END CHART 3 -->
+
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         CHART 4 — SVG SPARKLINE / LINE CHART
+         Technique: Pure SVG polyline with gradient fill polygon.
+         API: PSY_VIZ.sparkline(elementId, dataArray, options)
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="dv-card">
+      <div class="dv-card-header">
+        <div class="dv-card-title">
+          <i data-lucide="trending-up" class="dv-title-icon"></i>
+          Weekly HRN Trend
+        </div>
+        <span class="dv-badge dv-badge--amber">+4.2 THIS WEEK</span>
+      </div>
+
+      <!--
+        [COPY BLOCK START — hrn-sparkline]
+        SVG viewBox is 400×160. Axes are optional (drawn by JS).
+        The gradient fill polygon closes at the bottom baseline.
+      -->
+      <div class="dv-spark-wrap" id="hrn-sparkline">
+        <svg class="dv-spark-svg" viewBox="0 0 400 160"
+             xmlns="http://www.w3.org/2000/svg" id="hrn-spark-svg">
+          <defs>
+            <linearGradient id="sparkFillGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#a855f7" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="sparkLineGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%"   stop-color="#7c3aed"/>
+              <stop offset="50%"  stop-color="#22d3ee"/>
+              <stop offset="100%" stop-color="#f59e0b"/>
+            </linearGradient>
+            <filter id="sparkGlow">
+              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- Grid lines (horizontal, subtle) -->
+          <g id="spark-gridlines" stroke="rgba(255,255,255,0.05)" stroke-width="1"></g>
+
+          <!-- Y-axis labels -->
+          <g id="spark-ylabels" class="dv-spark-axislabel"></g>
+
+          <!-- X-axis labels -->
+          <g id="spark-xlabels" class="dv-spark-axislabel"></g>
+
+          <!-- Gradient fill polygon (area under the line) -->
+          <polygon id="spark-fill" fill="url(#sparkFillGrad)" opacity="0" points=""/>
+
+          <!-- Annotation lines (reference: 60 threshold) -->
+          <line id="spark-threshold-line"
+            x1="0" y1="80" x2="400" y2="80"
+            stroke="rgba(251,191,36,0.3)" stroke-width="1"
+            stroke-dasharray="4 4" opacity="0"/>
+
+          <!-- The main sparkline polyline -->
+          <polyline
+            id="spark-line"
+            fill="none"
+            stroke="url(#sparkLineGrad)"
+            stroke-width="2.5"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+            filter="url(#sparkGlow)"
+            points=""
+          />
+
+          <!-- Data point dots (injected by JS) -->
+          <g id="spark-dots"></g>
+
+          <!-- Hover crosshair (shown on mousemove) -->
+          <line id="spark-crosshair" x1="0" y1="0" x2="0" y2="160"
+            stroke="rgba(255,255,255,0.15)" stroke-width="1"
+            stroke-dasharray="3 3" opacity="0" pointer-events="none"/>
+        </svg>
+
+        <!-- Hover tooltip -->
+        <div class="dv-spark-tooltip" id="spark-tooltip" style="display:none;"></div>
+      </div>
+      <!-- [COPY BLOCK END — hrn-sparkline] -->
+
+      <!-- Summary row below chart -->
+      <div class="dv-spark-summary" id="spark-summary">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+    <!-- END CHART 4 -->
+
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         CHART 5 — VERTICAL BAR CHART
+         Technique: CSS flexbox bars growing upward via height transition.
+         API: PSY_VIZ.vertBars(elementId, departmentsArray)
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="dv-card">
+      <div class="dv-card-header">
+        <div class="dv-card-title">
+          <i data-lucide="bar-chart-2" class="dv-title-icon"></i>
+          Drill Success Rates by Department
+        </div>
+        <span class="dv-badge dv-badge--cyan">Q3 2024</span>
+      </div>
+
+      <!--
+        [COPY BLOCK START — drill-bars]
+        .dv-vbar grows from height:0 → data-height via CSS transition.
+        data-pct is the value label shown above.
+      -->
+      <div class="dv-vbars-wrap" id="drill-bars">
+        <!-- Populated by JS; static scaffold shown for reference -->
+        <div class="dv-vbars-chart-area" id="drill-bars-inner">
+          <!-- Horizontal grid lines (injected by JS) -->
+          <div class="dv-vbars-grid" id="drill-bars-grid"></div>
+          <!-- Bar columns (injected by JS) -->
+          <div class="dv-vbars-cols" id="drill-bars-cols"></div>
+        </div>
+        <div class="dv-vbars-xaxis" id="drill-bars-xaxis"></div>
+      </div>
+      <!-- [COPY BLOCK END — drill-bars] -->
+    </div>
+    <!-- END CHART 5 -->
+
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         CHART 6 — LIVE C2 AGENT STATUS GRID (HEATMAP)
+         Technique: CSS grid of divs with border, pulse animation per status.
+         API: PSY_VIZ.agentGrid(elementId, agentCount, options)
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="dv-card dv-card--wide">
+      <div class="dv-card-header">
+        <div class="dv-card-title">
+          <i data-lucide="network" class="dv-title-icon"></i>
+          Live C2 Agent Status Grid
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="dv-badge dv-badge--cyan dv-badge--dot">LIVE</span>
+          <span class="dv-badge dv-badge--neutral" id="agent-online-count">— Online</span>
+        </div>
+      </div>
+
+      <!--
+        [COPY BLOCK START — agent-grid]
+        Each .dv-agent-node has a data-status attribute (online|warning|alert|offline|drill).
+        The pulsing dot animation is CSS-only (keyframes defined below).
+      -->
+      <div class="dv-agent-grid-outer" id="agent-grid">
+        <!-- Node cells injected by PSY_VIZ.agentGrid() -->
+      </div>
+      <!-- [COPY BLOCK END — agent-grid] -->
+
+      <!-- Status legend -->
+      <div class="dv-agent-legend">
+        <span class="dv-agent-legend-item" data-status="online">
+          <span class="dv-agent-dot" data-status="online"></span>Online
+        </span>
+        <span class="dv-agent-legend-item" data-status="warning">
+          <span class="dv-agent-dot" data-status="warning"></span>Warning
+        </span>
+        <span class="dv-agent-legend-item" data-status="alert">
+          <span class="dv-agent-dot" data-status="alert"></span>Alert
+        </span>
+        <span class="dv-agent-legend-item" data-status="drill">
+          <span class="dv-agent-dot" data-status="drill"></span>In Drill
+        </span>
+        <span class="dv-agent-legend-item" data-status="offline">
+          <span class="dv-agent-dot" data-status="offline"></span>Offline
+        </span>
+      </div>
+    </div>
+    <!-- END CHART 6 -->
+
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         CHART 7 — PSYCHOLOGICAL RADAR / SPIDER CHART
+         Technique: Pure SVG polygon math (no external lib).
+         API: PSY_VIZ.radar(elementId, scoresObject)
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="dv-card dv-card--tall">
+      <div class="dv-card-header">
+        <div class="dv-card-title">
+          <i data-lucide="scan-face" class="dv-title-icon"></i>
+          Psychological Profile Radar
+        </div>
+        <span class="dv-badge dv-badge--violet">U-014 · J.DOE</span>
+      </div>
+
+      <!--
+        [COPY BLOCK START — psych-radar]
+        SVG viewBox 320×320, center at (160,160), radius=120.
+        Five axes at 72° intervals. Background rings at 25/50/75/100%.
+        Data polygon + comparison (team avg) polygon overlaid.
+      -->
+      <div class="dv-radar-wrap" id="psych-radar">
+        <svg class="dv-radar-svg" viewBox="0 0 320 320"
+             xmlns="http://www.w3.org/2000/svg" id="psych-radar-svg">
+          <defs>
+            <linearGradient id="radarFillGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.5"/>
+              <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.25"/>
+            </linearGradient>
+            <linearGradient id="radarAvgGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.1"/>
+            </linearGradient>
+            <filter id="radarGlow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- Background concentric pentagons (25 / 50 / 75 / 100) -->
+          <g id="radar-bg-rings" class="dv-radar-bg-ring"></g>
+
+          <!-- Axis lines from center to each vertex -->
+          <g id="radar-axes" class="dv-radar-axis"></g>
+
+          <!-- Team average polygon (amber, drawn first so user polygon overlays) -->
+          <polygon id="radar-avg-poly"
+            class="dv-radar-poly dv-radar-poly--avg"
+            fill="url(#radarAvgGrad)"
+            points="160,160"/>
+
+          <!-- User data polygon (violet/cyan gradient) -->
+          <polygon id="radar-user-poly"
+            class="dv-radar-poly dv-radar-poly--user"
+            fill="url(#radarFillGrad)"
+            filter="url(#radarGlow)"
+            points="160,160"/>
+
+          <!-- Data point dots on user polygon -->
+          <g id="radar-user-dots" class="dv-radar-dot--user"></g>
+
+          <!-- Axis labels (injected by JS) -->
+          <g id="radar-labels" class="dv-radar-label"></g>
+
+          <!-- Score callout on each dot (injected by JS) -->
+          <g id="radar-score-labels"></g>
+        </svg>
+
+        <!-- Legend below radar -->
+        <div class="dv-radar-legend">
+          <span class="dv-radar-legend-item dv-rli--user">
+            <span class="dv-rli-swatch"></span>J.Doe Profile
+          </span>
+          <span class="dv-radar-legend-item dv-rli--avg">
+            <span class="dv-rli-swatch"></span>Team Average
+          </span>
+        </div>
+      </div>
+      <!-- [COPY BLOCK END — psych-radar] -->
+    </div>
+    <!-- END CHART 7 -->
+
+  </div>
+  <!-- /dv-grid -->
+
+</section>
+<!-- /section-dataviz -->
+
+
+<!-- =====================================================================
+     DATAVIZ CSS
+     All values use existing :root token variables.
+     Paste this inside your existing <style> block.
+====================================================================== -->
+<style>
+/* ================================================================
+   DV-GRID — Two-column masonry-inspired layout
+================================================================ */
+.dv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* Wide cards span both columns */
+.dv-card--wide { grid-column: 1 / -1; }
+
+@media (max-width: 900px) {
+  .dv-grid { grid-template-columns: 1fr; }
+  .dv-card--wide { grid-column: auto; }
+}
+
+/* ================================================================
+   DV-CARD — Base card shell (reuses glass-card logic via tokens)
+================================================================ */
+.dv-card {
+  background: var(--bg-glass);
+  backdrop-filter: var(--blur-glass, blur(20px) saturate(160%));
+  -webkit-backdrop-filter: var(--blur-glass, blur(20px) saturate(160%));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition:
+    border-color var(--ease-med, 260ms ease),
+    box-shadow var(--ease-med, 260ms ease),
+    transform var(--ease-med, 260ms ease);
+}
+
+.dv-card:hover {
+  border-color: var(--border-accent);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px var(--violet-subtle);
+  transform: translateY(-2px);
+}
+
+/* ── Card Header ── */
+.dv-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dv-card-title {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dv-title-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--color-primary);
+}
+
+/* ── Badge (DV-local, mirrors global .badge) ── */
+.dv-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-display);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.dv-badge--violet  { background: var(--color-primary-bg);  color: var(--color-primary);  border: 1px solid rgba(168,85,247,0.2); }
+.dv-badge--cyan    { background: var(--color-secondary-bg);color: var(--color-secondary); border: 1px solid rgba(34,211,238,0.2); }
+.dv-badge--amber   { background: var(--color-warning-bg);  color: var(--color-warning);  border: 1px solid rgba(251,191,36,0.2); }
+.dv-badge--danger  { background: var(--color-danger-bg);   color: var(--color-danger);   border: 1px solid rgba(248,113,113,0.2); }
+.dv-badge--neutral { background: var(--bg-elevated);       color: var(--text-secondary); border: 1px solid var(--border-default); }
+
+.dv-badge--dot::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: dv-dot-pulse 2s ease infinite;
+}
+
+@keyframes dv-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ── Inline code (desc area) ── */
+.dv-inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--cyan-bright);
+  background: var(--bg-elevated);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   CHART 1 — HRN GAUGE CSS
+───────────────────────────────────────────────────────────────── */
+.dv-gauge-wrap {
+  position: relative;
+  width: 240px;
+  height: 260px;
+  margin: 0 auto;
+}
+
+.dv-gauge-svg {
+  width: 240px;
+  height: 240px;
+  display: block;
+  overflow: visible;
+}
+
+/* Background track ring */
+.dv-gauge-track {
+  fill: none;
+  stroke: rgba(255,255,255,0.05);
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+
+/* Animated fill arc */
+.dv-gauge-fill {
+  fill: none;
+  stroke-width: 14;
+  stroke-linecap: round;
+  /* JS sets stroke-dashoffset; initial = full hide */
+  transition: stroke-dashoffset 2.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Zone rings (subtle coloured inner ring) */
+.dv-gauge-zone {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: butt;
+}
+.dv-gauge-zone--low  { stroke: rgba(34,197,94,0.12); }
+.dv-gauge-zone--med  { stroke: rgba(251,191,36,0.12); }
+.dv-gauge-zone--high { stroke: rgba(248,113,113,0.12); }
+
+/* Center text overlay */
+.dv-gauge-center {
+  position: absolute;
+  top: 20px; left: 0;
+  width: 240px; height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.dv-gauge-label {
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.dv-gauge-score {
+  font-family: var(--font-display);
+  font-size: 3.4rem;
+  font-weight: 900;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--violet-bright), var(--cyan-bright));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  /* Count-up animation preserves gradient via JS textContent */
+}
+
+.dv-gauge-sublabel {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-warning);
+  text-transform: uppercase;
+}
+
+/* Zone legend row */
+.dv-gauge-legend {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 240px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.dv-gauge-legend-item {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.dv-gauge-legend-item::before {
+  content: '';
+  width: 8px; height: 3px;
+  border-radius: 2px;
+}
+.dv-gl--low  { color: var(--color-success); }
+.dv-gl--low::before  { background: var(--color-success); }
+.dv-gl--med  { color: var(--color-warning); }
+.dv-gl--med::before  { background: var(--color-warning); }
+.dv-gl--high { color: var(--color-danger);  }
+.dv-gl--high::before { background: var(--color-danger); }
+
+/* Card meta row */
+.dv-card-meta {
+  display: flex;
+  gap: 20px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.dv-meta-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dv-meta-val {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--cyan-bright);
+}
+.dv-meta-val--danger { color: var(--color-danger); }
+.dv-meta-val--cyan   { color: var(--cyan-bright); }
+.dv-meta-val--amber  { color: var(--color-warning); }
+
+.dv-meta-lbl {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   CHART 2 — DONUT CHART CSS
+───────────────────────────────────────────────────────────────── */
+.dv-donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.dv-donut-svg {
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+/* Track circle */
+.dv-donut-track {
+  fill: none;
+  stroke: rgba(255,255,255,0.05);
+  stroke-width: 28;
+}
+
+/* Individual segments — animated by JS via stroke-dashoffset */
+.dv-donut-segment {
+  fill: none;
+  stroke-width: 28;
+  stroke-linecap: butt;
+  /* Each segment starts fully offset (hidden); JS animates to target */
+  transition: stroke-dashoffset 1.8s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.dv-donut-segment:hover { stroke-width: 32; filter: brightness(1.15); }
+
+/* Center text (SVG text elements) */
+.dv-donut-center-val {
+  fill: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+}
+.dv-donut-center-lbl {
+  fill: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+.dv-donut-center-sub {
+  fill: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 2px;
+}
+
+/* Legend */
+.dv-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-width: 130px;
+}
+
+.dv-donut-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  transition: opacity var(--ease-fast, 140ms ease);
+}
+.dv-donut-legend-item:hover { opacity: 0.8; }
+
+.dv-donut-legend-swatch {
+  width: 12px; height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.dv-donut-legend-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.dv-donut-legend-val {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   CHART 3 — HORIZONTAL BARS CSS
+───────────────────────────────────────────────────────────────── */
+.dv-hbars-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dv-hbar-row {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  grid-template-rows: auto auto;
+  gap: 6px 12px;
+  align-items: center;
+}
+
+.dv-hbar-label-col { grid-row: 1; grid-column: 1; }
+.dv-hbar-track-col {
+  grid-row: 1; grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dv-hbar-sparkrow  { grid-row: 2; grid-column: 2; }
+
+.dv-hbar-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.dv-hbar-sub {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-family: var(--font-mono);
+}
+
+.dv-hbar-track {
+  flex: 1;
+  height: 10px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-full);
+  overflow: visible;
+  position: relative;
+}
+
+.dv-hbar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  width: 0; /* animated to target by JS */
+  transition: width 1.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+/* Glowing right-edge cap */
+.dv-hbar-fill::after {
+  content: '';
+  position: absolute;
+  right: -3px; top: 50%;
+  transform: translateY(-50%);
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: inherit;
+  filter: brightness(1.4) blur(2px);
+  opacity: 0.8;
+}
+
+/* Threshold indicator (vertical line inside bar area) */
+.dv-hbar-threshold {
+  position: absolute;
+  top: -4px;
+  height: 18px;
+  width: 2px;
+  background: rgba(251,191,36,0.5);
+  border-radius: 1px;
+  z-index: 2;
+}
+.dv-hbar-threshold::after {
+  content: '';
+  position: absolute;
+  bottom: -5px; left: -3px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid rgba(251,191,36,0.5);
+}
+
+.dv-hbar-pct {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Inline mini sparkline under each bar */
+.dv-hbar-sparkrow svg {
+  display: block;
+  width: 100%;
+  height: 22px;
+}
+
+.dv-hbars-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dv-hbars-threshold-legend {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.dv-threshold-line-icon {
+  display: inline-block;
+  width: 18px; height: 2px;
+  background: rgba(251,191,36,0.6);
+  border-radius: 1px;
+  position: relative;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   CHART 4 — SPARKLINE CSS
+───────────────────────────────────────────────────────────────── */
+.dv-spark-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.dv-spark-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* SVG text labels for axes */
+.dv-spark-axislabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--text-muted);
+}
+
+/* Animated line draw via stroke-dashoffset */
+#spark-line {
+  stroke-dasharray: 2000;
+  stroke-dashoffset: 2000;
+  transition: stroke-dashoffset 2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Data dots */
+.dv-spark-dot {
+  fill: var(--bg-surface);
+  stroke-width: 2.5;
+  transition: r var(--ease-fast, 140ms ease);
+  cursor: pointer;
+}
+.dv-spark-dot:hover { r: 5; }
+
+/* Hover tooltip */
+.dv-spark-tooltip {
+  position: absolute;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-primary);
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Summary stat pills below chart */
+.dv-spark-summary {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.dv-spark-stat {
+  display: flex;
+  flex-direction: column;
+}
+.dv-spark-stat-val {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.dv-spark-stat-lbl {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   CHART 5 — VERTICAL BAR CHART CSS
+───────────────────────────────────────────────────────────────── */
+.dv-vbars-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.dv-vbars-chart-area {
+  position: relative;
+  height: 180px;
+  width: 100%;
+}
+
+/* Horizontal grid lines */
+.dv-vbars-grid {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.dv-vbar-gridline {
+  width: 100%;
+  height: 1px;
+  background: rgba(255,255,255,0.05);
+  position: relative;
+}
+
+.dv-vbar-gridline-label {
+  position: absolute;
+  left: -28px;
+  top: -6px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--text-muted);
+}
+
+/* Bar columns row */
+.dv-vbars-cols {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  padding: 0 12px;
+  gap: 8px;
+}
+
+.dv-vbar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.dv-vbar {
+  width: 100%;
+  max-width: 52px;
+  border-radius: 5px 5px 2px 2px;
+  height: 0; /* animated to data-height by JS */
+  transition: height 1.4s cubic-bezier(0.4, 0, 0.2, 1), filter var(--ease-fast, 140ms ease);
+  position: relative;
+  overflow: hidden;
+}
+
+.dv-vbar:hover { filter: brightness(1.25); }
+
+/* Shimmer overlay inside bar */
+.dv-vbar::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+  animation: dv-vbar-shimmer 2.5s ease infinite;
+}
+
+@keyframes dv-vbar-shimmer {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+.dv-vbar-val {
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  opacity: 0;
+  transition: opacity var(--ease-med, 260ms ease);
+  position: absolute;
+  top: -20px;
+  width: 100%;
+  text-align: center;
+}
+
+.dv-vbar-col:hover .dv-vbar-val { opacity: 1; }
+
+/* X-axis labels */
+.dv-vbars-xaxis {
+  display: flex;
+  justify-content: space-around;
+  padding: 0 12px;
+}
+
+.dv-vbar-xlabel {
+  flex: 1;
+  text-align: center;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 2px;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   CHART 6 — AGENT GRID CSS
+───────────────────────────────────────────────────────────────── */
+.dv-agent-grid-outer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+  gap: 8px;
+}
+
+/* Individual agent node */
+.dv-agent-node {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition:
+    transform var(--ease-fast, 140ms ease),
+    box-shadow var(--ease-fast, 140ms ease),
+    border-color var(--ease-fast, 140ms ease);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.dv-agent-node:hover {
+  transform: scale(1.15);
+  z-index: 5;
+}
+
+/* Status-based colour & glow */
+.dv-agent-node[data-status="online"] {
+  border-color: rgba(34,197,94,0.25);
+}
+.dv-agent-node[data-status="online"]:hover {
+  box-shadow: 0 0 12px rgba(34,197,94,0.4);
+}
+.dv-agent-node[data-status="warning"] {
+  border-color: rgba(251,191,36,0.3);
+}
+.dv-agent-node[data-status="warning"]:hover {
+  box-shadow: 0 0 12px rgba(251,191,36,0.4);
+}
+.dv-agent-node[data-status="alert"] {
+  border-color: rgba(248,113,113,0.4);
+  box-shadow: 0 0 8px rgba(248,113,113,0.15);
+}
+.dv-agent-node[data-status="alert"]:hover {
+  box-shadow: 0 0 16px rgba(248,113,113,0.5);
+}
+.dv-agent-node[data-status="drill"] {
+  border-color: rgba(168,85,247,0.35);
+}
+.dv-agent-node[data-status="drill"]:hover {
+  box-shadow: 0 0 12px rgba(168,85,247,0.4);
+}
+.dv-agent-node[data-status="offline"] {
+  opacity: 0.4;
+  border-color: var(--border-subtle);
+}
+
+/* Status indicator dot */
+.dv-agent-indicator {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+}
+
+.dv-agent-node[data-status="online"]  .dv-agent-indicator {
+  background: #22c55e;
+  animation: dv-breathe-green 2.8s ease-in-out infinite;
+}
+.dv-agent-node[data-status="warning"] .dv-agent-indicator {
+  background: var(--color-warning);
+  animation: dv-breathe-amber 2s ease-in-out infinite;
+}
+.dv-agent-node[data-status="alert"]   .dv-agent-indicator {
+  background: var(--color-danger);
+  animation: dv-breathe-red 1.3s ease-in-out infinite;
+}
+.dv-agent-node[data-status="drill"]   .dv-agent-indicator {
+  background: var(--color-primary);
+  animation: dv-breathe-violet 1.8s ease-in-out infinite;
+}
+.dv-agent-node[data-status="offline"] .dv-agent-indicator {
+  background: var(--text-muted);
+}
+
+@keyframes dv-breathe-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  50% { box-shadow: 0 0 0 4px rgba(34,197,94,0.3); }
+}
+@keyframes dv-breathe-amber {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0); }
+  50% { box-shadow: 0 0 0 4px rgba(251,191,36,0.35); }
+}
+@keyframes dv-breathe-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(248,113,113,0); }
+  50% { box-shadow: 0 0 0 5px rgba(248,113,113,0.4); }
+}
+@keyframes dv-breathe-violet {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(168,85,247,0); }
+  50% { box-shadow: 0 0 0 4px rgba(168,85,247,0.35); }
+}
+
+/* Agent ID text */
+.dv-agent-id {
+  font-family: var(--font-mono);
+  font-size: 0.42rem;
+  color: var(--text-muted);
+  line-height: 1;
+  margin-top: 14px; /* below the indicator dot */
+}
+
+/* Node icon */
+.dv-agent-icon {
+  width: 14px; height: 14px;
+  color: var(--text-muted);
+  margin-top: -4px;
+}
+
+/* Tooltip on hover (CSS only, uses ::after pseudo) */
+.dv-agent-node::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-accent);
+  border-radius: 5px;
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ease-fast, 140ms ease);
+  z-index: 20;
+}
+.dv-agent-node:hover::after { opacity: 1; }
+
+/* Agent Legend */
+.dv-agent-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.dv-agent-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+}
+
+.dv-agent-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dv-agent-dot[data-status="online"]  { background: #22c55e; box-shadow: 0 0 5px rgba(34,197,94,0.5); }
+.dv-agent-dot[data-status="warning"] { background: var(--color-warning); box-shadow: 0 0 5px rgba(251,191,36,0.4); }
+.dv-agent-dot[data-status="alert"]   { background: var(--color-danger);  box-shadow: 0 0 5px rgba(248,113,113,0.5); }
+.dv-agent-dot[data-status="drill"]   { background: var(--color-primary); box-shadow: 0 0 5px rgba(168,85,247,0.4); }
+.dv-agent-dot[data-status="offline"] { background: var(--text-muted); }
+
+/* ─────────────────────────────────────────────────────────────────
+   CHART 7 — RADAR CSS
+───────────────────────────────────────────────────────────────── */
+.dv-radar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.dv-radar-svg {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  overflow: visible;
+}
+
+/* Background ring pentagons */
+.dv-radar-bg-ring polygon {
+  fill: none;
+  stroke: rgba(255,255,255,0.06);
+  stroke-width: 1;
+}
+
+/* Axis spokes */
+.dv-radar-axis line {
+  stroke: rgba(255,255,255,0.08);
+  stroke-width: 1;
+}
+
+/* User data polygon */
+.dv-radar-poly--user {
+  stroke: var(--violet-bright);
+  stroke-width: 2;
+  /* JS animates from center-collapsed to full polygon via clip/transform */
+  transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 0 6px rgba(168,85,247,0.5));
+}
+
+/* Team average polygon */
+.dv-radar-poly--avg {
+  stroke: var(--color-warning);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+  transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Axis labels */
+.dv-radar-label text {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  fill: var(--text-secondary);
+  text-anchor: middle;
+}
+
+/* Score callout text */
+.dv-radar-score-txt {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  fill: var(--text-primary);
+}
+
+/* Data point dots on user polygon */
+.dv-radar-dot--user circle {
+  fill: var(--bg-surface);
+  stroke: var(--violet-bright);
+  stroke-width: 2;
+  transition: r var(--ease-fast, 140ms ease);
+  cursor: pointer;
+}
+.dv-radar-dot--user circle:hover { r: 6 !important; }
+
+/* Ring value labels */
+.dv-radar-ring-label {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  fill: var(--text-muted);
+}
+
+/* Legend */
+.dv-radar-legend {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.dv-radar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.dv-rli-swatch {
+  width: 24px; height: 3px;
+  border-radius: 2px;
+  display: block;
+}
+
+.dv-rli--user .dv-rli-swatch {
+  background: var(--violet-bright);
+  box-shadow: 0 0 5px var(--violet-bright);
+}
+.dv-rli--avg .dv-rli-swatch {
+  background: var(--color-warning);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--color-warning) 0px, var(--color-warning) 5px,
+    transparent 5px, transparent 8px
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ANIMATION UTILITIES (shared across charts)
+───────────────────────────────────────────────────────────────── */
+
+/* Staggered fade-in for chart cards */
+@keyframes dv-card-appear {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dv-card {
+  animation: dv-card-appear 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Stagger delays for each card */
+.dv-card:nth-child(1) { animation-delay: 0.05s; }
+.dv-card:nth-child(2) { animation-delay: 0.12s; }
+.dv-card:nth-child(3) { animation-delay: 0.19s; }
+.dv-card:nth-child(4) { animation-delay: 0.26s; }
+.dv-card:nth-child(5) { animation-delay: 0.33s; }
+.dv-card:nth-child(6) { animation-delay: 0.40s; }
+.dv-card:nth-child(7) { animation-delay: 0.47s; }
+
+/* IntersectionObserver adds this class to trigger chart draws */
+.dv-card.dv-visible {}
+</style>
+
+
+<!-- =====================================================================
+     DATAVIZ JAVASCRIPT
+     PSY_VIZ namespace — each chart has a named init function.
+     Call PSY_VIZ.init() once after DOMContentLoaded.
+====================================================================== -->
+<script>
+/**
+ * ╔═══════════════════════════════════════════════════════════════╗
+ * ║  PSY_VIZ — Psyche Sentinel DataViz Engine                    ║
+ * ║  Zero dependencies. Pure vanilla JS + SVG/CSS.               ║
+ * ║                                                               ║
+ * ║  PUBLIC API:                                                  ║
+ * ║  PSY_VIZ.init()          — Animate all charts on page        ║
+ * ║  PSY_VIZ.gaugeHRN(el,n)  — Render gauge to score n (0-100)  ║
+ * ║  PSY_VIZ.donutPsych(el,segs) — Render segmented donut       ║
+ * ║  PSY_VIZ.riskBars(el,data)   — Render horizontal bars       ║
+ * ║  PSY_VIZ.sparkline(el,data,opts) — Render line chart        ║
+ * ║  PSY_VIZ.vertBars(el,data)   — Render vertical bar chart    ║
+ * ║  PSY_VIZ.agentGrid(el,agents,opts) — Render agent heatmap   ║
+ * ║  PSY_VIZ.radar(el,scores,avgScores) — Render spider chart   ║
+ * ╚═══════════════════════════════════════════════════════════════╝
+ */
+const PSY_VIZ = (() => {
+
+  // ─── UTILITY: animate a number from start → end over duration ms ─────
+  function animateNumber(setter, start, end, duration, decimals = 0) {
+    const startTime = performance.now();
+    function step(now) {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 4); // ease-out quart
+      const val = start + (end - start) * ease;
+      setter(parseFloat(val.toFixed(decimals)));
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ─── UTILITY: get resolved CSS variable value ─────────────────────────
+  function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  // ─── UTILITY: polar → cartesian conversion (for SVG) ─────────────────
+  function polarToCart(cx, cy, r, angleDeg) {
+    const rad = (angleDeg - 90) * Math.PI / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  // ─── UTILITY: SVG element factory ────────────────────────────────────
+  function svgEl(tag, attrs = {}) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    return el;
+  }
+
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CHART 1 — HRN GAUGE
+  // ═══════════════════════════════════════════════════════════════════════
+  /**
+   * gaugeHRN(elementId, score)
+   * @param {string} elementId — ID of .dv-gauge-wrap container
+   * @param {number} score     — 0-100 risk score
+   *
+   * SVG arc math:
+   *   r=95, full circumference=596.9
+   *   270° arc = 596.9 × 0.75 = 447.7 (the stroke-dasharray first value)
+   *   stroke-dashoffset start = 447.7 (fully hidden)
+   *   stroke-dashoffset target = 447.7 - (score/100 × 447.7)
+   */
+  function gaugeHRN(elementId, score = 72) {
+    const container = document.getElementById(elementId);
+    if (!container) return;
+
+    const fill     = container.querySelector('#hrn-gauge-fill');
+    const scoreEl  = container.querySelector('#hrn-gauge-score');
+    const bandEl   = container.querySelector('#hrn-gauge-band');
+    const ticksEl  = container.querySelector('#hrn-gauge-ticks');
+
+    // Draw 36 tick marks around the 270° arc
+    if (ticksEl) {
+      for (let i = 0; i <= 36; i++) {
+        const angle = 135 + (i / 36) * 270;
+        const inner = polarToCart(120, 120, 88, angle);
+        const outer = polarToCart(120, 120, 93, angle);
+        const isMajor = i % 9 === 0;
+        const line = svgEl('line', {
+          x1: inner.x, y1: inner.y,
+          x2: outer.x, y2: outer.y,
+          stroke: 'rgba(255,255,255,0.3)',
+          'stroke-width': isMajor ? 1.5 : 0.75,
+          'stroke-linecap': 'round'
+        });
+        ticksEl.appendChild(line);
+        // Major tick score label
+        if (isMajor) {
+          const labelPt = polarToCart(120, 120, 76, angle);
+          const labelVal = Math.round((i / 36) * 100);
+          const text = svgEl('text', {
+            x: labelPt.x, y: labelPt.y,
+            'text-anchor': 'middle',
+            'dominant-baseline': 'middle',
+            fill: 'rgba(255,255,255,0.25)',
+            'font-size': '7',
+            'font-family': 'Orbitron, sans-serif'
+          });
+          text.textContent = labelVal;
+          ticksEl.appendChild(text);
+        }
+      }
+    }
+
+    // Animate the arc fill
+    const totalArc = 447.7;
+    const targetOffset = totalArc - (Math.min(100, Math.max(0, score)) / 100) * totalArc;
+
+    // Small delay so CSS transition fires after paint
+    setTimeout(() => {
+      if (fill) fill.style.strokeDashoffset = targetOffset;
+    }, 200);
+
+    // Animate the center number
+    animateNumber(val => {
+      if (scoreEl) scoreEl.textContent = val;
+    }, 0, score, 2200);
+
+    // Update band label
+    if (bandEl) {
+      const bands = [
+        { max: 30,  label: 'LOW RISK',      color: 'var(--color-success)' },
+        { max: 60,  label: 'MODERATE RISK', color: 'var(--cyan-bright)' },
+        { max: 80,  label: 'ELEVATED RISK', color: 'var(--color-warning)' },
+        { max: 100, label: 'CRITICAL RISK', color: 'var(--color-danger)' },
+      ];
+      const band = bands.find(b => score <= b.max) || bands[bands.length - 1];
+      bandEl.textContent = band.label;
+      bandEl.style.color = band.color;
+    }
+  }
+
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CHART 2 — SEGMENTED DONUT CHART
+  // ═══════════════════════════════════════════════════════════════════════
+  /**
+   * donutPsych(elementId, segments)
+   * @param {string} elementId
+   * @param {Array}  segments  — [{label, pct, color}]
+   *
+   * SVG math: r=85, circumference=534.1
+   * Each segment: dasharray = [pct×534.1, remainder], dashoffset starts at
+   * totalCircumference minus the running offset, then animates to target.
+   * A 2px gap between segments = 2/534.1 × 100% of the arc.
+   */
+  function donutPsych(elementId, segments) {
+    segments = segments || [
+      { label: 'Low Risk',      pct: 0.38, color: '#4ade80', users: 130 },
+      { label: 'Medium Risk',   pct: 0.31, color: '#fbbf24', users: 106 },
+      { label: 'High Risk',     pct: 0.21, color: '#f87171', users: 72  },
+      { label: 'Critical Risk', pct: 0.10, color: '#a855f7', users: 34  },
+    ];
+
+    const container  = document.getElementById(elementId);
+    if (!container) return;
+    const segGroup   = container.querySelector('#psych-donut-segments');
+    const legendEl   = container.querySelector('#psych-donut-legend');
+    if (!segGroup) return;
+
+    const r           = 85;
+    const circ        = 2 * Math.PI * r; // 534.07
+    const cx = 110, cy = 110;
+    const GAP         = 3; // px gap between segments
+    let cumulativeOffset = 0; // running dashoffset (in px along arc)
+
+    segments.forEach((seg, idx) => {
+      const segLen    = seg.pct * circ - GAP;
+      const dashArray = `${segLen} ${circ - segLen}`;
+      // Start fully hidden (dashoffset = full circumference - cumulative)
+      // The rotation places the start of this segment correctly
+      const rotationDeg = (cumulativeOffset / circ) * 360 - 90;
+
+      const circle = svgEl('circle', {
+        cx, cy, r,
+        class:              'dv-donut-segment',
+        stroke:             seg.color,
+        'stroke-dasharray': dashArray,
+        'stroke-dashoffset': segLen + GAP, // start hidden
+        transform:          `rotate(${rotationDeg} ${cx} ${cy})`,
+        'data-label':       seg.label,
+        'data-pct':         Math.round(seg.pct * 100)
+      });
+
+      segGroup.appendChild(circle);
+
+      // Animate from hidden → visible after staggered delay
+      setTimeout(() => {
+        circle.style.strokeDashoffset = 0;
+      }, 300 + idx * 120);
+
+      // Hover: bold & show tooltip via data attribute
+      circle.addEventListener('mouseenter', () => {
+        circle.style.strokeWidth = '32';
+        circle.style.filter = 'brightness(1.2)';
+      });
+      circle.addEventListener('mouseleave', () => {
+        circle.style.strokeWidth = '';
+        circle.style.filter = '';
+      });
+
+      cumulativeOffset += seg.pct * circ;
+
+      // Build legend row
+      if (legendEl) {
+        const item = document.createElement('div');
+        item.className = 'dv-donut-legend-item';
+        item.innerHTML = `
+          <div class="dv-donut-legend-swatch" style="background:${seg.color};color:${seg.color}"></div>
+          <span class="dv-donut-legend-label">${seg.label}</span>
+          <span class="dv-donut-legend-val" style="color:${seg.color}">
+            ${Math.round(seg.pct * 100)}%
+          </span>
+        `;
+        legendEl.appendChild(item);
+      }
+    });
+  }
+
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CHART 3 — HORIZONTAL RISK BARS
+  // ═══════════════════════════════════════════════════════════════════════
+  /**
+   * riskBars(elementId, vectors)
+   * @param {string} elementId
+   * @param {Array}  vectors — [{name, pct, color, trend:[...7 values]}]
+   *
+   * Each bar also renders a tiny 7-point sparkline trend below it.
+   */
+  function riskBars(elementId, vectors) {
+    vectors = vectors || [
+      { name: 'Behavioural Anomaly',  pct: 78, color: 'linear-gradient(90deg,#f87171,#a855f7)',  trend: [55,60,65,70,72,75,78], above: true  },
+      { name: 'Shadow AI Usage',      pct: 62, color: 'linear-gradient(90deg,#fbbf24,#f97316)',  trend: [40,44,50,55,58,60,62], above: true  },
+      { name: 'Phishing Susceptibility',pct:45,color: 'linear-gradient(90deg,#a855f7,#22d3ee)', trend: [50,48,47,46,47,45,45], above: false },
+      { name: 'Data Exfil Signals',   pct: 33, color: 'linear-gradient(90deg,#22d3ee,#3b82f6)', trend: [30,31,33,30,32,32,33], above: false },
+      { name: 'Credential Abuse',     pct: 71, color: 'linear-gradient(90deg,#f87171,#fbbf24)',  trend: [50,55,60,63,66,69,71], above: true  },
+      { name: 'Insider Collusion',    pct: 18, color: 'linear-gradient(90deg,#4ade80,#22d3ee)',  trend: [22,20,19,20,18,19,18], above: false },
+    ];
+
+    const container = document.getElementById(elementId);
+    if (!container) return;
+    container.innerHTML = '';
+
+    const aboveCount = vectors.filter(v => v.above).length;
+
+    vectors.forEach((vec, idx) => {
+      const row = document.createElement('div');
+      row.className = 'dv-hbar-row';
+
+      // Determine pct text colour
+      const pctColor = vec.pct >= 60
+        ? 'var(--color-danger)'
+        : vec.pct >= 45
+          ? 'var(--color-warning)'
+          : 'var(--color-success)';
+
+      row.innerHTML = `
+        <div class="dv-hbar-label-col">
+          <div class="dv-hbar-name">${vec.name}</div>
+          <div class="dv-hbar-sub">${vec.trend[vec.trend.length-1] > vec.trend[0]
+            ? `↑ ${vec.trend[vec.trend.length-1] - vec.trend[0]}% 7d`
+            : `↓ ${vec.trend[0] - vec.trend[vec.trend.length-1]}% 7d`}</div>
+        </div>
+        <div class="dv-hbar-track-col">
+          <div class="dv-hbar-track">
+            <div class="dv-hbar-fill" data-pct="${vec.pct}"
+              style="background:${vec.color};width:0%"></div>
+            <div class="dv-hbar-threshold" style="left:60%"></div>
+          </div>
+          <span class="dv-hbar-pct" style="color:${pctColor}">${vec.pct}%</span>
+        </div>
+        <div class="dv-hbar-sparkrow" id="hbar-spark-${idx}"></div>
+      `;
+
+      container.appendChild(row);
+
+      // Animate bar width after staggered delay
+      setTimeout(() => {
+        const fill = row.querySelector('.dv-hbar-fill');
+        if (fill) fill.style.width = vec.pct + '%';
+      }, 400 + idx * 80);
+
+      // Draw micro sparkline for trend data
+      drawMiniSparkline(`hbar-spark-${idx}`, vec.trend, vec.pct >= 60 ? '#f87171' : '#22d3ee');
+    });
+
+    // Update footer badge
+    const footer = container.parentElement?.querySelector('.dv-hbars-footer .dv-badge--amber');
+    if (footer) footer.textContent = `${aboveCount} vectors above threshold`;
+  }
+
+  /**
+   * drawMiniSparkline — tiny inline sparkline SVG used inside horizontal bars
+   */
+  function drawMiniSparkline(containerId, data, lineColor) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    const W = 220, H = 22, PAD = 2;
+    const min = Math.min(...data), max = Math.max(...data), range = (max - min) || 1;
+    const pts = data.map((v, i) => {
+      const x = PAD + i * ((W - PAD * 2) / (data.length - 1));
+      const y = H - PAD - ((v - min) / range) * (H - PAD * 2);
+      return `${x},${y}`;
+    }).join(' ');
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('preserveAspectRatio', 'none');
+
+    const poly = svgEl('polyline', {
+      points: pts,
+      fill: 'none',
+      stroke: lineColor,
+      'stroke-width': '1.5',
+      'stroke-linejoin': 'round',
+      'stroke-linecap': 'round',
+      opacity: '0.6'
+    });
+    svg.appendChild(poly);
+    el.appendChild(svg);
+  }
+
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CHART 4 — SVG SPARKLINE / LINE CHART
+  // ═══════════════════════════════════════════════════════════════════════
+  /**
+   * sparkline(elementId, data, options)
+   * @param {string} elementId
+   * @param {Array}  data — array of {week:string, hrn:number} objects
+   * @param {object} opts — { showThreshold:bool, thresholdVal:number }
+   *
+   * Renders a 400×160 SVG polyline with:
+   *   - gradient area fill (polygon)
+   *   - animated stroke-dashoffset line draw
+   *   - interactive hover crosshair + tooltip
+   *   - Y-axis grid lines & labels
+   */
+  function sparkline(elementId, data, opts = {}) {
+    data = data || [
+      { week: 'W1', hrn: 58 },{ week: 'W2', hrn: 61 },
+      { week: 'W3', hrn: 60 },{ week: 'W4', hrn: 64 },
+      { week: 'W5', hrn: 67 },{ week: 'W6', hrn: 70 },
+      { week: 'W7', hrn: 68 },{ week: 'W8', hrn: 72 },
+    ];
+
+    const W = 400, H = 160;
+    const PADL = 36, PADR = 12, PADT = 14, PADB = 28;
+    const chartW = W - PADL - PADR;
+    const chartH = H - PADT - PADB;
+
+    const container = document.getElementById(elementId);
+    if (!container) return;
+    const svg = container.querySelector('#hrn-spark-svg');
+    if (!svg) return;
+
+    const vals = data.map(d => d.hrn);
+    const minV = Math.min(...vals) - 5;
+    const maxV = Math.max(...vals) + 5;
+    const range = maxV - minV;
+
+    // Coordinate converter
+    const toX = (i) => PADL + i * (chartW / (data.length - 1));
+    const toY = (v) => PADT + chartH - ((v - minV) / range) * chartH;
+
+    // ── Grid lines & Y labels ──
+    const gridG = svg.querySelector('#spark-gridlines');
+    const yLblG = svg.querySelector('#spark-ylabels');
+    const gridSteps = [minV, (minV + maxV) / 2, maxV];
+    gridSteps.forEach(v => {
+      const y = toY(v);
+      if (gridG) {
+        const line = svgEl('line', { x1: PADL, y1: y, x2: W - PADR, y2: y });
+        gridG.appendChild(line);
+      }
+      if (yLblG) {
+        const txt = svgEl('text', { x: PADL - 4, y: y + 3, 'text-anchor': 'end' });
+        txt.textContent = Math.round(v);
+        yLblG.appendChild(txt);
+      }
+    });
+
+    // ── X-axis labels ──
+    const xLblG = svg.querySelector('#spark-xlabels');
+    data.forEach((d, i) => {
+      if (xLblG) {
+        const txt = svgEl('text', { x: toX(i), y: H - 4, 'text-anchor': 'middle' });
+        txt.textContent = d.week;
+        xLblG.appendChild(txt);
+      }
+    });
+
+    // ── Threshold line ──
+    const threshold = opts.thresholdVal ?? 60;
+    const threshLine = svg.querySelector('#spark-threshold-line');
+    if (threshLine) {
+      threshLine.setAttribute('y1', toY(threshold));
+      threshLine.setAttribute('y2', toY(threshold));
+      threshLine.setAttribute('x1', PADL);
+      threshLine.setAttribute('x2', W - PADR);
+      threshLine.setAttribute('opacity', '1');
+    }
+
+    // ── Build points string ──
+    const pointsArr = data.map((d, i) => `${toX(i)},${toY(d.hrn)}`);
+    const polylinePoints = pointsArr.join(' ');
+
+    // ── Area fill polygon (closes at bottom) ──
+    const fillPoly = svg.querySelector('#spark-fill');
+    if (fillPoly) {
+      const bottomL = `${toX(0)},${PADT + chartH}`;
+      const bottomR = `${toX(data.length - 1)},${PADT + chartH}`;
+      fillPoly.setAttribute('points', `${bottomL} ${polylinePoints} ${bottomR}`);
+      fillPoly.style.transition = 'opacity 1s ease 0.5s';
+      setTimeout(() => { fillPoly.setAttribute('opacity', '1'); }, 100);
+    }
+
+    // ── The main line ──
+    const line = svg.querySelector('#spark-line');
+    if (line) {
+      line.setAttribute('points', polylinePoints);
+      // Measure actual path length and set dasharray accordingly
+      setTimeout(() => {
+        try {
+          // Approximate length from bounding box as fallback
+          const len = Math.hypot(
+            toX(data.length - 1) - toX(0),
+            toY(vals[vals.length-1]) - toY(vals[0])
+          ) * 3;
+          line.style.strokeDasharray = len;
+          line.style.strokeDashoffset = len;
+          setTimeout(() => { line.style.strokeDashoffset = 0; }, 300);
+        } catch(e) {
+          line.style.strokeDasharray = 2000;
+          line.style.strokeDashoffset = 0;
+        }
+      }, 50);
+    }
+
+    // ── Data dots ──
+    const dotsG = svg.querySelector('#spark-dots');
+    if (dotsG) {
+      data.forEach((d, i) => {
+        const dot = svgEl('circle', {
+          cx: toX(i), cy: toY(d.hrn), r: '3.5',
+          class: 'dv-spark-dot',
+          stroke: i === data.length - 1 ? '#f59e0b' : '#a855f7',
+          'data-val': d.hrn, 'data-week': d.week
+        });
+        dotsG.appendChild(dot);
+      });
+    }
+
+    // ── Hover crosshair + tooltip ──
+    const crosshair = svg.querySelector('#spark-crosshair');
+    const tooltip   = container.querySelector('#spark-tooltip');
+    const svgEl2    = svg; // alias for event listener
+
+    svgEl2.addEventListener('mousemove', (e) => {
+      const rect = svgEl2.getBoundingClientRect();
+      const scaleX = W / rect.width;
+      const mouseX = (e.clientX - rect.left) * scaleX;
+
+      if (mouseX < PADL || mouseX > W - PADR) {
+        if (crosshair) crosshair.setAttribute('opacity', '0');
+        if (tooltip) tooltip.style.display = 'none';
+        return;
+      }
+
+      // Snap to nearest data point
+      const idx = Math.round((mouseX - PADL) / (chartW / (data.length - 1)));
+      const clamped = Math.max(0, Math.min(data.length - 1, idx));
+      const px = toX(clamped);
+      const py = toY(data[clamped].hrn);
+
+      if (crosshair) {
+        crosshair.setAttribute('x1', px);
+        crosshair.setAttribute('x2', px);
+        crosshair.setAttribute('opacity', '1');
+      }
+
+      if (tooltip) {
+        tooltip.style.display = 'block';
+        tooltip.innerHTML = `<strong>${data[clamped].week}</strong> · HRN: ${data[clamped].hrn}`;
+        // Position relative to container
+        const relX = (px / W) * rect.width;
+        const relY = (py / H) * rect.height;
+        tooltip.style.left = (relX - 60) + 'px';
+        tooltip.style.top  = (relY - 44) + 'px';
+      }
+    });
+
+    svgEl2.addEventListener('mouseleave', () => {
+      if (crosshair) crosshair.setAttribute('opacity', '0');
+      if (tooltip) tooltip.style.display = 'none';
+    });
+
+    // ── Summary stats ──
+    const summaryEl = container.querySelector('#spark-summary') || container.parentElement?.querySelector('.dv-spark-summary');
+    if (summaryEl) {
+      const lastVal = vals[vals.length - 1];
+      const firstVal = vals[0];
+      const delta = lastVal - firstVal;
+      const peak  = Math.max(...vals);
+
+      const stats = [
+        { val: lastVal, label: 'Current HRN', color: lastVal > 60 ? 'var(--color-danger)' : 'var(--color-success)' },
+        { val: (delta >= 0 ? '+' : '') + delta.toFixed(1), label: '8-Week Delta', color: delta > 0 ? 'var(--color-danger)' : 'var(--color-success)' },
+        { val: peak, label: 'Peak HRN', color: 'var(--color-warning)' },
+        { val: (vals.reduce((a, b) => a + b) / vals.length).toFixed(1), label: '8-Week Avg', color: 'var(--cyan-bright)' },
+      ];
+
+      stats.forEach(s => {
+        const stat = document.createElement('div');
+        stat.className = 'dv-spark-stat';
+        stat.innerHTML = `
+          <span class="dv-spark-stat-val" style="color:${s.color}">${s.val}</span>
+          <span class="dv-spark-stat-lbl">${s.label}</span>
+        `;
+        summaryEl.appendChild(stat);
+      });
+    }
+  }
+
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CHART 5 — VERTICAL BAR CHART
+  // ═══════════════════════════════════════════════════════════════════════
+  /**
+   * vertBars(elementId, departments)
+   * @param {string} elementId
+   * @param {Array}  departments — [{name, pct, color}]
+   *
+   * Bar height grows from 0 → (pct / maxPct × chartH)px
+   * Grid lines are drawn at 25%, 50%, 75%, 100% of max value.
+   */
+  function vertBars(elementId, departments) {
+    departments = departments || [
+      { name: 'Sec Ops',    pct: 98, color: 'linear-gradient(0deg,#7c3aed,#a855f7)' },
+      { name: 'Engineering',pct: 91, color: 'linear-gradient(0deg,#0891b2,#22d3ee)' },
+      { name: 'Finance',    pct: 84, color: 'linear-gradient(0deg,#16a34a,#4ade80)' },
+      { name: 'Legal & HR', pct: 77, color: 'linear-gradient(0deg,#d97706,#fbbf24)' },
+      { name: 'Marketing',  pct: 65, color: 'linear-gradient(0deg,#ea580c,#f97316)' },
+    ];
+
+    const container = document.getElementById(elementId);
+    if (!container) return;
+
+    const chartAreaH = 180; // matches CSS .dv-vbars-chart-area height
+    const maxVal     = Math.max(...departments.map(d => d.pct));
+    const gridVals   = [0, 25, 50, 75, 100].filter(v => v <= maxVal + 5);
+
+    // ── Grid lines ──
+    const gridEl = container.querySelector('#drill-bars-grid');
+    if (gridEl) {
+      gridVals.forEach(v => {
+        const yPct = 1 - v / 100;
+        const line = document.createElement('div');
+        line.className = 'dv-vbar-gridline';
+        line.style.position = 'absolute';
+        line.style.top = (yPct * 100) + '%';
+        line.style.width = '100%';
+        line.innerHTML = `<span class="dv-vbar-gridline-label">${v}</span>`;
+        gridEl.appendChild(line);
+      });
+    }
+
+    // ── Bars ──
+    const colsEl  = container.querySelector('#drill-bars-cols');
+    const xaxisEl = container.querySelector('#drill-bars-xaxis');
+
+    if (!colsEl) return;
+
+    departments.forEach((dept, idx) => {
+      const heightPct = (dept.pct / 100) * chartAreaH;
+      const colWrapper = document.createElement('div');
+      colWrapper.className = 'dv-vbar-col';
+
+      const bar = document.createElement('div');
+      bar.className = 'dv-vbar';
+      bar.setAttribute('data-height', heightPct);
+      bar.style.background = dept.color;
+      bar.setAttribute('title', `${dept.name}: ${dept.pct}%`);
+
+      // Value label (shown on hover)
+      const val = document.createElement('div');
+      val.className = 'dv-vbar-val';
+      val.textContent = dept.pct + '%';
+      bar.appendChild(val);
+
+      colWrapper.appendChild(bar);
+      colsEl.appendChild(colWrapper);
+
+      // X-axis label
+      if (xaxisEl) {
+        const lbl = document.createElement('div');
+        lbl.className = 'dv-vbar-xlabel';
+        lbl.textContent = dept.name;
+        xaxisEl.appendChild(lbl);
+      }
+
+      // Animate height after stagger
+      setTimeout(() => {
+        bar.style.height = heightPct + 'px';
+        // After animation, fade in val label
+        setTimeout(() => { val.style.opacity = '0.7'; }, 1000);
+      }, 500 + idx * 100);
+    });
+  }
+
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CHART 6 — LIVE C2 AGENT STATUS GRID
+  // ═══════════════════════════════════════════════════════════════════════
+  /**
+   * agentGrid(elementId, count, options)
+   * @param {string}  elementId
+   * @param {number}  count  — total agent count (default 64)
+   * @param {object}  opts   — { liveRefresh:bool, refreshInterval:ms }
+   *
+   * Each node is assigned a random status weighted by:
+   *   online 65%, warning 15%, alert 8%, drill 7%, offline 5%
+   * Live refresh randomly mutates 1-3 nodes every refreshInterval ms.
+   */
+  function agentGrid(elementId, count = 64, opts = {}) {
+    const container = document.getElementById(elementId);
+    if (!container) return;
+
+    const STATUS_WEIGHTS = [
+      ...Array(65).fill('online'),
+      ...Array(15).fill('warning'),
+      ...Array(8).fill('alert'),
+      ...Array(7).fill('drill'),
+      ...Array(5).fill('offline'),
+    ];
+
+    const DEPTS  = ['ENG','FIN','HR','MKT','SEC','OPS','LEG','CX'];
+    const ICONS  = ['laptop-2','monitor','server','cpu'];
+
+    let agentData = Array.from({ length: count }, (_, i) => ({
+      id:     `U-${String(i + 1).padStart(3, '0')}`,
+      dept:   DEPTS[i % DEPTS.length],
+      status: STATUS_WEIGHTS[Math.floor(Math.random() * STATUS_WEIGHTS.length)],
+      icon:   ICONS[i % ICONS.length],
+    }));
+
+    function render() {
+      container.innerHTML = '';
+      let onlineCount = 0;
+
+      agentData.forEach(agent => {
+        const node = document.createElement('div');
+        node.className = 'dv-agent-node';
+        node.dataset.status = agent.status;
+        node.dataset.tip    = `${agent.id} · ${agent.dept} · ${agent.status.toUpperCase()}`;
+
+        // Status indicator dot
+        const dot = document.createElement('div');
+        dot.className = 'dv-agent-indicator';
+
+        // Icon (tiny Lucide icon via i tag)
+        const icon = document.createElement('i');
+        icon.setAttribute('data-lucide', agent.icon);
+        icon.className = 'dv-agent-icon';
+
+        // ID text
+        const idTxt = document.createElement('div');
+        idTxt.className = 'dv-agent-id';
+        idTxt.textContent = agent.id;
+
+        node.appendChild(dot);
+        node.appendChild(icon);
+        node.appendChild(idTxt);
+        container.appendChild(node);
+
+        if (agent.status === 'online' || agent.status === 'drill') onlineCount++;
+      });
+
+      // Update badge
+      const badge = document.getElementById('agent-online-count');
+      if (badge) badge.textContent = `${onlineCount} Online`;
+
+      // Re-render Lucide icons for newly inserted nodes
+      if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [container] });
+    }
+
+    render();
+
+    // Live refresh
+    if (opts.liveRefresh !== false) {
+      setInterval(() => {
+        // Mutate 1-3 random agents
+        const mutCount = 1 + Math.floor(Math.random() * 3);
+        for (let m = 0; m < mutCount; m++) {
+          const idx = Math.floor(Math.random() * agentData.length);
+          agentData[idx].status = STATUS_WEIGHTS[Math.floor(Math.random() * STATUS_WEIGHTS.length)];
+        }
+        render();
+      }, opts.refreshInterval || 4000);
+    }
+  }
+
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CHART 7 — PSYCHOLOGICAL RADAR / SPIDER CHART
+  // ═══════════════════════════════════════════════════════════════════════
+  /**
+   * radar(elementId, userScores, avgScores)
+   * @param {string} elementId
+   * @param {object} userScores — {Awareness:0-100, Culture:0-100, Technical:0-100, Behavior:0-100, Policy:0-100}
+   * @param {object} avgScores  — same shape, team average
+   *
+   * SVG math:
+   *   Center (160,160), radius R=120.
+   *   5 axes at 72° intervals, starting from top (−90°).
+   *   Background rings at 25%, 50%, 75%, 100% of R.
+   *   Polygon vertex = center + (score/100 × R) in direction of axis.
+   */
+  function radar(elementId, userScores, avgScores) {
+    userScores = userScores || { Awareness: 45, Culture: 72, Technical: 88, Behavior: 38, Policy: 65 };
+    avgScores  = avgScores  || { Awareness: 70, Culture: 78, Technical: 75, Behavior: 68, Policy: 72 };
+
+    const container = document.getElementById(elementId);
+    if (!container) return;
+    const svg = container.querySelector('#psych-radar-svg');
+    if (!svg) return;
+
+    const CX = 160, CY = 160, R = 110;
+    const axes = Object.keys(userScores);
+    const N    = axes.length;
+
+    // Vertex calculator
+    const vertex = (axisIdx, pct) => {
+      const angleDeg = (axisIdx / N) * 360 - 90;
+      return polarToCart(CX, CY, R * pct, angleDeg);
+    };
+
+    // ── Background concentric rings ──
+    const bgGroup = svg.querySelector('#radar-bg-rings');
+    [0.25, 0.5, 0.75, 1.0].forEach(frac => {
+      const pts = Array.from({ length: N }, (_, i) => {
+        const p = vertex(i, frac);
+        return `${p.x},${p.y}`;
+      }).join(' ');
+      const poly = svgEl('polygon', { points: pts });
+      bgGroup.appendChild(poly);
+
+      // Value label at top (rightmost ring)
+      if (frac === 0.5 || frac === 1.0) {
+        const topPt = vertex(0, frac);
+        const lbl = svgEl('text', {
+          x: topPt.x + 4, y: topPt.y + 3,
+          class: 'dv-radar-ring-label'
+        });
+        lbl.textContent = Math.round(frac * 100);
+        bgGroup.appendChild(lbl);
+      }
+    });
+
+    // ── Axis spokes ──
+    const axesGroup = svg.querySelector('#radar-axes');
+    axes.forEach((_, i) => {
+      const end = vertex(i, 1);
+      const line = svgEl('line', { x1: CX, y1: CY, x2: end.x, y2: end.y });
+      axesGroup.appendChild(line);
+    });
+
+    // ── Axis labels ──
+    const labelsGroup = svg.querySelector('#radar-labels');
+    axes.forEach((name, i) => {
+      const pos  = vertex(i, 1.22);
+      const score = userScores[name];
+
+      // Colour based on score
+      const labelColor = score >= 70
+        ? 'var(--color-success)'
+        : score >= 50
+          ? 'var(--color-warning)'
+          : 'var(--color-danger)';
+
+      const txt = svgEl('text', {
+        x: pos.x, y: pos.y,
+        class: 'dv-radar-label',
+      });
+      txt.style.fill = labelColor;
+      txt.textContent = name;
+      labelsGroup.appendChild(txt);
+    });
+
+    // ── Polygon point builder ──
+    const buildPoints = (scores) =>
+      axes.map((name, i) => {
+        const pct = scores[name] / 100;
+        const pt  = vertex(i, pct);
+        return `${pt.x},${pt.y}`;
+      }).join(' ');
+
+    // ── Average polygon ──
+    const avgPoly = svg.querySelector('#radar-avg-poly');
+    if (avgPoly) {
+      // Start at center, animate to real points
+      setTimeout(() => {
+        avgPoly.setAttribute('points', buildPoints(avgScores));
+      }, 400);
+    }
+
+    // ── User polygon ──
+    const userPoly = svg.querySelector('#radar-user-poly');
+    if (userPoly) {
+      setTimeout(() => {
+        userPoly.setAttribute('points', buildPoints(userScores));
+      }, 600);
+    }
+
+    // ── Data dots on user polygon ──
+    const dotsGroup = svg.querySelector('#radar-user-dots');
+    const scoreLabelsGroup = svg.querySelector('#radar-score-labels');
+    axes.forEach((name, i) => {
+      const pct = userScores[name] / 100;
+      const pt  = vertex(i, pct);
+
+      // Dot
+      const circle = svgEl('circle', {
+        cx: pt.x, cy: pt.y, r: '4',
+        stroke: pct < 0.5 ? 'var(--color-danger)' : 'var(--violet-bright)'
+      });
+      dotsGroup.appendChild(circle);
+
+      // Score label next to dot
+      const scoreTxt = svgEl('text', {
+        x: pt.x + 6, y: pt.y + 4,
+        class: 'dv-radar-score-txt'
+      });
+      scoreTxt.style.fill = pct < 0.5 ? 'var(--color-danger)' : 'var(--cyan-bright)';
+      scoreTxt.textContent = userScores[name];
+      scoreLabelsGroup.appendChild(scoreTxt);
+    });
+  }
+
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // IntersectionObserver — animate charts when they scroll into view
+  // ═══════════════════════════════════════════════════════════════════════
+  function _setupObserver() {
+    const cards = document.querySelectorAll('.dv-card');
+    if (!('IntersectionObserver' in window)) return;
+
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('dv-visible');
+        }
+      });
+    }, { threshold: 0.15 });
+
+    cards.forEach(c => obs.observe(c));
+  }
+
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PUBLIC: init() — wire everything up
+  // Call this once after DOM is ready:  PSY_VIZ.init();
+  // ═══════════════════════════════════════════════════════════════════════
+  function init() {
+    _setupObserver();
+
+    // Re-render Lucide icons first (for existing icon refs in HTML)
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    // Small delay so CSS transitions fire after first paint
+    setTimeout(() => {
+      gaugeHRN('hrn-gauge', 72);
+      donutPsych('psych-donut', null);
+      riskBars('risk-bars', null);
+      sparkline('hrn-sparkline', null, { thresholdVal: 60 });
+      vertBars('drill-bars', null);
+      agentGrid('agent-grid', 72, { liveRefresh: true, refreshInterval: 5000 });
+      radar('psych-radar', null, null);
+    }, 150);
+  }
+
+
+  // Expose public API
+  return { init, gaugeHRN, donutPsych, riskBars, sparkline, vertBars, agentGrid, radar };
+
+})(); // end PSY_VIZ IIFE
+
+
+// ── Auto-init when DOM is ready ──
+// If your page already has a DOMContentLoaded listener, move this call inside it.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', PSY_VIZ.init);
+} else {
+  PSY_VIZ.init(); // DOM already loaded (script deferred)
+}
+</script>
+{% endblock %}

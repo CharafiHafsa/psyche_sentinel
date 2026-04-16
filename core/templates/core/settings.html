@@ -1,0 +1,107 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div style="max-width: auto; margin: 0 auto;">
+    {% if messages %}
+        <div style="margin-bottom: 24px;">
+            {% for message in messages %}
+                <div style="padding: 16px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 12px; {% if message.tags == 'error' %}background: var(--color-danger-bg); color: var(--color-danger); border: 1px solid rgba(255, 71, 87, 0.2);{% else %}background: var(--color-success-bg); color: var(--color-success); border: 1px solid rgba(46, 213, 115, 0.2);{% endif %}">
+                    {% if message.tags == 'error' %}
+                        <i data-lucide="alert-circle" style="width: 20px; height: 20px;"></i>
+                    {% else %}
+                        <i data-lucide="check-circle" style="width: 20px; height: 20px;"></i>
+                    {% endif %}
+                    <span style="font-size: 0.9rem; font-weight: 500;">{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <div class="section-header"">
+        <div class="section-icon" style="color: var(--color-primary); padding-top: 4px;">
+            <i data-lucide="shield-check" style="width: 28px; height: 28px;"></i>
+        </div>
+        <div class="section-title-group">
+            <div class="section-title">Sécurité du Compte Administrateur</div>
+            <div class="section-desc">Mettez à jour vos identifiants de connexion par défaut et sécurisez l'accès à la plateforme.</div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        
+        <div class="glass-card" style="padding: 24px; display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                <i data-lucide="user" style="color: var(--color-secondary);"></i>
+                <h3 class="h4" style="margin: 0;">Identifiants de Connexion</h3>
+            </div>
+            
+            <form action="{% url 'settings' %}" method="POST" style="display: flex; flex-direction: column; gap: 16px; flex-grow: 1;">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label class="form-label" style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-muted);">Email de connexion (Lecture seule)</label>
+                    <input type="text" value="{{ request.user.email }}" style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-primary); font-family: var(--font-mono); font-size: 0.85rem;" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-secondary);">Nom d'utilisateur</label>
+                    <input type="text" name="username" value="{{ request.user.username|default:'' }}" placeholder="Ex: h.charafi_admin" style="width: 100%; padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-primary);" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-secondary);">Nouvelle Adresse Email</label>
+                    <input type="email" name="email" value="{{ request.user.email }}" style="width: 100%; padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-primary);" required>
+                </div>
+
+                <div style="margin-top: auto; padding-top: 24px;">
+                    <button type="submit" name="update_profile" class="btn btn-outline" style="width: 100%; justify-content: center;">
+                        <i data-lucide="save"></i> Mettre à jour le profil
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="glass-card" style="padding: 24px; display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                <i data-lucide="key" style="color: var(--color-danger);"></i>
+                <h3 class="h4" style="margin: 0;">Modification du Mot de Passe</h3>
+            </div>
+            
+            <form action="{% url 'settings' %}" method="POST" style="display: flex; flex-direction: column; gap: 16px; flex-grow: 1;">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label class="form-label" style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-secondary);">Mot de passe actuel</label>
+                    <input type="password" name="old_password" placeholder="••••••••" style="width: 100%; padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-primary);" required>
+                </div>
+
+                <div class="divider" style="margin: 8px 0; border-top: 1px solid var(--border-subtle);"></div>
+
+                <div class="form-group">
+                    <label class="form-label" style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-secondary);">Nouveau mot de passe</label>
+                    <input type="password" name="new_password" placeholder="Nouveau mot de passe" style="width: 100%; padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-primary);" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-secondary);">Confirmer le mot de passe</label>
+                    <input type="password" name="confirm_password" placeholder="Confirmez le mot de passe" style="width: 100%; padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-primary);" required>
+                </div>
+
+                <div style="margin-top: auto; padding-top: 24px;">
+                    <button type="submit" name="update_password" class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--color-danger); border-color: var(--color-danger);">
+                        <i data-lucide="lock"></i> Appliquer le nouveau mot de passe
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Ré-initialiser les icônes si nécessaire
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>
+{% endblock %}

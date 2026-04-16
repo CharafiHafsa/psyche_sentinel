@@ -1,0 +1,298 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div style="max-width: auto; margin: 0 auto;">
+
+    {% if messages %}
+        <div style="margin-bottom: 24px;">
+            {% for message in messages %}
+                <div style="padding: 16px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 12px; {% if message.tags == 'error' %}background: var(--color-danger-bg); color: var(--color-danger); border: 1px solid rgba(255, 71, 87, 0.2);{% else %}background: var(--color-success-bg); color: var(--color-success); border: 1px solid rgba(46, 213, 115, 0.2);{% endif %}">
+                    <i data-lucide="{% if message.tags == 'error' %}alert-circle{% else %}check-circle{% endif %}" style="width: 20px; height: 20px;"></i>
+                    <span style="font-size: 0.9rem; font-weight: 500;">{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="section-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div class="section-title-group">
+            <div class="section-title">Annuaire des Cibles</div>
+            <div class="section-desc">Gérez les employés, analysez le score HRN et modifiez les statuts.</div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <div style="position: relative;">
+                <i data-lucide="search" style="position: absolute; left: 12px; top: 8px; width: 16px; height: 16px; color: var(--text-muted);"></i>
+                <input type="text" id="searchInput" placeholder="Rechercher un employé..." style="padding: 8px 12px 8px 36px; border-radius: var(--radius-sm); border: 1px solid var(--border-default); background: var(--bg-surface); color: var(--text-primary); font-size: 0.85rem; width: 250px;">
+            </div>
+            <button class="btn btn-outline btn-sm">
+                <i data-lucide="filter"></i> Filtrer
+            </button>
+        </div>
+    </div>
+
+    <div class="component-stage" style="padding:0; overflow:hidden;">
+        <div class="data-table-wrap" style="border-radius:var(--radius-lg); border:none;">
+            <table class="data-table" id="employeeTable">
+                <thead>
+                    <tr>
+                        <th>Employé</th>
+                        <th>Département</th>
+                        <th>Score HRN</th>
+                        <th>Progression</th>
+                        <th>Dernier Évènement</th>
+                        <th>Statut</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr class="employee-row">
+                        <td>
+                            <div class="table-user-cell">
+                                <div class="table-avatar dynamic-avatar">{{ emp.full_name.0|upper }}</div>
+                                <div>
+                                    <div class="table-user-name employee-name">{{ emp.full_name }}</div>
+                                    <div class="table-user-email">{{ emp.email|default:"Non spécifié" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="employee-dept"><span class="badge dynamic-dept" style="border: 1px solid transparent;">{{ emp.department|default:"Non assigné" }}</span></td>
+                        
+                        <td>
+                            <span class="risk-score {% if emp.hrn_score >= 70 %}risk-high{% elif emp.hrn_score >= 40 %}risk-medium{% else %}risk-low{% endif %}">
+                                {{ emp.hrn_score }}
+                            </span>
+                        </td>
+                        
+                        <td>
+                            <div class="table-progress">
+                                <div class="table-bar-track">
+                                    <div class="table-bar-fill" style="width:{{ emp.drill_progress }}%; background: {% if emp.drill_progress < 50 %}var(--color-danger){% elif emp.drill_progress < 80 %}var(--color-warning){% else %}var(--color-success){% endif %}"></div>
+                                </div>
+                                <span class="table-bar-pct">{{ emp.drill_progress }}%</span>
+                            </div>
+                        </td>
+                        
+                        <td class="body-sm">{{ emp.last_event }}</td>
+                        
+                        <td>
+                            <span class="badge {% if emp.status == 'Alert' %}badge-danger{% elif emp.status == 'Watch' or emp.status == 'Monitor' %}badge-warning{% else %}badge-success{% endif %} badge-dot">
+                                {{ emp.status }}
+                            </span>
+                        </td>
+                        
+                        <td>
+                            <button class="btn btn-ghost btn-sm" onclick="openEmpModal('{{ emp.id }}', '{{ emp.full_name|escapejs }}', '{{ emp.sam_account_name|escapejs }}', '{{ emp.department|escapejs }}', '{{ emp.hrn_score }}', '{{ emp.drill_progress }}', '{{ emp.last_event|escapejs }}', '{{ emp.status|escapejs }}')">
+                                <i data-lucide="eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            Aucun employé trouvé. Veuillez synchroniser l'Active Directory.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<div id="empModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    
+    <div class="glass-card" style="padding: 24px; width: 100%; max-width: 420px; position: relative;">
+        
+        <button onclick="closeEmpModal()" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--text-muted); cursor: pointer;">
+            <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+        </button>
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; padding-right: 24px;">
+            <div>
+                <div class="h5" style="margin-bottom: 4px;" id="modalEmpName">Profil de l'agent</div>
+                <div class="body-sm" id="modalEmpSub">SAM_NAME · Département</div>
+            </div>
+            <div class="avatar avatar-md dynamic-avatar-modal" id="modalEmpInitials" style="border: none; color: white;">A</div>
+        </div>
+
+        <div class="divider" style="margin-bottom: 14px;"></div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; font-size: .78rem;">
+                <span style="color: var(--text-secondary)">Score HRN (Risque)</span>
+                <span id="modalEmpHRN" style="font-family: var(--font-display); font-weight: 700;">0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: .78rem;">
+                <span style="color: var(--text-secondary)">Dernière Anomalie</span>
+                <span id="modalEmpEvent" style="color: var(--text-primary)">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: .78rem;">
+                <span style="color: var(--text-secondary)">Taux de réussite aux tests</span>
+                <span id="modalEmpProgress" style="color: var(--text-primary)">0%</span>
+            </div>
+        </div>
+
+        <form method="POST" action="{% url 'directory' %}">
+            {% csrf_token %}
+            <input type="hidden" name="employee_id" id="modalEmpId">
+            
+            <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Département</label>
+                    <input type="text" name="department" id="modalEmpDeptInput" style="width: 100%; padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.85rem;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Statut Actuel</label>
+                    <select name="status" id="modalEmpStatusInput" class="form-select" style="width: 100%; padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.85rem; cursor: pointer;">
+                        <option value="Clear">Clear (Sain)</option>
+                        <option value="Watch">Watch (À l'œil)</option>
+                        <option value="Monitor">Monitor (Surveillance)</option>
+                        <option value="Alert">Alert (Compromis)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+                <button type="submit" name="action" value="edit" class="btn btn-primary btn-sm" style="flex: 1; justify-content: center;">
+                    <i data-lucide="save"></i> Enregistrer
+                </button>
+                <button type="submit" name="action" value="delete" class="btn btn-danger btn-sm" style="flex: 1; justify-content: center;" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette cible ?');">
+                    <i data-lucide="trash-2"></i> Retirer
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // 1. DÉGRADÉS DYNAMIQUES POUR LES AVATARS (6 couleurs)
+        const gradients = [
+            'linear-gradient(135deg, #0e7490, #059669)', // Cyan/Green
+            'linear-gradient(135deg, #7c3aed, #db2777)', // Violet/Pink
+            'linear-gradient(135deg, #d97706, #dc2626)', // Orange/Red
+            'linear-gradient(135deg, #2563eb, #0891b2)', // Blue/Cyan
+            'linear-gradient(135deg, #4f46e5, #9333ea)', // Indigo/Purple
+            'linear-gradient(135deg, #be123c, #e11d48)'  // Rose/Red
+        ];
+        
+        document.querySelectorAll('.dynamic-avatar').forEach((avatar, index) => {
+            // Assigne un dégradé en boucle en fonction de la ligne
+            const gradient = gradients[index % gradients.length];
+            avatar.style.background = gradient;
+            avatar.style.color = '#ffffff';
+            avatar.style.border = 'none';
+            // On sauvegarde l'index du dégradé dans un attribut de données pour la modale
+            avatar.setAttribute('data-grad-index', index % gradients.length);
+        });
+
+        // 2. COULEURS FIXES PAR DÉPARTEMENT (10 couleurs, sauvées en cache)
+        const deptColors = [
+            '#8b5cf6', // Violet
+            '#06b6d4', // Cyan
+            '#10b981', // Emerald
+            '#f59e0b', // Amber
+            '#f43f5e', // Rose
+            '#3b82f6', // Blue
+            '#84cc16', // Lime
+            '#d946ef', // Fuchsia
+            '#14b8a6', // Teal
+            '#ef4444'  // Red
+        ];
+
+        // Récupérer les couleurs déjà assignées depuis le navigateur
+        let storedDeptColors = JSON.parse(localStorage.getItem('psyche_dept_colors')) || {};
+        let colorCounter = Object.keys(storedDeptColors).length;
+
+        document.querySelectorAll('.dynamic-dept').forEach(badge => {
+            const deptName = badge.textContent.trim();
+            
+            // Si le département n'a pas encore de couleur, on lui en assigne une nouvelle
+            if (!storedDeptColors[deptName]) {
+                storedDeptColors[deptName] = deptColors[colorCounter % deptColors.length];
+                colorCounter++;
+            }
+            
+            // Appliquer la couleur (Fond avec 15% d'opacité, texte couleur pleine)
+            const hexColor = storedDeptColors[deptName];
+            badge.style.backgroundColor = hexColor + '25'; // Ajoute de la transparence (hex alpha)
+            badge.style.color = hexColor;
+            badge.style.borderColor = hexColor + '50';
+        });
+
+        // Sauvegarder la nouvelle carte des couleurs dans le navigateur
+        localStorage.setItem('psyche_dept_colors', JSON.stringify(storedDeptColors));
+    });
+
+    // 3. LOGIQUE DE RECHERCHE
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        let filter = this.value.toLowerCase();
+        let rows = document.querySelectorAll('.employee-row');
+        
+        rows.forEach(row => {
+            let name = row.querySelector('.employee-name').textContent.toLowerCase();
+            let dept = row.querySelector('.employee-dept').textContent.toLowerCase();
+            if (name.includes(filter) || dept.includes(filter)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // 4. LOGIQUE DE LA MODALE
+    const modal = document.getElementById('empModalOverlay');
+    const gradientsList = [
+        'linear-gradient(135deg, #0e7490, #059669)',
+        'linear-gradient(135deg, #7c3aed, #db2777)',
+        'linear-gradient(135deg, #d97706, #dc2626)',
+        'linear-gradient(135deg, #2563eb, #0891b2)',
+        'linear-gradient(135deg, #4f46e5, #9333ea)',
+        'linear-gradient(135deg, #be123c, #e11d48)'
+    ];
+
+    function openEmpModal(id, name, sam, dept, hrn, progress, lastEvent, status) {
+        document.getElementById('modalEmpName').textContent = name;
+        document.getElementById('modalEmpSub').textContent = `${sam} · ${dept}`;
+        
+        // Gérer l'avatar de la modale
+        const modalAvatar = document.getElementById('modalEmpInitials');
+        modalAvatar.textContent = name.charAt(0).toUpperCase();
+        
+        // Trouver la ligne cliquée pour récupérer son dégradé exact
+        const clickedRow = document.querySelector(`tr.employee-row button[onclick*="'${id}'"]`).closest('tr');
+        const gradIndex = clickedRow.querySelector('.dynamic-avatar').getAttribute('data-grad-index');
+        modalAvatar.style.background = gradientsList[gradIndex];
+
+        document.getElementById('modalEmpHRN').textContent = hrn;
+        document.getElementById('modalEmpEvent').textContent = lastEvent;
+        document.getElementById('modalEmpProgress').textContent = progress + '%';
+        
+        const hrnEl = document.getElementById('modalEmpHRN');
+        if(hrn >= 70) hrnEl.style.color = 'var(--color-danger)';
+        else if(hrn >= 40) hrnEl.style.color = 'var(--color-warning)';
+        else hrnEl.style.color = 'var(--color-success)';
+
+        document.getElementById('modalEmpId').value = id;
+        document.getElementById('modalEmpDeptInput').value = dept;
+        document.getElementById('modalEmpStatusInput').value = status;
+
+        modal.style.display = 'flex';
+    }
+
+    function closeEmpModal() {
+        modal.style.display = 'none';
+    }
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeEmpModal();
+        }
+    });
+</script>
+
+{% endblock %}
