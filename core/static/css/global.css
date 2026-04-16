@@ -7,6 +7,7 @@
 
     /* ── DARK MODE (default) ── */
     :root {
+      color-scheme: dark;
       /* --- Backgrounds --- */
       --bg-void:          #07080d;
       --bg-surface:       #0d0f1a;
@@ -83,6 +84,7 @@
     /* ── LIGHT MODE overrides ──
        Every variable is remapped; components inherit automatically.   */
     [data-theme="light"] {
+      color-scheme: light;
       --bg-void:          #f0f2f8;
       --bg-surface:       #ffffff;
       --bg-elevated:      #f8f9fd;
@@ -284,7 +286,7 @@
       display: flex;
       max-width: 1400px;
       margin: 0 auto;
-      padding: 0 20px 60px;
+      /* padding: 0px  0px 60px; */
     }
 
     /* Sticky left nav */
@@ -294,7 +296,8 @@
       padding-top: 32px;
       position: sticky;
       top: 60px;
-      height: calc(100vh - 60px);
+      height: auto;
+      max-height: calc(100vh - 60px);
       overflow-y: auto;
       padding-right: 16px;
     }
@@ -342,7 +345,10 @@
     .kit-content {
       flex: 1;
       min-width: 0;
-      padding: 32px 0 0 40px;
+      padding-top: 32px;
+      padding-left: 20px;
+      padding-right: 20px;
+      padding-bottom: 32px;
     }
 
     /* Section wrapper */
@@ -1644,7 +1650,7 @@
     /* Responsive helpers */
     @media (max-width: 1024px) {
       .kit-sidenav { display: none; }
-      .kit-content { padding-left: 0; }
+      /* .kit-content { padding-left: 0; }*/
       .metric-4up  { grid-template-columns: 1fr 1fr; }
       .qcm-options { grid-template-columns: 1fr; }
       .form-grid   { grid-template-columns: 1fr; }
@@ -1670,3 +1676,45 @@
     .items-center { align-items: center; }
     .flex-col { flex-direction: column; }
     .w-full { width: 100%; }
+
+/* ================================================================
+   §14 — SIDEBAR COLLAPSE LOGIC
+================================================================ */
+.kit-sidenav {
+  transition: width var(--ease-med), padding var(--ease-med);
+  overflow-x: hidden;
+}
+
+.sidenav-link {
+  white-space: nowrap;
+}
+
+/* Elements to hide when collapsed */
+.nav-text, .sidenav-label {
+  transition: opacity var(--ease-fast);
+  opacity: 1;
+}
+
+/* The Collapsed State */
+body.sidebar-collapsed .kit-sidenav {
+  width: 68px; /* Just wide enough for the icons */
+  padding-right: 8px;
+}
+
+body.sidebar-collapsed .nav-text,
+body.sidebar-collapsed .sidenav-label {
+  opacity: 0;
+  pointer-events: none;
+  display: none; /* Removes from flow after fading */
+}
+
+body.sidebar-collapsed .sidenav-link {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+body.sidebar-collapsed .sidenav-link i, 
+body.sidebar-collapsed .sidenav-link svg {
+  margin: 0; /* Centers the icon */
+}
+

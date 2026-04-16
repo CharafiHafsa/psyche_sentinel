@@ -1,0 +1,260 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div style="max-width: auto; margin: 0 auto;">
+
+    {% if messages %}
+        <div style="margin-bottom: 24px;">
+            {% for message in messages %}
+                <div style="padding: 16px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 12px; {% if message.tags == 'error' %}background: var(--color-danger-bg); color: var(--color-danger); border: 1px solid rgba(255, 71, 87, 0.2);{% else %}background: var(--color-success-bg); color: var(--color-success); border: 1px solid rgba(46, 213, 115, 0.2);{% endif %}">
+                    <i data-lucide="{% if message.tags == 'error' %}alert-circle{% else %}check-circle{% endif %}" style="width: 20px; height: 20px;"></i>
+                    <span style="font-size: 0.9rem; font-weight: 500;">{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="section-header" style="margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div class="section-title-group">
+            <div class="section-title">Synchronisation Annuaire (LDAP)</div>
+            <div class="section-desc">Gérez la connexion à votre Active Directory et l'historique d'extraction.</div>
+        </div>
+        
+        <form id="resyncForm" method="POST" action="{% url 'ldap_management' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="resync">
+            <button type="button" class="btn btn-primary" onclick="openResyncModal()" {% if not config.is_configured %}disabled{% endif %}>
+                <i data-lucide="refresh-cw"></i> Forcer la Synchronisation
+            </button>
+        </form>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-bottom: 32px;">
+        
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="glass-card info-card {% if config.is_configured %}card-success{% else %}card-danger{% endif %}">
+                <div class="info-card-header">
+                    <div class="info-card-icon" style="background:var(--color-{% if config.is_configured %}success{% else %}danger{% endif %}-bg); color:var(--color-{% if config.is_configured %}success{% else %}danger{% endif %});">
+                        <i data-lucide="{% if config.is_configured %}server{% else %}server-off{% endif %}"></i>
+                    </div>
+                    <span class="badge badge-{% if config.is_configured %}success{% else %}danger{% endif %} badge-dot">
+                        {% if config.is_configured %}Connecté{% else %}Non Configuré{% endif %}
+                    </span>
+                </div>
+                <div class="info-card-title">État de la liaison LDAP</div>
+                <div class="info-card-value" style="font-size: 1.5rem;">
+                    {{ config.server_ip|default:"Aucun serveur" }}
+                </div>
+                <div class="info-card-desc">Port: {{ config.port|default:"N/A" }}</div>
+            </div>
+
+            <button class="btn btn-outline" style="width: 100%; justify-content: center;" onclick="openConfigModal()">
+                <i data-lucide="settings-2"></i> Modifier la configuration
+            </button>
+        </div>
+
+        <div class="glass-card" style="padding: 24px;">
+            <div class="h5" style="margin-bottom: 24px; color: var(--color-primary);">Paramètres de Liaison Actuels</div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Serveur IP / Hostname</label>
+                    <input type="text" class="form-input" value="{{ config.server_ip|default:'' }}" disabled style="opacity: 0.7;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Port</label>
+                    <input type="text" class="form-input" value="{{ config.port|default:'' }}" disabled style="opacity: 0.7;">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Bind DN (Compte de service)</label>
+                    <input type="text" class="form-input" value="{{ config.bind_dn|default:'' }}" disabled style="opacity: 0.7;">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Mot de passe du compte de service</label>
+                    <input type="password" class="form-input" value="{% if config.bind_password %}********{% endif %}" disabled style="opacity: 0.7;">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Structure OU de base (Base OU)</label>
+                    <input type="text" class="form-input" value="{{ config.base_ou|default:'' }}" disabled style="opacity: 0.7;">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="section-header" style="margin-bottom: 16px;">
+        <div class="section-title" style="font-size: 1.1rem;">Journal d'Audit d'Extraction (Immuable)</div>
+    </div>
+    
+    <div class="data-table-wrap" style="border-radius:var(--radius-lg); border:none;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Horodatage (UTC)</th>
+                    <th>Administrateur</th>
+                    <th>Adresse IP Source</th>
+                    <th>Consentement Legal</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="mono-text">{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
+                    <td>{{ log.admin.email }}</td>
+                    <td class="mono-text">{{ log.ip_address|default:"Inconnu" }}</td>
+                    <td>
+                        <span class="badge badge-success"><i data-lucide="check"></i> Confirmé</span>
+                    </td>
+                    <td><span class="badge badge-info badge-dot">Succès</span></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                        Aucun historique de synchronisation disponible.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<div id="configModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    
+    <div class="glass-card" style="padding: 24px; width: 100%; max-width: 500px; position: relative;">
+        
+        <button onclick="closeConfigModal()" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--text-muted); cursor: pointer;">
+            <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+        </button>
+
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+            <div class="avatar avatar-md" style="background:var(--color-warning-bg); color:var(--color-warning); border: none;">
+                <i data-lucide="shield-alert"></i>
+            </div>
+            <div>
+                <div class="h5" style="margin-bottom: 4px;">Modifier la liaison LDAP</div>
+                <div class="body-sm">Une mauvaise configuration interrompra la mise à jour de l'annuaire cible.</div>
+            </div>
+        </div>
+
+        <div class="divider" style="margin-bottom: 16px;"></div>
+
+        <form method="POST" action="{% url 'ldap_management' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_config">
+            
+            <div class="form-grid" style="margin-bottom: 24px;">
+                <div class="form-group">
+                    <label class="form-label">Serveur IP</label>
+                    <input type="text" name="server_ip" class="form-input" value="{{ config.server_ip|default:'' }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Port</label>
+                    <input type="number" name="port" class="form-input" value="{{ config.port|default:'389' }}" required>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Bind DN</label>
+                    <input type="text" name="bind_dn" class="form-input" value="{{ config.bind_dn|default:'' }}" required>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Nouveau mot de passe de service</label>
+                    <input type="password" name="bind_password" class="form-input" placeholder="Laissez vide pour conserver l'actuel" {% if not config.bind_password %}required{% endif %}>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Base OU</label>
+                    <input type="text" name="base_ou" class="form-input" value="{{ config.base_ou|default:'' }}" required>
+                </div>
+            </div>
+
+            <div style="background: rgba(var(--color-danger-rgb), 0.1); border: 1px solid rgba(var(--color-danger-rgb), 0.2); padding: 16px; border-radius: var(--radius-sm); margin-bottom: 24px;">
+                <label class="form-label" style="color: var(--text-primary);">Autorisation Administrateur Requise</label>
+                <div class="form-hint" style="margin-bottom: 12px; color: var(--text-muted);">Veuillez entrer votre propre mot de passe pour confirmer cette modification critique.</div>
+                <div class="input-icon-wrap">
+                    <div class="input-icon"><i data-lucide="lock"></i></div>
+                    <input type="password" name="admin_password" class="form-input" placeholder="Votre mot de passe" required>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button type="button" class="btn btn-ghost" onclick="closeConfigModal()">Annuler</button>
+                <button type="submit" class="btn btn-primary"><i data-lucide="save"></i> Enregistrer et Tester</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+<div id="resyncModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    
+    <div class="glass-card" style="padding: 24px; width: 100%; max-width: 420px; position: relative;">
+        
+        <button onclick="closeResyncModal()" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--text-muted); cursor: pointer;">
+            <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+        </button>
+
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div class="avatar avatar-md" style="background:var(--color-warning-bg); color:var(--color-warning); border: none;">
+                <i data-lucide="alert-triangle"></i>
+            </div>
+            <div>
+                <div class="h5" style="margin-bottom: 4px;">Nouvelle Extraction LDAP</div>
+            </div>
+        </div>
+
+        <div class="body-sm" style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5;">
+            Êtes-vous sûr de vouloir lancer une nouvelle extraction complète ? Cette action va synchroniser l'annuaire cible et générer un nouveau journal d'audit immuable.
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-ghost" style="flex: 1; justify-content: center;" onclick="closeResyncModal()">
+                Annuler
+            </button>
+            <button type="button" class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="confirmResync()">
+                <i data-lucide="check"></i> Confirmer
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById('configModalOverlay');
+
+    function openConfigModal() {
+        modal.style.display = 'flex';
+    }
+
+    function closeConfigModal() {
+        modal.style.display = 'none';
+    }
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeConfigModal();
+        }
+    });
+    // --- Logique de la Modale de Confirmation de Synchronisation ---
+    const resyncModal = document.getElementById('resyncModalOverlay');
+
+    function openResyncModal() {
+        resyncModal.style.display = 'flex';
+    }
+
+    function closeResyncModal() {
+        resyncModal.style.display = 'none';
+    }
+
+    // Soumet le formulaire quand l'admin clique sur "Confirmer"
+    function confirmResync() {
+        document.getElementById('resyncForm').submit();
+    }
+
+    resyncModal.addEventListener('click', function(e) {
+        if (e.target === resyncModal) {
+            closeResyncModal();
+        }
+    });
+</script>
+
+{% endblock %}

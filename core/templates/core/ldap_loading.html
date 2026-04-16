@@ -1,0 +1,98 @@
+{% extends 'core/base.html' %}
+{% load i18n %}
+
+{% block content %}
+
+<div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; background: rgba(10, 10, 15, 0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; padding: 16px;">
+    
+    <div class="glass-card" style="width: 100%; max-width: 550px; padding: 40px; text-align: center;">
+        
+        <div style="margin-bottom: 24px; display: inline-flex; position: relative;">
+            <div style="position: absolute; inset: -10px; background: var(--violet-glow); border-radius: 50%; animation: pulse-generic 2s infinite;"></div>
+            <div class="result-icon-ring" style="background: var(--color-primary-bg); border: 1px solid var(--border-accent); margin: 0;">
+                <i data-lucide="database" style="color: var(--color-primary);"></i>
+            </div>
+        </div>
+
+        <h2 class="h2" style="margin-bottom: 8px;">{% trans "Établissement de la connexion" %}</h2>
+        <p class="body-sm" id="statusMessage" style="color: var(--text-muted); margin-bottom: 32px;">
+            {% trans "Authentification auprès du contrôleur de domaine..." %}
+        </p>
+
+        <div class="test-progress-wrap" style="text-align: left; background: transparent; border: none; padding: 0;">
+            <div class="test-progress-header">
+                <span class="test-progress-label">{% trans "Progression de l'extraction" %}</span>
+                <span class="test-step-count" id="progressPct">0%</span>
+            </div>
+            
+            <div class="test-bar-track" style="height: 12px;">
+                <div class="test-bar-fill" id="progressBar" style="width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+
+        <div style="margin-top: 32px; display: flex; justify-content: center; gap: 12px;">
+            <span class="badge badge-neutral"><i data-lucide="lock"></i> {% trans "Chiffrement de bout en bout" %}</span>
+            <span class="badge badge-violet badge-dot" id="liveBadge">{% trans "Connexion en cours" %}</span>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const progressBar = document.getElementById('progressBar');
+        const progressPct = document.getElementById('progressPct');
+        const statusMessage = document.getElementById('statusMessage');
+        const liveBadge = document.getElementById('liveBadge');
+        
+        // 1. Démarrer une fausse barre de progression visuelle pour que l'utilisateur sache que ça fonctionne
+        let progress = 0;
+        const visualSim = setInterval(() => {
+            if (progress < 85) { // Plafonner à 85% jusqu'à ce que le serveur réponde
+                progress += Math.floor(Math.random() * 10) + 2;
+                progressBar.style.width = progress + '%';
+                progressPct.innerText = progress + '%';
+            }
+        }, 1000);
+
+        // 2. Lancer le script Python en arrière-plan
+        fetch("{% url 'execute_ldap_sync' %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+                "Content-Type": "application/json"
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            clearInterval(visualSim); // Arrêter la fausse progression
+            
+            if (data.success) {
+                // Succès ! Remplir la barre à 100%
+                progressBar.style.width = '100%';
+                progressPct.innerText = '100%';
+                statusMessage.innerText = `{% trans "Extraction réussie de" %} ${data.count} {% trans "fiches employés." %}`;
+                statusMessage.style.color = "var(--color-success)";
+                liveBadge.innerText = "{% trans "Terminé" %}";
+                liveBadge.className = "badge badge-success";
+                
+                // Redirection vers le tableau de bord
+                setTimeout(() => { window.location.href = "{% url 'deployment' %}"; }, 2000);
+            } else {
+                // Gérer l'erreur de manière conviviale
+                progressBar.style.background = "var(--color-danger)";
+                statusMessage.innerText = `{% trans "Erreur :" %} ${data.error}`;
+                statusMessage.style.color = "var(--color-danger)";
+                liveBadge.innerText = "{% trans "Échec" %}";
+                liveBadge.className = "badge badge-danger";
+            }
+        })
+        .catch(error => {
+            clearInterval(visualSim);
+            statusMessage.innerText = "{% trans "Une erreur réseau critique est survenue. Veuillez vérifier les journaux du serveur." %}";
+            statusMessage.style.color = "var(--color-danger)";
+        });
+    });
+</script>
+
+{% endblock %}

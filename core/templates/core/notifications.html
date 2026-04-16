@@ -1,0 +1,80 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div style="max-width: auto; margin: 0 auto;">
+    
+    <div class="section-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div class="section-title-group">
+            <div class="section-title">Centre de Notifications</div>
+            <div class="section-desc">Gérez vos alertes système, résultats d'évaluations et synchronisations.</div>
+        </div>
+        
+        <button class="btn btn-outline btn-sm">
+            <i data-lucide="check-check"></i> Tout marquer comme lu
+        </button>
+    </div>
+
+    <div class="glass-card" style="padding: 0; overflow: hidden;">
+        
+        <div style="padding: 16px 24px; border-bottom: 1px solid var(--border-subtle); display: flex; gap: 16px; align-items: flex-start; background: rgba(var(--color-primary-rgb), 0.05); transition: background var(--ease-fast);">
+            
+            <div style="margin-top: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-primary); flex-shrink: 0;"></div>
+            
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--color-danger-bg); color: var(--color-danger); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i data-lucide="alert-triangle" style="width: 20px; height: 20px;"></i>
+            </div>
+
+            <div style="flex-grow: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                    <h4 style="margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Échec de la synchronisation Active Directory</h4>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Il y a 10 min</span>
+                </div>
+                <p style="margin: 0 0 12px 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
+                    Le serveur LDAP 192.168.1.45 n'a pas répondu. Vérifiez les paramètres de liaison dans la configuration du système.
+                </p>
+                <a href="{% url 'ldap_setup' %}" class="btn btn-ghost btn-sm" style="padding: 4px 12px; font-size: 0.75rem; border: 1px solid var(--border-default);">
+                    Vérifier les paramètres LDAP
+                </a>
+            </div>
+        </div>
+
+        <div style="padding: 16px 24px; border-bottom: 1px solid var(--border-subtle); display: flex; gap: 16px; align-items: flex-start; background: rgba(var(--color-primary-rgb), 0.05); transition: background var(--ease-fast);">
+            <div style="margin-top: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-primary); flex-shrink: 0;"></div>
+            
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--color-success-bg); color: var(--color-success); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i data-lucide="check-circle" style="width: 20px; height: 20px;"></i>
+            </div>
+
+            <div style="flex-grow: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                    <h4 style="margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Campagne de Phishing terminée</h4>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Il y a 2 heures</span>
+                </div>
+                <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
+                    Le "Scénario Faux-Ransomware" a été délivré à 145 cibles. Le rapport d'analyse comportementale est maintenant disponible.
+                </p>
+            </div>
+        </div>
+
+        <div style="padding: 16px 24px; border-bottom: 1px solid var(--border-subtle); display: flex; gap: 16px; align-items: flex-start; transition: background var(--ease-fast);">
+            
+            <div style="margin-top: 8px; width: 8px; height: 8px; flex-shrink: 0;"></div>
+            
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg-elevated); border: 1px solid var(--border-default); color: var(--text-muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i data-lucide="info" style="width: 20px; height: 20px;"></i>
+            </div>
+
+            <div style="flex-grow: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                    <h4 style="margin: 0; font-size: 0.95rem; font-weight: 500; color: var(--text-secondary);">Mise à jour du système</h4>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Hier</span>
+                </div>
+                <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
+                    Le moteur de génération d'IA a été mis à jour vers la version 2.4. De nouveaux modèles de comportements suspects sont disponibles.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

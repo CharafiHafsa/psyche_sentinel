@@ -1,0 +1,161 @@
+{% extends 'core/base.html' %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="result-modal-overlay open" id="modalPrivacy" style="z-index: 10000;">
+    <div class="result-modal modal-fail">
+        <div class="result-modal-top"></div>
+        <div class="result-modal-body">
+            <div class="result-icon-ring">
+                <i data-lucide="shield-alert"></i>
+            </div>
+            <div class="result-modal-title">{% trans "AVIS DE CONFIDENTIALITÉ DES DONNÉES" %}</div>
+            <div class="result-modal-sub" style="text-align: left; margin-bottom: 24px;">
+                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+                    <li>{% trans "Cette application accédera et traitera des informations limitées sur les employés à partir du service d'annuaire de l'organisation (LDAP), y compris les noms, adresses e-mail et détails du département." %}</li>
+                    <li>{% trans "Ces données sont utilisées strictement à des fins internes de sensibilisation à la sécurité et d'évaluation au sein de l'organisation." %}</li>
+                    <li>{% trans "Aucune donnée ne sera partagée en dehors de l'organisation. L'accès à ces données est réservé au personnel autorisé uniquement et doit être conforme aux réglementations applicables en matière de protection des données." %}</li>
+                    <li>{% trans "L'organisation est responsable de s'assurer que l'utilisation des données des employés est légale et dûment autorisée." %}</li>
+                </ul>
+            </div>
+            <div class="result-modal-actions">
+                <button class="btn btn-danger btn-lg w-full" onclick="goToAuthModal()">
+                    {% trans "Prendre connaissance de l'avis" %} <i data-lucide="arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="result-modal-overlay" id="modalAuth" style="z-index: 10000;">
+    <div class="result-modal modal-fail">
+        <div class="result-modal-top"></div>
+        <div class="result-modal-body">
+            <div class="result-icon-ring">
+                <i data-lucide="key-round"></i>
+            </div>
+            <div class="result-modal-title">{% trans "CONFIRMATION D'AUTORISATION" %}</div>
+            <div class="result-modal-sub">
+                {% trans "Veuillez confirmer ce qui suit avant de continuer :" %}
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 24px; text-align: left; background: var(--bg-elevated); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                <label class="form-checkbox-wrap" style="align-items: flex-start;">
+                    <input type="checkbox" class="form-checkbox" id="authCheckbox" onchange="toggleAuthBtn()" style="margin-top: 2px;" />
+                    <span class="checkbox-label body-sm">{% trans "Je confirme que je suis autorisé à accéder aux données de l'annuaire de l'organisation et à utiliser les informations des employés à des fins internes de sensibilisation à la sécurité, conformément aux politiques de protection des données applicables." %}</span>
+                </label>
+            </div>
+
+            <div class="result-modal-actions">
+                <button class="btn btn-danger btn-lg w-full disabled" id="btnAuthorize" disabled onclick="unlockForm()">
+                    <i data-lucide="check-circle"></i> {% trans "Autoriser et continuer" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; background: rgba(10, 10, 15, 0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; padding: 16px;">
+    
+    <div class="glass-card" style="width: 100%; max-width: 900px; padding: 28px 36px; position: relative; max-height: 90vh; overflow-y: auto;">
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="color: var(--color-warning); margin-bottom: 8px;">
+                <i data-lucide="server" style="width: 36px; height: 36px;"></i>
+            </div>
+            <h2 class="h2" style="margin-bottom: 4px;">{% trans "Synchronisation de l'annuaire" %}</h2>
+            <p class="body-sm" style="color: var(--text-muted);">{% trans "Connectez votre Active Directory pour importer la liste des employés cibles." %}</p>
+        </div>
+
+        <div class="alert alert-info" style="margin-bottom: 20px; padding: 12px 16px;">
+            <i data-lucide="info"></i>
+            <div class="alert-body">
+                <div class="alert-title" style="margin-bottom: 4px;">{% trans "Recommandation de sécurité" %}</div>
+                <div class="alert-msg">
+                    {% blocktrans %}Pour une sécurité maximale, utilisez le nom principal d'utilisateur (UPN) d'un compte de service dédié <strong>Lecture seule</strong>. N'utilisez jamais les identifiants d'administrateur de domaine pour la synchronisation d'annuaire.{% endblocktrans %}
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" action="" id="ldapForm">
+            {% csrf_token %}
+            <input type="hidden" name="consent_given" id="consentInput" value="false">
+            
+            <div class="form-grid" style="row-gap: 12px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">{% trans "IP du serveur / Nom d'hôte" %}</label>
+                    <div class="input-icon-wrap">
+                        <div class="input-icon"><i data-lucide="network"></i></div>
+                        <input type="text" name="server_ip" class="form-input" placeholder="{% trans '192.168.1.100' %}" required />
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">{% trans "Port" %}</label>
+                    <div class="input-icon-wrap">
+                        <div class="input-icon"><i data-lucide="plug"></i></div>
+                        <input type="number" name="port" class="form-input" value="389" required />
+                    </div>
+                    <span class="form-hint">{% trans "389 (LDAP) ou 636 (LDAPS)" %}</span>
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1; margin-bottom: 0;">
+                    <label class="form-label">{% trans "Compte de service (Format UPN)" %}</label>
+                    <div class="input-icon-wrap">
+                        <div class="input-icon"><i data-lucide="user-check"></i></div>
+                        <input type="text" name="bind_dn" class="form-input" placeholder="{% trans 'compte_lecture@entreprise.com' %}" required />
+                    </div>
+                    <span class="form-hint" style="color: var(--color-warning);">{% trans "Le compte de service sera exclu de la base de données des employés extraite." %}</span>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">{% trans "Mot de passe du service" %}</label>
+                    <div class="input-icon-wrap">
+                        <div class="input-icon"><i data-lucide="key-round"></i></div>
+                        <input type="password" name="bind_password" class="form-input" placeholder="{% trans '••••••••••••' %}" required />
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">{% trans "UO de base cible" %}</label>
+                    <div class="input-icon-wrap">
+                        <div class="input-icon"><i data-lucide="folder-tree"></i></div>
+                        <input type="text" name="base_ou" class="form-input" placeholder="{% trans 'OU=Employes,DC=entreprise,DC=com' %}" required />
+                    </div>
+                </div>
+            </div>
+
+            <div class="stage-divider" style="margin: 20px 0;"></div>
+
+            <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; justify-content: center;" id="syncBtn">
+                <i data-lucide="zap"></i> {% trans "INITIALISER LA SYNCHRONISATION" %}
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function goToAuthModal() {
+        document.getElementById('modalPrivacy').classList.remove('open');
+        document.getElementById('modalAuth').classList.add('open');
+    }
+
+    function toggleAuthBtn() {
+        const btn = document.getElementById('btnAuthorize');
+        if (document.getElementById('authCheckbox').checked) {
+            btn.classList.remove('disabled');
+            btn.removeAttribute('disabled');
+        } else {
+            btn.classList.add('disabled');
+            btn.setAttribute('disabled', 'true');
+        }
+    }
+
+    function unlockForm() {
+        document.getElementById('modalAuth').classList.remove('open');
+        document.getElementById('consentInput').value = 'true';
+    }
+</script>
+
+{% endblock %}
