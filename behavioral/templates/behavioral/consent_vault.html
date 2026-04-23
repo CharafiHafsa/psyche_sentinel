@@ -1,0 +1,44 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div style="max-width: auto;">
+
+    <div style="text-align: center; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid var(--border-default);">
+        <i data-lucide="shield-check" style="width: 48px; height: 48px; color: var(--color-primary); margin-bottom: 16px;"></i>
+        <h1 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 8px; letter-spacing: 0.05em;">REGISTRE D'AUDIT : CONSENTEMENT END-USER</h1>
+        <p class="body-sm text-muted">Ce registre est immuable. Il prouve l'acceptation explicite de la charte de simulation par les employés sur leurs terminaux.</p>
+    </div>
+
+    <div class="glass-card" style="padding: 0;">
+        <table class="data-table">
+            <thead style="background: rgba(var(--color-primary-rgb), 0.1);">
+                <tr>
+                    <th>Horodatage (UTC)</th>
+                    <th>Identité de l'Employé</th>
+                    <th>Terminal (Hostname)</th>
+                    <th>Jeton Agent</th>
+                    <th>Statut Légal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for consent in consents %}
+                <tr>
+                    <td class="mono-text" style="font-size: 0.8rem;">{{ consent.user_consent_timestamp|date:"Y-m-d H:i:s" }}</td>
+                    <td style="font-weight: 500;">{{ consent.employee.full_name }}</td>
+                    <td class="mono-text" style="font-size: 0.8rem;">{{ consent.hostname }}</td>
+                    <td class="mono-text" style="font-size: 0.75rem; color: var(--text-muted);">{{ consent.token|truncatechars:12 }}</td>
+                    <td>
+                        <span class="badge badge-success"><i data-lucide="check" style="width: 10px;"></i> Accordé (GUI)</span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">Aucun consentement enregistré à ce jour.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

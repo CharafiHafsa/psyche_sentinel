@@ -244,8 +244,8 @@
                 <a class="sidenav-link" href="#">
                     <i data-lucide="crosshair"></i> <span class="nav-text">{% trans "Scénarios d’attaque" %}</span>
                 </a>
-                <a class="sidenav-link" href="#">
-                    <i data-lucide="fingerprint"></i> <span class="nav-text">{% trans "Évaluations comportementales" %}</span>
+                <a class="sidenav-link {% if 'behavioral' in request.path %}active{% endif %}" href="{% url 'behavioral:dashboard' %}">
+                    <i data-lucide="fingerprint"></i> <span class="nav-text">Évaluations comportementales</span>
                 </a>
             </div>
 

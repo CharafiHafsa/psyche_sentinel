@@ -1,0 +1,352 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div style="max-width: auto;">
+
+    {% if messages %}
+        <div style="margin-bottom: 24px;">
+            {% for message in messages %}
+                <div class="alert alert-success">
+                    <i data-lucide="check-circle"></i>
+                    <div class="alert-body"><div class="alert-msg">{{ message }}</div></div>
+                    <button class="alert-dismiss" onclick="this.closest('.alert').remove()"><i data-lucide="x"></i></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="section-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div class="section-title-group">
+            <div class="section-title">Gestion du Parc d'Agents</div>
+            <div class="section-desc">Recherchez, inspectez la télémétrie ou envoyez des commandes C2.</div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <div style="position: relative;">
+                <i data-lucide="search" style="position: absolute; left: 12px; top: 8px; width: 16px; height: 16px; color: var(--text-muted);"></i>
+                <input type="text" id="searchInput" placeholder="Rechercher (IP, Hostname...)" style="padding: 8px 12px 8px 36px; border-radius: var(--radius-sm); border: 1px solid var(--border-default); background: var(--bg-surface); color: var(--text-primary); font-size: 0.85rem; width: 250px;">
+            </div>
+            <a href="{% url 'behavioral:dashboard' %}" class="btn btn-outline btn-sm">
+                <i data-lucide="arrow-left"></i> Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="glass-card" style="padding: 0; overflow: hidden;">
+        <div class="data-table-wrap" style="border: none; border-radius: 0; overflow-x: auto;">
+            <table class="data-table" id="agentTable">
+                <thead>
+                    <tr>
+                        <th>Machine</th>
+                        <th>Employé</th>
+                        <th>Adresse IP</th>
+                        <th>Statut</th>
+                        <th>Date de Déploiement</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in agents %}
+                    <tr class="agent-row" id="agent-row-{{ agent.id }}">
+                        <td class="searchable">{{ agent.hostname|default:"En attente..." }}</td>
+                        <td class="searchable">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="avatar avatar-sm dynamic-avatar" style="border: none;">{{ agent.employee.full_name.0|upper }}</div>
+                                <span>{{ agent.employee.full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="mono-text searchable" style="color: var(--text-muted);">{{ agent.ip_address|default:"-" }}</td>
+                        <td>
+                            {% if agent.status == 'Pending' %}
+                                <span class="badge badge-neutral badge-dot">En attente</span>
+                            {% elif agent.is_online_realtime %}
+                                <span class="badge badge-success badge-dot">En ligne</span>
+                            {% elif agent.status == 'Compromised' %}
+                                <span class="badge badge-danger badge-dot">Compromis</span>
+                            {% else %}
+                                <span class="badge badge-neutral">Hors ligne</span>
+                            {% endif %}
+                        </td>
+                        <td class="body-sm text-muted">{{ agent.created_at|date:"d M Y, H:i" }}</td>
+                        <td>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-ghost btn-sm" onclick="openDetailsModal('{{ agent.id }}', '{{ agent.hostname|escapejs }}', '{{ agent.status }}', '{{ agent.ip_address|escapejs }}', '{{ agent.user_consent_granted }}', '{{ agent.token }}')">
+                                    <i data-lucide="terminal"></i>
+                                </button>
+                                <button type="button" class="btn btn-ghost btn-sm" style="color: var(--color-danger);" onclick="openRevokeModal('{{ agent.id }}')">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">Aucun agent.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<div id="detailsModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="glass-card" style="padding: 24px; width: 100%; max-width: 700px; position: relative;">
+        
+        <button onclick="closeDetailsModal()" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; z-index: 10;">
+            <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+        </button>
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-right: 40px;">
+            <div>
+                <div class="h4" style="margin-bottom: 4px;">Centre de Contrôle</div>
+                <div class="mono-text text-muted" id="modalHostname">DESKTOP-XXX</div>
+            </div>
+            <span id="modalStatusBadge" class="badge">Statut</span>
+        </div>
+
+        <div id="modalInstallCmdBlock" style="display: none; margin-bottom: 24px;">
+            <div class="body-xs text-muted" style="margin-bottom: 8px;">Commande de Déploiement (PowerShell)</div>
+            <div class="code-block" style="position: relative; white-space: normal; word-break: break-all; padding-right: 40px;">
+                <span class="code-string" id="modalInstallCmdText" style="font-family: var(--font-mono); line-height: 1.5;"></span>
+                <button class="btn btn-ghost btn-sm" onclick="copyModalCmd()" title="Copier" style="position: absolute; top: 8px; right: 8px; color: white;">
+                    <i data-lucide="copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="component-row" style="gap: 12px; margin-bottom: 24px; padding: 16px; background: rgba(0,0,0,0.15); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <input type="hidden" id="currentAgentId">
+            <button type="button" id="btnCheck" class="btn btn-outline-secondary btn-sm" onclick="sendC2Command('PING')" title="Forcer un ping immédiat">
+                <i data-lucide="radio"></i> Vérifier
+            </button>
+            <button type="button" id="btnRestart" class="btn btn-outline btn-sm" onclick="sendC2Command('RESTART')" title="Redémarrer le processus">
+                <i data-lucide="refresh-cw"></i> Redémarrer
+            </button>
+            <button type="button" id="btnContain" class="btn btn-danger btn-sm" style="margin-left: auto;" onclick="sendC2Command('CONTAIN')" title="Isoler la machine">
+                <i data-lucide="shield-off"></i> Isoler
+            </button>
+        </div>
+
+        <div class="divider" style="margin-bottom: 16px;"></div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+            <div>
+                <div class="body-xs text-muted" style="margin-bottom: 4px;">Adresse IP</div>
+                <div class="mono-text" id="modalIp" style="font-size: 0.85rem;">-</div>
+            </div>
+            <div>
+                <div class="body-xs text-muted" style="margin-bottom: 4px;">Consentement Légal</div>
+                <div id="modalConsent" style="font-size: 0.85rem; font-weight: 500;">-</div>
+            </div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+            <div class="body-xs text-muted" style="display: flex; align-items: center; gap: 8px;">
+                Journal d'Audit 
+                <button class="btn btn-ghost btn-sm" onclick="refreshModalData()" title="Rafraîchir les données" style="padding: 2px 6px;">
+                    <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="code-block" style="height: 200px; overflow-y: auto;" id="realLogsContainer">
+            <span class="code-comment">// Chargement des logs...</span><br>
+        </div>
+    </div>
+</div>
+
+<div id="revokeModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="glass-card" style="padding: 24px; width: 100%; max-width: 420px; position: relative;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div class="avatar avatar-md" style="background:var(--color-danger-bg); color:var(--color-danger); border: none;"><i data-lucide="alert-triangle"></i></div>
+            <div class="h5" style="color: var(--color-danger); margin: 0;">Révocation de l'Agent</div>
+        </div>
+        <div class="body-sm" style="color: var(--text-secondary); margin-bottom: 24px;">Suppression définitive. Continuer ?</div>
+        <form method="POST" action="{% url 'behavioral:agent_management' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="revoke">
+            <input type="hidden" name="agent_id" id="revokeAgentId">
+            <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn btn-ghost" style="flex: 1;" onclick="closeRevokeModal()">Annuler</button>
+                <button type="submit" class="btn btn-danger" style="flex: 1;"><i data-lucide="trash-2"></i> Révoquer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // --- Modale de Révocation ---
+    const revokeModal = document.getElementById('revokeModalOverlay');
+    function openRevokeModal(id) { document.getElementById('revokeAgentId').value = id; revokeModal.style.display = 'flex'; }
+    function closeRevokeModal() { revokeModal.style.display = 'none'; }
+
+    // --- Modale de Détails & Actions C2 ---
+    const detailsModal = document.getElementById('detailsModalOverlay');
+    let currentCmdToCopy = "";
+
+    
+    // 1. Fonction de rafraîchissement manuel et automatique
+    async function refreshModalData() {
+        const agentId = document.getElementById('currentAgentId').value;
+        const container = document.getElementById('realLogsContainer');
+        const btnRefresh = document.querySelector('button[onclick="refreshModalData()"] i');
+        
+        if(btnRefresh) btnRefresh.classList.add('lucide-spin');
+
+        try {
+            const response = await fetch(`/behavioral/api/agent-live-data/${agentId}/`);
+            const data = await response.json();
+            
+            if (data.success) {
+                // MAJ IP et Consentement
+                document.getElementById('modalIp').textContent = data.ip;
+                document.getElementById('modalConsent').innerHTML = data.consent ? 
+                    '<span style="color: var(--color-success);">✓ Accordé</span>' : 
+                    '<span style="color: var(--color-warning);">En attente</span>';
+
+                // MAJ Badge
+                const badge = document.getElementById('modalStatusBadge');
+                if (data.status === 'Pending') { badge.className = 'badge badge-neutral'; badge.textContent = 'En attente'; }
+                else if (data.status === 'Compromised') { badge.className = 'badge badge-danger'; badge.textContent = 'Compromis'; }
+                else if (data.status === 'Offline') { badge.className = 'badge badge-neutral'; badge.textContent = 'Hors ligne'; }
+                else { badge.className = 'badge badge-success badge-dot'; badge.textContent = 'En ligne'; }
+
+                // --- CORRECTION : RÉACTIVATION DYNAMIQUE DES BOUTONS ---
+                // Si l'agent n'est plus "Pending", on cache la commande et on débloque les actions
+                if (data.status !== 'Pending') {
+                    document.getElementById('modalInstallCmdBlock').style.display = 'none';
+                    
+                    const btnCheck = document.getElementById('btnCheck');
+                    const btnRestart = document.getElementById('btnRestart');
+                    const btnContain = document.getElementById('btnContain');
+                    
+                    btnCheck.disabled = false; btnCheck.style.opacity = '1';
+                    btnRestart.disabled = false; btnRestart.style.opacity = '1';
+                    btnContain.disabled = false; btnContain.style.opacity = '1';
+                }
+
+                // MAJ des logs
+                container.innerHTML = '';
+                if (data.logs.length === 0) {
+                    container.innerHTML = '<span class="code-comment">// Aucun log disponible.</span><br>';
+                } else {
+                    data.logs.forEach(log => {
+                        let color = 'var(--text-primary)';
+                        if (log.level === 'ERROR' || log.level === 'ALERT') color = 'var(--color-danger)';
+                        if (log.level === 'WARNING') color = 'var(--color-warning)';
+                        if (log.level === 'INFO') color = 'var(--color-success)';
+                        container.innerHTML += `<span style="color: ${color};">[${log.level}] ${log.timestamp} - ${log.message}</span><br>`;
+                    });
+                }
+            }
+        } catch (e) {
+            container.innerHTML += '<br><span style="color: var(--color-danger);">// Erreur réseau lors du rafraîchissement.</span><br>';
+        }
+        
+        if(btnRefresh) btnRefresh.classList.remove('lucide-spin');
+    }
+
+    // 2. Ouverture de la modale
+    function openDetailsModal(id, hostname, status, ip, consent, token) {
+        document.getElementById('modalHostname').textContent = hostname || "En attente";
+        document.getElementById('currentAgentId').value = id;
+        
+        const cmdBlock = document.getElementById('modalInstallCmdBlock');
+        const btnCheck = document.getElementById('btnCheck');
+        const btnRestart = document.getElementById('btnRestart');
+        const btnContain = document.getElementById('btnContain');
+
+        // LOGIQUE INITIALE : En attente vs Actif
+        if (status === 'Pending') { 
+            const serverUrl = window.location.origin;
+            const downloadUrl = `${serverUrl}{% url 'behavioral:download_agent' %}?token=${token}`;
+            currentCmdToCopy = `powershell -Command "Invoke-WebRequest -Uri '${downloadUrl}' -OutFile agent.exe; Start-Process .\\agent.exe -ArgumentList '--server ${serverUrl} --token ${token}'"`;
+            document.getElementById('modalInstallCmdText').textContent = currentCmdToCopy;
+            cmdBlock.style.display = 'block';
+
+            btnCheck.disabled = true; btnCheck.style.opacity = '0.5';
+            btnRestart.disabled = true; btnRestart.style.opacity = '0.5';
+            btnContain.disabled = true; btnContain.style.opacity = '0.5';
+        } else { 
+            cmdBlock.style.display = 'none';
+            btnCheck.disabled = false; btnCheck.style.opacity = '1';
+            btnRestart.disabled = false; btnRestart.style.opacity = '1';
+            btnContain.disabled = false; btnContain.style.opacity = '1';
+        }
+
+        // Charge les données initiales
+        refreshModalData();
+        
+        // --- CORRECTION : AUTO-REFRESH CHAQUE MINUTE (60000 ms) ---
+        logIntervalId = setInterval(() => {
+            refreshModalData();
+        }, 60000);
+        
+        detailsModal.style.display = 'flex';
+    }
+
+    function closeDetailsModal() { 
+        detailsModal.style.display = 'none'; 
+    }
+
+    function copyModalCmd() {
+        navigator.clipboard.writeText(currentCmdToCopy).then(() => {
+            alert("Commande PowerShell copiée !");
+        });
+    }
+
+    async function sendC2Command(cmdType) {
+        const agentId = document.getElementById('currentAgentId').value;
+        const container = document.getElementById('realLogsContainer');
+        
+        try {
+            const response = await fetch('{% url "behavioral:queue_command_ajax" %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ agent_id: agentId, command: cmdType })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                container.innerHTML = `<span style="color: var(--color-primary);">[SYSTEM] Ordre mis en attente : ${cmdType}...</span><br>` + container.innerHTML;
+            } else {
+                alert("Erreur : " + data.error);
+            }
+        } catch (error) {
+            alert("Erreur réseau lors de l'envoi de la commande.");
+        }
+    }
+
+    // === 3. MISE À JOUR AUTO DU TABLEAU EN ARRIÈRE-PLAN (Chaque 15s) ===
+    setInterval(async () => {
+        try {
+            const response = await fetch('/behavioral/api/agents-live-status/');
+            const data = await response.json();
+            
+            for (const [id, agentData] of Object.entries(data.agents)) {
+                const row = document.getElementById(`agent-row-${id}`);
+                if (row) {
+                    row.cells[2].textContent = agentData.ip;
+                    const statusCell = row.cells[3];
+                    if (agentData.status === 'Pending') {
+                        statusCell.innerHTML = '<span class="badge badge-neutral badge-dot">En attente</span>';
+                    } else if (agentData.status === 'Compromised') {
+                        statusCell.innerHTML = '<span class="badge badge-danger badge-dot">Compromis</span>';
+                    } else if (agentData.status === 'Online') {
+                        statusCell.innerHTML = '<span class="badge badge-success badge-dot">En ligne</span>';
+                    } else {
+                        statusCell.innerHTML = '<span class="badge badge-neutral">Hors ligne</span>';
+                    }
+                }
+            }
+        } catch (e) {
+            console.log("Erreur de synchronisation du tableau en direct.");
+        }
+    }, 15000);
+
+    // Dégradés
+    document.addEventListener("DOMContentLoaded", () => {
+        const gradients = ['linear-gradient(135deg, #0e7490, #059669)', 'linear-gradient(135deg, #7c3aed, #db2777)', 'linear-gradient(135deg, #d97706, #dc2626)', 'linear-gradient(135deg, #2563eb, #0891b2)'];
+        document.querySelectorAll('.dynamic-avatar').forEach((a, i) => { a.style.background = gradients[i % gradients.length]; a.style.color = '#ffffff'; });
+    });
+</script>
+{% endblock %}

@@ -285,7 +285,7 @@
     .kit-layout {
       display: flex;
       max-width: 1400px;
-      margin: 0 auto;
+      margin: 0;
       /* padding: 0px  0px 60px; */
     }
 

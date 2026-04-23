@@ -1,0 +1,369 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div style="max-width: auto;">
+
+    <div class="section-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div class="section-title-group">
+            <div class="section-title">Évaluations Comportementales</div>
+            <div class="section-desc">Supervisez les agents furtifs, les honeytokens et l'activité des terminaux.</div>
+        </div>
+        
+        <div style="display: flex; gap: 12px;">
+            <button class="btn btn-outline" onclick="openTestModal()">
+                <i data-lucide="play"></i> Performer Test
+            </button>
+            <button class="btn btn-primary" onclick="openDeployModal()">
+                <i data-lucide="plus"></i> Ajouter un Agent
+            </button>
+        </div>
+    </div>
+
+    <div class="metric-4up" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 32px;">
+        
+        <div class="glass-card info-card card-violet" style="padding: 16px;">
+            <div class="info-card-header" style="margin-bottom: 8px;">
+                <div class="info-card-icon" style="background:var(--color-primary-bg);color:var(--color-primary); width: 32px; height: 32px;"><i data-lucide="cpu" style="width:16px;"></i></div>
+            </div>
+            <div class="info-card-title" style="font-size: 0.8rem;">Total Agents</div>
+            <div class="info-card-value" style="font-size: 1.5rem;">{{ metrics.total }}</div>
+        </div>
+
+        <div class="glass-card info-card card-success" style="padding: 16px;">
+            <div class="info-card-header" style="margin-bottom: 8px;">
+                <div class="info-card-icon" style="background:var(--color-success-bg);color:var(--color-success); width: 32px; height: 32px;"><i data-lucide="activity" style="width:16px;"></i></div>
+            </div>
+            <div class="info-card-title" style="font-size: 0.8rem;">En Ligne (Temps réel)</div>
+            <div class="info-card-value" style="font-size: 1.5rem; color: var(--color-success);">{{ metrics.online }}</div>
+        </div>
+
+        <div class="glass-card info-card card-danger" style="padding: 16px;">
+            <div class="info-card-header" style="margin-bottom: 8px;">
+                <div class="info-card-icon" style="background:var(--color-danger-bg);color:var(--color-danger); width: 32px; height: 32px;"><i data-lucide="shield-alert" style="width:16px;"></i></div>
+            </div>
+            <div class="info-card-title" style="font-size: 0.8rem;">Compromis / Alerte</div>
+            <div class="info-card-value" style="font-size: 1.5rem; color: var(--color-danger);">{{ metrics.compromised }}</div>
+        </div>
+
+        <div class="glass-card info-card" style="padding: 16px; border-color: var(--border-default);">
+            <div class="info-card-header" style="margin-bottom: 8px;">
+                <div class="info-card-icon" style="background:var(--bg-elevated);color:var(--text-muted); width: 32px; height: 32px;"><i data-lucide="power-off" style="width:16px;"></i></div>
+            </div>
+            <div class="info-card-title" style="font-size: 0.8rem;">Hors Ligne</div>
+            <div class="info-card-value" style="font-size: 1.5rem; color: var(--text-muted);">{{ metrics.offline }}</div>
+        </div>
+    </div>
+
+    <div class="glass-card" style="padding: 0; overflow: hidden;">
+        
+        <div style="padding: 16px 24px; border-bottom: 1px solid var(--border-subtle); background: rgba(0,0,0,0.2);">
+            <div class="dv-agent-legend" style="display: flex; gap: 16px; font-size: 0.8rem; color: var(--text-secondary);">
+                <span class="dv-agent-legend-item" style="display: flex; align-items: center; gap: 6px;">
+                    <span style="width:8px; height:8px; border-radius:50%; background:var(--color-success);"></span> En ligne
+                </span>
+                <span class="dv-agent-legend-item" style="display: flex; align-items: center; gap: 6px;">
+                    <span style="width:8px; height:8px; border-radius:50%; background:var(--color-warning);"></span> Attention (Watch)
+                </span>
+                <span class="dv-agent-legend-item" style="display: flex; align-items: center; gap: 6px;">
+                    <span style="width:8px; height:8px; border-radius:50%; background:var(--color-danger); box-shadow: 0 0 8px var(--color-danger);"></span> Alerte (Compromis)
+                </span>
+                <span class="dv-agent-legend-item" style="display: flex; align-items: center; gap: 6px;">
+                    <span style="width:8px; height:8px; border-radius:50%; background:var(--color-primary);"></span> En cours de test
+                </span>
+                <span class="dv-agent-legend-item" style="display: flex; align-items: center; gap: 6px;">
+                    <span style="width:8px; height:8px; border-radius:50%; background:var(--text-muted);"></span> Hors ligne / En attente
+                </span>
+            </div>
+        </div>
+
+        <div class="data-table-wrap" style="border: none; border-radius: 0;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Machine (Hostname)</th>
+                        <th>Employé Associé</th>
+                        <th>Adresse IP</th>
+                        <th>Statut Réseau</th>
+                        <th>Dernier Ping</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in agents %}
+                    <tr class="employee-row">
+                        <td style="font-weight: 600; font-family: var(--font-mono); font-size: 0.85rem;">
+                            <i data-lucide="monitor" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 6px; color: var(--color-primary);"></i>
+                            {{ agent.hostname|default:"En attente de connexion..." }}
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="avatar avatar-sm dynamic-avatar" style="width: 24px; height: 24px; font-size: 0.6rem; border: none;">{{ agent.employee.full_name.0|upper }}</div>
+                                <span>{{ agent.employee.full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="mono-text" style="color: var(--text-muted);">{{ agent.ip_address|default:"-" }}</td>
+                        
+                        <td>
+                            {% if agent.status == 'Compromised' %}
+                                <span style="display: flex; align-items: center; gap: 6px; color: var(--color-danger);">
+                                    <span style="width:8px; height:8px; border-radius:50%; background:var(--color-danger); box-shadow: 0 0 8px var(--color-danger);"></span> Compromis
+                                </span>
+                            {% elif agent.status == 'Pending' %}
+                                <span style="display: flex; align-items: center; gap: 6px; color: var(--text-muted);">
+                                    <span style="width:8px; height:8px; border-radius:50%; background:var(--text-muted);"></span> En attente
+                                </span>
+                            {% elif agent.is_online_realtime %}
+                                <span style="display: flex; align-items: center; gap: 6px; color: var(--color-success);">
+                                    <span style="width:8px; height:8px; border-radius:50%; background:var(--color-success);"></span> En ligne
+                                </span>
+                            {% else %}
+                                <span style="display: flex; align-items: center; gap: 6px; color: var(--text-muted);">
+                                    <span style="width:8px; height:8px; border-radius:50%; background:var(--text-muted);"></span> Hors ligne
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="body-sm" style="color: var(--text-muted);">
+                            {{ agent.last_heartbeat|timesince|default:"Jamais" }}
+                        </td>
+                        
+                        <td>
+                            {% if agent.status == 'Pending' %}
+                                <button class="btn btn-ghost btn-sm" title="Voir la commande d'installation" onclick="reopenCommandModal('{{ agent.token }}')">
+                                    <i data-lucide="key"></i>
+                                </button>
+                            {% else %}
+                                <button class="btn btn-ghost btn-sm" title="Voir les détails de l'agent">
+                                    <i data-lucide="terminal"></i>
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <i data-lucide="ghost" style="width: 32px; height: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
+                            <br>Aucun agent déployé.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if metrics.total > 5 %}
+        <div style="padding: 16px; text-align: center; border-top: 1px solid var(--border-subtle); background: rgba(0,0,0,0.1);">
+            <a href="{% url 'behavioral:agent_management' %}" style="color: var(--color-primary); font-size: 0.85rem; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                Voir tous les agents ({{ metrics.total }}) <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<div id="deployModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="glass-card" style="padding: 24px; width: 100%; max-width: 500px; position: relative;">
+        
+        <button onclick="closeDeployModal()" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--text-muted); cursor: pointer;">
+            <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+        </button>
+
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+            <div class="avatar avatar-md" style="background:var(--color-primary-bg); color:var(--color-primary); border: none;">
+                <i data-lucide="download-cloud"></i>
+            </div>
+            <div>
+                <div class="h5" style="margin-bottom: 4px;">Déployer un Agent Furtif</div>
+                <div class="body-sm text-muted">Générez un installateur lié à un profil cible.</div>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label class="form-label">Cible de l'évaluation (Employé)</label>
+            <select id="agentEmployeeSelect" class="form-select" style="width: 100%;">
+                <option value="" disabled selected>Sélectionnez un employé de l'annuaire...</option>
+                {% for emp in employees %}
+                    <option value="{{ emp.id }}">{{ emp.full_name }} ({{ emp.department|default:"Sans département" }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="background: rgba(var(--color-warning-rgb), 0.1); border: 1px solid rgba(var(--color-warning-rgb), 0.2); padding: 16px; border-radius: var(--radius-sm); margin-bottom: 24px;">
+            <label class="form-checkbox-wrap" style="align-items: flex-start;">
+                <input type="checkbox" id="legalConsentCheck" class="form-checkbox" style="margin-top: 4px;" />
+                <span class="checkbox-label" style="font-size: 0.8rem; line-height: 1.4;">
+                    <strong>Autorisation Légale :</strong> Je confirme être expressément autorisé à déployer cet outil de supervision sur le terminal cible. L'employé concerné a été informé des campagnes de sensibilisation conformément à la charte informatique de l'entreprise.
+                </span>
+            </label>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <button class="btn btn-ghost" onclick="closeDeployModal()">Annuler</button>
+            <button id="generateBtn" class="btn btn-primary" onclick="generateAgentToken()">
+                <i data-lucide="key"></i> Générer l'Installeur
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="installModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="glass-card" style="padding: 24px; width: 100%; max-width: 600px; position: relative;">
+        
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+            <div class="avatar avatar-md" style="background:var(--color-success-bg); color:var(--color-success); border: none;">
+                <i data-lucide="check-circle"></i>
+            </div>
+            <div>
+                <div class="h5" style="margin-bottom: 4px;">Agent Généré avec Succès</div>
+                <div class="body-sm text-muted">Jeton de sécurité : <span id="displayTokenId" style="font-family: var(--font-mono); color: var(--color-primary);"></span></div>
+            </div>
+        </div>
+
+        <p class="body-sm" style="margin-bottom: 16px;">
+            Ouvrez <strong>PowerShell</strong> sur la machine cible avec les privilèges Administrateur, puis collez cette commande de déploiement automatisé (One-Liner) :
+        </p>
+
+        <div class="code-block" style="margin-bottom: 24px; position: relative; white-space: normal; word-break: break-all;">
+            <span class="code-comment"># Téléchargement sécurisé et exécution silencieuse de l'Agent</span><br>
+            <span class="code-string" id="displayTokenCmd" style="font-family: var(--font-mono); line-height: 1.5;"></span>
+        </div>
+
+        <div class="alert alert-info" style="margin-bottom: 24px;">
+            <i data-lucide="info"></i>
+            <div class="alert-body">
+                <div class="alert-title">Notification Utilisateur</div>
+                <div class="alert-msg">Lors de l'exécution, une fenêtre expliquant le but de la simulation s'affichera à l'utilisateur pour consentement final. L'agent apparaîtra dans le tableau de bord une fois ce consentement validé.</div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end;">
+            <button class="btn btn-primary" onclick="copyInstallCommandAndClose()">
+                <i data-lucide="copy"></i> Copier la commande et Fermer
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 1. DÉGRADÉS DYNAMIQUES POUR LES AVATARS ---
+    document.addEventListener("DOMContentLoaded", () => {
+        const gradients = [
+            'linear-gradient(135deg, #0e7490, #059669)',
+            'linear-gradient(135deg, #7c3aed, #db2777)',
+            'linear-gradient(135deg, #d97706, #dc2626)',
+            'linear-gradient(135deg, #2563eb, #0891b2)',
+            'linear-gradient(135deg, #4f46e5, #9333ea)',
+            'linear-gradient(135deg, #be123c, #e11d48)'
+        ];
+        
+        document.querySelectorAll('.dynamic-avatar').forEach((avatar, index) => {
+            const gradient = gradients[index % gradients.length];
+            avatar.style.background = gradient;
+            avatar.style.color = '#ffffff';
+        });
+    });
+
+    // --- 2. LOGIQUE DES MODALES ---
+    const deployModal = document.getElementById('deployModalOverlay');
+    const installModal = document.getElementById('installModalOverlay');
+    let generatedCommandText = "";
+
+    function openDeployModal() {
+        deployModal.style.display = 'flex';
+        document.getElementById('legalConsentCheck').checked = false;
+        document.getElementById('agentEmployeeSelect').value = "";
+    }
+
+    function closeDeployModal() {
+        deployModal.style.display = 'none';
+    }
+
+    async function generateAgentToken() {
+        const empId = document.getElementById('agentEmployeeSelect').value;
+        const consent = document.getElementById('legalConsentCheck').checked;
+        const btn = document.getElementById('generateBtn');
+
+        if (!empId) {
+            alert("Veuillez sélectionner un employé.");
+            return;
+        }
+        if (!consent) {
+            alert("Vous devez accepter l'autorisation légale pour continuer.");
+            return;
+        }
+
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<span class="btn-spinner"></span> Création...';
+        btn.classList.add('btn-loading');
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('{% url "behavioral:generate_agent" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    employee_id: empId,
+                    consent: consent
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                closeDeployModal();
+                
+                const serverUrl = window.location.origin;
+                document.getElementById('displayTokenId').textContent = data.token.substring(0, 8) + '...';
+                
+                // Construction de la commande PowerShell
+                const downloadUrl = `${serverUrl}{% url 'behavioral:download_agent' %}?token=${data.token}`;
+                generatedCommandText = `powershell -Command "Invoke-WebRequest -Uri '${downloadUrl}' -OutFile agent.exe; Start-Process .\\agent.exe -ArgumentList '--server ${serverUrl} --token ${data.token}'"`;
+                
+                document.getElementById('displayTokenCmd').textContent = generatedCommandText;
+                
+                installModal.style.display = 'flex';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            } else {
+                alert("Erreur: " + data.error);
+            }
+        } catch (error) {
+            alert("Erreur réseau lors de la génération de l'agent.");
+        } finally {
+            btn.innerHTML = originalContent;
+            btn.classList.remove('btn-loading');
+            btn.disabled = false;
+        }
+    }
+
+    function copyInstallCommandAndClose() {
+        navigator.clipboard.writeText(generatedCommandText).then(() => {
+            installModal.style.display = 'none';
+            window.location.reload();
+        });
+    }
+
+    function reopenCommandModal(token) {
+        const serverUrl = window.location.origin;
+        document.getElementById('displayTokenId').textContent = token.substring(0, 8) + '...';
+        
+        const downloadUrl = `${serverUrl}{% url 'behavioral:download_agent' %}?token=${token}`;
+        generatedCommandText = `powershell -Command "Invoke-WebRequest -Uri '${downloadUrl}' -OutFile agent.exe; Start-Process .\\agent.exe -ArgumentList '--server ${serverUrl} --token ${token}'"`;
+        
+        document.getElementById('displayTokenCmd').textContent = generatedCommandText;
+        
+        installModal.style.display = 'flex';
+    }
+
+    function openTestModal() {
+        alert("Phase de Test : La modale pour sélectionner le type d'attaque (Clipboard, Honeytoken) s'ouvrira ici !");
+    }
+
+    // Gestion du clic en dehors des modales
+    deployModal.addEventListener('click', (e) => { if (e.target === deployModal) closeDeployModal(); });
+    installModal.addEventListener('click', (e) => { if (e.target === installModal) installModal.style.display = 'none'; });
+</script>
+{% endblock %}
