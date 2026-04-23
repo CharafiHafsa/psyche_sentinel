@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
+    'announced_drills',
 ]
 
 MIDDLEWARE = [
@@ -78,12 +79,11 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'cognisec_db',
         'USER' : 'postgres',
-        'PASSWORD': 'P@$$w0rd',
+        'PASSWORD': 'azerty',
         'HOST': 'localhost',
         'PORT' : '5432',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

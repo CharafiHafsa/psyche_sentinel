@@ -1,0 +1,62 @@
+{% extends 'core/base_public.html' %}
+{% block content %}
+
+<div style="display:flex; justify-content:center; align-items:center; min-height:80vh; padding:20px;">
+
+    <div class="glass-card" style="max-width:600px; width:100%; padding:40px;">
+
+        <!-- Titre -->
+        <div style="text-align:center; margin-bottom:30px;">
+            <i data-lucide="shield" style="width:48px; height:48px; color:var(--color-primary);"></i>
+
+            <h2 class="h2" style="margin-top:16px;">
+                {{ run.campaign_name }}
+            </h2>
+
+            <p class="body-sm" style="color:var(--text-muted);">
+                Vous allez participer à une simulation interactive de cybersécurité.
+            </p>
+        </div>
+
+        <!-- Informations -->
+        <div class="alert alert-info" style="margin-bottom:20px;">
+            <i data-lucide="info"></i>
+
+            <div class="alert-body">
+                <div class="alert-title">Informations</div>
+
+                <div class="alert-msg">
+                    Nombre de scénarios : <strong>{{ scenario_count }}</strong><br>
+                    Département : <strong>{{ run.target_department }}</strong><br>
+                    Durée estimée : 5 à 10 minutes
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning -->
+        <div class="alert alert-warning" style="margin-bottom:30px;">
+            <i data-lucide="triangle-alert"></i>
+
+            <div class="alert-body">
+                <div class="alert-title">Important</div>
+
+                <div class="alert-msg">
+                    Ne saisissez jamais de vraies données sensibles.<br>
+                    N’entrez pas de vrai mot de passe.<br>
+                    Tous les contenus affichés sont fictifs.
+                </div>
+            </div>
+        </div>
+
+        <!-- Bouton -->
+        <div style="text-align:center;">
+            <a href="{% url 'announced-campaign-launch' run.id %}" class="btn btn-primary">
+                <i data-lucide="play"></i> Commencer la simulation
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
