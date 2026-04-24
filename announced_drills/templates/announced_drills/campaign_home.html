@@ -1,0 +1,109 @@
+{% extends 'core/base.html' %}
+{% block content %}
+
+<div class="section-header" style="margin-bottom: 32px;">
+    <span class="section-number">AD</span>
+    <div class="section-title-group">
+        <div class="section-title">Gestion des campagnes annoncées</div>
+        <div class="section-desc">
+            Préparez une campagne de simulation pour un département ou pour toute l’entreprise.
+        </div>
+    </div>
+</div>
+
+<div class="glass-card info-card" style="max-width: 900px;">
+    <div class="info-card-header">
+        <div class="info-card-icon" style="background:var(--color-primary-bg);color:var(--color-primary);">
+            <i data-lucide="mouse-pointer-click"></i>
+        </div>
+        <span class="badge badge-violet">Administration</span>
+    </div>
+
+    <div class="h3" style="margin-bottom: 12px;">Créer une nouvelle campagne</div>
+
+    <p class="body-sm" style="color: var(--text-muted); margin-bottom: 20px;">
+        Nombre de scénarios actifs disponibles dans la base : <strong>{{ scenario_count }}</strong>
+    </p>
+
+    {% if error_message %}
+    <div class="alert alert-danger" style="margin-bottom: 20px;">
+        <i data-lucide="shield-alert"></i>
+        <div class="alert-body">
+            <div class="alert-title">Erreur</div>
+            <div class="alert-msg">{{ error_message }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if success_message %}
+    <div class="alert alert-success" style="margin-bottom: 20px;">
+        <i data-lucide="check-circle"></i>
+        <div class="alert-body">
+            <div class="alert-title">Succès</div>
+            <div class="alert-msg">{{ success_message }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="form-grid" style="margin-bottom: 20px;">
+            <div class="form-group">
+                <label class="form-label">Nom de la campagne</label>
+                <input type="text" name="campaign_name" class="form-input" placeholder="Ex : Campagne Finance Avril 2026" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Département ciblé</label>
+                <select name="target_department" class="form-select">
+                    {% for value, label in departments %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 24px; max-width: 260px;">
+            <label class="form-label">Nombre de tests</label>
+            <input type="number" name="question_count" class="form-input" value="10" min="1">
+            <span class="form-hint">Par défaut : 10 scénarios</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i data-lucide="play"></i> Générer la campagne
+        </button>
+    </form>
+</div>
+
+{% if generated_run %}
+<div class="glass-card info-card" style="max-width: 900px; margin-top: 24px;">
+    <div class="h3" style="margin-bottom: 12px;">Campagne générée</div>
+
+    <div class="body-sm" style="color: var(--text-muted); margin-bottom: 8px;">
+        <strong>Nom :</strong> {{ generated_run.campaign_name }}
+    </div>
+    <div class="body-sm" style="color: var(--text-muted); margin-bottom: 8px;">
+        <strong>Département :</strong> {{ generated_run.target_department }}
+    </div>
+    <div class="body-sm" style="color: var(--text-muted); margin-bottom: 16px;">
+        <strong>Nombre de tests :</strong> {{ generated_run.question_count }}
+    </div>
+
+    <div class="alert alert-info" style="margin-bottom: 20px;">
+        <i data-lucide="link"></i>
+        <div class="alert-body">
+            <div class="alert-title">Lien employé</div>
+            <div class="alert-msg">
+                http://127.0.0.1:8000{{ generated_run.start_link }}
+            </div>
+        </div>
+    </div>
+
+    <a href="{% url 'announced-campaign-start' generated_run.id %}" class="btn btn-outline">
+        <i data-lucide="eye"></i> Prévisualiser la page employé
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

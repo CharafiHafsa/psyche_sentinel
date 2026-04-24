@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
+    'announced_drills',
 ]
 
 MIDDLEWARE = [
@@ -78,7 +79,7 @@ WSGI_APPLICATION = 'cognisec.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'cognisec_db',
+        'NAME': 'cognisec1_db',
         'USER' : 'postgres',
         'PASSWORD': 'P@$$w0rd',
         'HOST': 'localhost',

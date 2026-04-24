@@ -1,0 +1,59 @@
+{% extends 'core/base.html' %}
+{% block content %}
+
+<div class="section-header" style="margin-bottom: 32px;">
+    <span class="section-number">OK</span>
+    <div class="section-title-group">
+        <div class="section-title">Campagne terminée</div>
+        <div class="section-desc">Analyse des comportements observés</div>
+    </div>
+</div>
+
+<div class="metric-4up" style="margin-bottom: 24px;">
+    <div class="glass-card info-card card-success">
+        <div class="info-card-title">Actions prudentes</div>
+        <div class="info-card-value">{{ safe_count }}</div>
+    </div>
+
+    <div class="glass-card info-card card-warning">
+        <div class="info-card-title">Actions douteuses</div>
+        <div class="info-card-value">{{ warning_count }}</div>
+    </div>
+
+    <div class="glass-card info-card card-danger">
+        <div class="info-card-title">Actions risquées</div>
+        <div class="info-card-value">{{ risk_count }}</div>
+    </div>
+</div>
+
+<div class="glass-card info-card" style="margin-bottom: 24px;">
+    <div class="h3" style="margin-bottom: 12px;">Résumé global</div>
+
+    <p class="body-sm" style="color: var(--text-muted);">
+        Cette simulation a permis d’évaluer votre comportement face à différentes situations de cybersécurité.
+        Les résultats ci-dessus reflètent votre niveau de vigilance et votre capacité à identifier les risques.
+    </p>
+</div>
+
+<div class="data-table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Scénario</th>
+                <th>Action</th>
+                <th>Niveau de risque</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for response in responses %}
+            <tr>
+                <td>{{ response.scenario.title }}</td>
+                <td>{{ response.action_taken }}</td>
+                <td>{{ response.risk_result }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
