@@ -1,0 +1,231 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div style="max-width: auto;">
+
+    <div class="section-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div class="section-title-group">
+            <div class="section-title">Historique des Campagnes</div>
+            <div class="section-desc">Retrouvez toutes vos évaluations, terminées ou en cours.</div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <div style="position: relative;">
+                <i data-lucide="search" style="position: absolute; left: 12px; top: 8px; width: 16px; height: 16px; color: var(--text-muted);"></i>
+                <input type="text" id="searchInput" placeholder="Rechercher (Nom, Cible...)" style="padding: 8px 12px 8px 36px; border-radius: var(--radius-sm); border: 1px solid var(--border-default); background: var(--bg-surface); color: var(--text-primary); font-size: 0.85rem; width: 250px;">
+            </div>
+            <a href="{% url 'behavioral:dashboard' %}" class="btn btn-outline btn-sm">
+                <i data-lucide="arrow-left"></i> Retour au Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="metric-4up" style="grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px;">
+        <div class="glass-card info-card" style="padding: 16px;">
+            <div class="info-card-header" style="margin-bottom: 8px;">
+                <div class="info-card-icon" style="background:rgba(255,255,255,0.1); width: 32px; height: 32px;"><i data-lucide="layers" style="width:16px;"></i></div>
+            </div>
+            <div class="info-card-title" style="font-size: 0.8rem;">Total Campagnes</div>
+            <div class="info-card-value" style="font-size: 1.5rem;">{{ stats.total }}</div>
+        </div>
+        <div class="glass-card info-card" style="padding: 16px;">
+            <div class="info-card-header" style="margin-bottom: 8px;">
+                <div class="info-card-icon" style="background:var(--color-success-bg);color:var(--color-success); width: 32px; height: 32px;"><i data-lucide="play-circle" style="width:16px;"></i></div>
+            </div>
+            <div class="info-card-title" style="font-size: 0.8rem;">En cours</div>
+            <div class="info-card-value" style="font-size: 1.5rem; color: var(--color-success);">{{ stats.running }}</div>
+        </div>
+        <div class="glass-card info-card" style="padding: 16px;">
+            <div class="info-card-header" style="margin-bottom: 8px;">
+                <div class="info-card-icon" style="background:var(--color-warning-bg);color:var(--color-warning); width: 32px; height: 32px;"><i data-lucide="pause-circle" style="width:16px;"></i></div>
+            </div>
+            <div class="info-card-title" style="font-size: 0.8rem;">En Pause</div>
+            <div class="info-card-value" style="font-size: 1.5rem; color: var(--color-warning);">{{ stats.paused }}</div>
+        </div>
+        <div class="glass-card info-card" style="padding: 16px;">
+            <div class="info-card-header" style="margin-bottom: 8px;">
+                <div class="info-card-icon" style="background:var(--bg-elevated);color:var(--text-muted); width: 32px; height: 32px;"><i data-lucide="check-square" style="width:16px;"></i></div>
+            </div>
+            <div class="info-card-title" style="font-size: 0.8rem;">Terminées</div>
+            <div class="info-card-value" style="font-size: 1.5rem; color: var(--text-muted);">{{ stats.completed }}</div>
+        </div>
+    </div>
+
+    <div class="glass-card" style="padding: 0; overflow: hidden;">
+        <div class="data-table-wrap" style="border: none; border-radius: 0;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nom de l'Opération</th>
+                        <th>Cible</th>
+                        <th>Modules</th>
+                        <th>Statut</th>
+                        <th>Création</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for camp in campaigns %}
+                    <tr class="campaign-row">
+                        <td class="searchable" style="font-weight: 600; font-family: var(--font-mono); font-size: 0.85rem; color: var(--color-primary);">
+                            {{ camp.name }}
+                        </td>
+                        <td class="searchable">{{ camp.target_department }}</td>
+                        <td>
+                            <div style="display: flex; gap: 4px;">
+                                {% for mod in camp.modules.all %}
+                                    <span title="{{ mod.name }}" style="padding: 2px 6px; background: rgba(0,0,0,0.2); border-radius: 4px; font-size: 0.75rem; color: var(--text-muted);">
+                                        <i data-lucide="{{ mod.icon }}" style="width: 12px; display: inline;"></i>
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="searchable">
+                            {% if camp.status == 'Running' %}
+                                <span class="badge badge-success badge-dot">En cours</span>
+                            {% elif camp.status == 'Paused' %}
+                                <span class="badge badge-warning">En Pause</span>
+                            {% elif camp.status == 'Completed' %}
+                                <span class="badge badge-neutral">Terminé</span>
+                            {% else %}
+                                <span class="badge badge-neutral">{{ camp.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="body-sm" style="color: var(--text-muted);">
+                            {{ camp.created_at|date:"d/m/Y H:i" }}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px;">
+                                <a href="{% url 'behavioral:campaign_dashboard' camp.id %}" class="btn btn-ghost btn-sm" title="Ouvrir le tableau de bord">
+                                    <i data-lucide="external-link"></i> Dashboard
+                                </a>
+                                <button onclick="openDeleteModal({{ camp.id }})" class="btn btn-ghost btn-sm" style="color: var(--color-danger);" title="Archiver/Supprimer">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                                </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            Aucune campagne trouvée.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+<!-- Conteneur pour les notifications Toasts -->
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+    <!-- Modale de Confirmation de Suppression -->
+    <div id="deleteConfirmModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="glass-card" style="padding: 24px; width: 100%; max-width: 400px; text-align: center;">
+            <div style="background: rgba(var(--color-danger-rgb), 0.1); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+                <i data-lucide="trash-2" style="width: 32px; height: 32px; color: var(--color-danger);"></i>
+            </div>
+            <div class="h5" style="margin-bottom: 8px;">Archiver la campagne ?</div>
+            <p class="body-sm text-muted" style="margin-bottom: 24px;">Cette campagne disparaîtra de la liste. Ses données seront conservées en arrière-plan pour l'historique global.</p>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-ghost" style="flex: 1;" onclick="closeDeleteModal()">Annuler</button>
+                <button class="btn btn-danger" style="flex: 1;" id="confirmDeleteBtn">Oui, Archiver</button>
+            </div>
+        </div>
+    </div>
+<script>
+    // --- SYSTÈME DE NOTIFICATIONS TOAST ---
+    function showToast(msg, type="info") {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        let color = 'var(--color-primary)';
+        let icon = 'info';
+        
+        if(type === 'error') { color = 'var(--color-danger)'; icon = 'alert-circle'; }
+        if(type === 'success') { color = 'var(--color-success)'; icon = 'check-circle'; }
+
+        toast.style.cssText = `background: var(--bg-surface); border-left: 4px solid ${color}; padding: 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); color: var(--text-primary); font-size: 0.9rem; display: flex; align-items: center; gap: 12px; transform: translateX(100%); transition: transform 0.3s ease, opacity 0.3s ease;`;
+        
+        toast.innerHTML = `<i data-lucide="${icon}" style="color: ${color}; width: 20px;"></i> <span>${msg}</span>`;
+        container.appendChild(toast);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        // Animation d'entrée
+        setTimeout(() => toast.style.transform = 'translateX(0)', 10);
+
+        // Disparition après 3 secondes
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // --- LOGIQUE DE SUPPRESSION ---
+    let campaignToDelete = null;
+
+    function openDeleteModal(id) {
+        campaignToDelete = id;
+        document.getElementById('deleteConfirmModalOverlay').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        campaignToDelete = null;
+        document.getElementById('deleteConfirmModalOverlay').style.display = 'none';
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+        if (!campaignToDelete) return;
+        
+        // On remplace le bouton par un état de chargement pour éviter les double-clics
+        const originalText = this.innerHTML;
+        this.innerHTML = "Suppression...";
+        this.disabled = true;
+
+        try {
+            const response = await fetch(`/behavioral/api/campaign/${campaignToDelete}/action/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ action: 'DELETE' })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                window.location.reload(); 
+            } else {
+                showToast("Erreur: " + data.error, "error");
+                closeDeleteModal();
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
+        } catch (e) {
+            showToast("Erreur réseau. Veuillez réessayer.", "error");
+            closeDeleteModal();
+            this.innerHTML = originalText;
+            this.disabled = false;
+        }
+    });
+
+    // Initialisation des icônes de la barre de recherche
+    document.addEventListener("DOMContentLoaded", () => {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+    // Initialisation des icônes
+    document.addEventListener("DOMContentLoaded", () => {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+
+    // Barre de recherche simple
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        let filter = this.value.toLowerCase();
+        let rows = document.querySelectorAll('.campaign-row');
+        
+        rows.forEach(row => {
+            let text = row.innerText.toLowerCase();
+            row.style.display = text.includes(filter) ? '' : 'none';
+        });
+    });
+    
+</script>
+{% endblock %}

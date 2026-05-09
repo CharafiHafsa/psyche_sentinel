@@ -1,0 +1,948 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<style>
+    /* Correction du contour violet sur les onglets */
+    .tab-btn:focus { outline: none; }
+    
+    /* Rendre les selects plus propres en mode sombre */
+    select.form-select option {
+        background-color: var(--bg-surface);
+        color: var(--text-primary);
+    }
+    .modal-tab-btn {
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--text-muted);
+        padding: 10px 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .modal-tab-btn:hover {
+        background: rgba(255,255,255,0.05);
+        color: var(--text-primary);
+    }
+
+    .modal-tab-btn.active {
+        background: rgba(255,255,255,0.08);
+        color: var(--text-primary);
+    }
+</style>
+<div style="max-width: auto;">
+
+    <div class="section-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                <h1 class="h3" style="margin: 0; font-family: var(--font-mono); color: var(--color-primary);">{{ campaign.name }}</h1>
+                
+                {% if campaign.status == 'Running' %}
+                    <span class="badge badge-success badge-dot" id="campaignStatusBadge">En cours</span>
+                {% elif campaign.status == 'Completed' %}
+                    <span class="badge badge-neutral">Terminé</span>
+                {% else %}
+                    <span class="badge badge-warning">En Pause</span>
+                {% endif %}
+            </div>
+            
+            <div style="display: flex; gap: 16px; color: var(--text-muted); font-size: 0.85rem;">
+                <span style="display: flex; align-items: center; gap: 4px;"><i data-lucide="crosshair" style="width:14px;"></i> Cible : {{ campaign.target_department }}</span>
+                <span style="display: flex; align-items: center; gap: 4px;"><i data-lucide="play-circle" style="width:14px;"></i> Démarré le : {{ campaign.created_at|date:"d M Y, H:i" }}</span>
+                <span style="display: flex; align-items: center; gap: 4px;"><i data-lucide="layers" style="width:14px;"></i> {{ modules.count }} Module(s) Actif(s)</span>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <a href="{% url 'behavioral:campaign_management' %}" class="btn btn-ghost btn-sm" title="Retour à la liste"><i data-lucide="arrow-left"></i></a>
+            <button onclick="window.location.reload()" class="btn btn-ghost btn-sm" title="Rafraîchir la page"><i data-lucide="refresh-cw"></i></button>
+            <button onclick="openDeleteModal({{ camp.id }})" class="btn btn-ghost btn-sm" style="color: var(--color-danger);" title="Archiver/Supprimer">
+                <i data-lucide="trash-2"></i>
+            </button>
+                        <div style="width: 1px; height: 24px; background: var(--border-subtle); margin: 0 8px;"></div>
+
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('extendModalOverlay').style.display='flex'"><i data-lucide="clock"></i> Prolonger</button>
+            
+            {% if campaign.status == 'Running' %}
+                <button class="btn btn-outline btn-sm" onclick="executeAction('PAUSE')" title="Mettre l'évaluation en pause"><i data-lucide="pause"></i> Pause</button>
+                <button class="btn btn-danger btn-sm" onclick="document.getElementById('stopConfirmModalOverlay').style.display='flex'"><i data-lucide="square"></i> Stop</button>
+            {% elif campaign.status == 'Paused' %}
+                <button class="btn btn-success btn-sm" onclick="executeAction('RESUME')" title="Reprendre l'évaluation"><i data-lucide="play"></i> Reprendre</button>
+                <button class="btn btn-danger btn-sm" onclick="document.getElementById('stopConfirmModalOverlay').style.display='flex'"><i data-lucide="square"></i> Stop</button>
+            {% endif %}
+            
+            <button class="btn btn-primary btn-sm" onclick="alert('Exportation CSV en cours...')"><i data-lucide="download"></i> Export</button>
+        </div>
+    </div>
+
+    <div style="width: 100%; height: 6px; background: var(--border-default); border-radius: 4px; margin-bottom: 24px; overflow: hidden;">
+        <div style="width: {{ progress_percent }}%; height: 100%; background: var(--color-primary); transition: width 1s ease;"></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+        
+        <div class="glass-card info-card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border-left: 4px solid {{ risk_data.color }}; min-height: 140px;">
+            <div>
+                <div class="info-card-icon" style="background:rgba(0,0,0,0.2); width: 32px; height: 32px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                    <i data-lucide="shield-alert" style="width:16px; color:{{ risk_data.color }};"></i>
+                </div>
+                <div class="info-card-title" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">Score de Risque</div>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+                <div class="info-card-value" style="font-size: 2rem; font-weight: bold; color: {{ risk_data.color }};">{{ risk_data.score }}<span style="font-size:1.1rem; color:var(--text-muted)">/100</span></div>
+                <div style="font-size: 0.85rem; font-weight: bold; color: {{ risk_data.color }};">{{ risk_data.label }}</div>
+            </div>
+        </div>
+
+        <div class="glass-card info-card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between; min-height: 140px; {% if coverage_percent < 70 %}border-color: var(--color-warning);{% endif %}">
+            <div>
+                <div class="info-card-icon" style="background:var(--color-primary-bg); color:var(--color-primary); width: 32px; height: 32px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                    <i data-lucide="shield-check" style="width:16px;"></i>
+                </div>
+                <div class="info-card-title" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">Couverture Active</div>
+            </div>
+            <div>
+                <div style="display: flex; align-items: baseline; gap: 8px;">
+                    <div class="info-card-value" style="font-size: 2rem; font-weight: bold; color: var(--text-primary);">{{ coverage_percent }}%</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">{{ active_count }} / {{ total_targets }} déployés</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card info-card" style="padding: 20px; position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 140px; {% if vulnerable_targets_count > 0 %}border-color: var(--color-warning);{% endif %}">
+            <button onclick="document.getElementById('missingAgentsModalOverlay').style.display='flex'" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--text-muted); cursor: pointer;" title="Voir la répartition">
+                <i data-lucide="list" style="width: 18px;"></i>
+            </button>
+            <div>
+                <div class="info-card-icon" style="background:var(--color-warning-bg); color:var(--color-warning); width: 32px; height: 32px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                    <i data-lucide="target" style="width:16px;"></i>
+                </div>
+                <div class="info-card-title" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">Cibles Non Couvertes</div>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+                <div class="info-card-value" style="font-size: 2rem; font-weight: bold; {% if vulnerable_targets_count > 0 %}color: var(--color-warning);{% else %}color: var(--text-primary);{% endif %}">{{ vulnerable_targets_count }}</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">Employés à risque</div>
+            </div>
+        </div>
+        
+
+        <div class="glass-card info-card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between; min-height: 140px;">
+            <div>
+                <div class="info-card-icon" style="background:var(--bg-elevated);color:var(--text-primary); width: 32px; height: 32px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                    <i data-lucide="clock" style="width:16px;"></i>
+                </div>
+                <div class="info-card-title" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">Temps Restant</div>
+            </div>
+            <div class="info-card-value" id="countdownTimer" style="font-size: 1.5rem; font-family: var(--font-mono);">
+                {% if is_expired %}00:00:00{% else %}Calcul...{% endif %}
+            </div>
+        </div>
+    </div>
+
+
+    <div style="border-bottom: 1px solid var(--border-subtle); margin-bottom: 24px; display: flex; gap: 24px;">
+        <button class="tab-btn active" onclick="switchTab('tab-risk', this)"><i data-lucide="activity" style="width:14px; display:inline; margin-right:4px;"></i> Évaluation des Risques</button>
+        
+        <button class="tab-btn" onclick="switchTab('tab-overview', this)"><i data-lucide="grid" style="width:14px; display:inline; margin-right:4px;"></i> Vue d'Ensemble</button>
+        
+        {% if 'HONEYTOKEN' in module_codes %}
+            <button class="tab-btn" onclick="switchTab('tab-honeytoken', this)"><i data-lucide="file-key" style="width:14px; display:inline; margin-right:4px;"></i> Leurres (Honeytokens)</button>
+        {% endif %}
+        {% if 'AI_LEAK' in module_codes %}
+        <button class="tab-btn" onclick="switchTab('tab-shadow-ai', this)"><i data-lucide="brain-circuit" style="width:14px; display:inline; margin-right:4px;"></i> Shadow AI & DLP</button>
+        {% endif %}
+
+        <button class="tab-btn" onclick="switchTab('tab-agents', this)">Agents & Terminaux</button>
+        <button class="tab-btn" onclick="switchTab('tab-logs', this)">Flux de Logs</button>
+    </div>
+
+
+    <div id="tab-risk" class="tab-content" style="display: block;">
+        
+        <div class="glass-card" style="margin-bottom: 24px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                <div>
+                    <div class="h5" style="margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="bar-chart-2" style="color: var(--color-primary);"></i> Modélisation du Risque
+                    </div>
+                    <div class="mono-text" style="font-size: 0.85rem; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; display: inline-block;">
+                        Risk = (0.4 × Exposure) + (0.3 × Behavior) + (0.3 × Impact)
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <span class="badge" style="background: {{ risk_data.color }}; color: #fff; font-size: 1.5rem; padding: 8px 16px; border-radius: 8px;">
+                        {{ risk_data.score }} <span style="font-size: 1rem; opacity: 0.8;">/ 100</span>
+                    </span>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 20px;">
+                <div style="background: rgba(var(--cyan-bright-rgb, 0, 255, 255), 0.05); border: 1px solid rgba(var(--cyan-bright-rgb, 0, 255, 255), 0.2); padding: 16px; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: var(--cyan-bright, #22d3ee);">Exposure</span>
+                        <span class="badge" style="background: rgba(var(--cyan-bright-rgb, 0, 255, 255), 0.1); color: var(--cyan-bright, #22d3ee);">Poids: 40%</span>
+                    </div>
+                    <div style="font-size: 1.8rem; font-weight: bold; font-family: var(--font-mono); margin-bottom: 4px;">{{ risk_data.exposure }}%</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Compromised agents ratio</div>
+                </div>
+                
+                <div style="background: rgba(var(--violet-bright-rgb, 138, 43, 226), 0.05); border: 1px solid rgba(var(--violet-bright-rgb, 138, 43, 226), 0.2); padding: 16px; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: var(--violet-bright, #a78bfa);">Behavior</span>
+                        <span class="badge" style="background: rgba(var(--violet-bright-rgb, 138, 43, 226), 0.1); color: var(--violet-bright, #a78bfa);">Poids: 30%</span>
+                    </div>
+                    <div style="font-size: 1.8rem; font-weight: bold; font-family: var(--font-mono); margin-bottom: 4px;">{{ risk_data.behavior }}%</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">User interaction severity</div>
+                </div>
+
+                <div style="background: rgba(var(--color-primary-rgb), 0.05); border: 1px solid rgba(var(--color-primary-rgb), 0.2); padding: 16px; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: var(--color-primary);">Impact</span>
+                        <span class="badge" style="background: rgba(var(--color-primary-rgb), 0.1); color: var(--color-primary);">Poids: 30%</span>
+                    </div>
+                    <div style="font-size: 1.8rem; font-weight: bold; font-family: var(--font-mono); margin-bottom: 4px;">{{ risk_data.impact }}%</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Sensitivity of targeted data</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+            
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                
+                <div class="glass-card" style="padding: 16px;">
+                    <div class="h6" style="margin-bottom: 16px;"><i data-lucide="eye" style="display: inline; width: 16px; margin-right: 6px;"></i> Behavioral Interpretation</div>
+                    <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: var(--text-primary);">
+                        <li style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span style="color: var(--color-info);">●</span> 
+                            <strong>{{ honeytoken_stats.triggered }} employee(s)</strong> interacted with a honeytoken.
+                        </li>
+                        
+                        <li style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            {% if destructive_count > 0 %}
+                                <span style="color: var(--color-danger);">●</span> 
+                                <strong>Destructive behavior detected</strong> ({{ destructive_count }} modification/deletion actions).
+                            {% else %}
+                                <span style="color: var(--color-success);">●</span> 
+                                No destructive behavior detected (read-only interactions).
+                            {% endif %}
+                        </li>
+
+                        {% if campaign.target_department == 'ALL' and dept_triggers %}
+                            <li style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
+                                <span style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 8px; display: block;">Result by department:</span>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    {% for dept, count in dept_triggers.items %}
+                                        <span class="badge" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle);">{{ dept }} : {{ count }}</span>
+                                    {% endfor %}
+                                </div>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <div class="glass-card" style="padding: 16px;">
+                    <div class="h6" style="margin-bottom: 16px;"><i data-lucide="pie-chart" style="display: inline; width: 16px; margin-right: 6px;"></i> Risk Distribution (Actions)</div>
+                    <div style="display: flex; gap: 16px;">
+                        <div style="flex: 1; text-align: center; background: rgba(var(--color-info-rgb), 0.05); border: 1px solid rgba(var(--color-info-rgb), 0.2); padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--color-info);">{{ action_counts.OPEN }}</div>
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">OPEN</div>
+                        </div>
+                        <div style="flex: 1; text-align: center; background: rgba(var(--color-warning-rgb), 0.05); border: 1px solid rgba(var(--color-warning-rgb), 0.2); padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--color-warning);">{{ action_counts.MODIFY }}</div>
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">MODIFY</div>
+                        </div>
+                        <div style="flex: 1; text-align: center; background: rgba(var(--color-danger-rgb), 0.05); border: 1px solid rgba(var(--color-danger-rgb), 0.2); padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--color-danger);">{{ action_counts.DELETE }}</div>
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">DELETE</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="glass-card" style="height: 100%; border-top: 4px solid {{ reliability_color }}; padding: 16px;">
+                    <div class="h6" style="margin-bottom: 16px;"><i data-lucide="shield" style="display: inline; width: 16px; margin-right: 6px;"></i> Fiabilité de l'Évaluation</div>
+                    
+                    <div style="margin-bottom: 16px;">
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Coverage reliability:</span>
+                        <div style="font-size: 1.2rem; font-weight: bold; color: {{ reliability_color }}; margin-top: 4px;">{{ reliability_level }}</div>
+                    </div>
+
+                    <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                        Only <strong>{{ coverage_percent }}%</strong> of targeted employees had active agents. 
+                        {% if coverage_percent < 70 %}
+                            <br><br><span style="color: var(--color-warning);">The final risk score may not accurately reflect the overall organizational posture due to low visibility.</span>
+                        {% else %}
+                            <br><br><span style="color: var(--color-success);">The sample size is sufficient to consider this evaluation statistically relevant.</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="tab-overview" class="tab-content" style="display: none;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+            <div class="glass-card" style="padding: 16px;">
+                <div class="h6" style="margin-bottom: 16px;">Statut des Modules Déployés</div>
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    {% for mod in modules %}
+                    <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: var(--radius-sm); border-left: 3px solid var(--color-primary);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <strong style="font-size: 0.9rem;"><i data-lucide="{{ mod.icon }}" style="width:14px; margin-right:6px; color:var(--color-primary);"></i>{{ mod.name }}</strong>
+                            <span class="badge badge-success badge-dot">Actif</span>
+                        </div>
+                        <div class="body-sm text-muted">{{ mod.description }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="glass-card" style="border-color: rgba(var(--color-warning-rgb), 0.3); padding: 16px;">
+                <div class="h6" style="margin-bottom: 16px; color: var(--color-warning);"><i data-lucide="alert-triangle" style="width:16px; display:inline;"></i> Trous dans la raquette</div>
+                <p class="body-sm text-muted" style="margin-bottom: 16px;">Ces employés font partie du périmètre ciblé mais aucun agent n'est installé ou en ligne pour eux.</p>
+                <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; max-height: 200px; overflow-y: auto;">
+                    {% for emp in missing_employees %}
+                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between;">
+                            <span>{{ emp.full_name }}</span>
+                            <span style="color: var(--text-muted);">{{ emp.department }}</span>
+                        </li>
+                    {% empty %}
+                        <li style="color: var(--color-success); padding: 12px; background: rgba(var(--color-success-rgb), 0.1); border-radius: 4px; text-align: center;">Couverture à 100% !</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {% if 'HONEYTOKEN' in module_codes %}
+    <div id="tab-honeytoken" class="tab-content" style="display: none;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+            <div class="glass-card" style="text-align: center; padding: 24px;">
+                <div style="font-size: 2.5rem; font-weight: bold; color: var(--color-primary);">{{ honeytoken_stats.deployed_real }}<span style="font-size: 1.2rem; color: var(--text-muted)">/{{ honeytoken_stats.expected }}</span></div>
+                <div class="body-sm text-muted">Leurres physiquement créés</div>
+            </div>
+            <div class="glass-card" style="text-align: center; padding: 24px; {% if honeytoken_stats.triggered > 0 %}border-color: var(--color-danger);{% endif %}">
+                <div style="font-size: 2.5rem; font-weight: bold; color: {% if honeytoken_stats.triggered > 0 %}var(--color-danger){% else %}var(--text-muted){% endif %};">{{ honeytoken_stats.triggered }}</div>
+                <div class="body-sm text-muted">Pièges Déclenchés</div>
+            </div>
+            <div class="glass-card" style="text-align: center; padding: 24px;">
+                <div style="font-size: 2.5rem; font-weight: bold; color: var(--color-success);">{{ honeytoken_stats.safe }}</div>
+                <div class="body-sm text-muted">Fichiers Intacts</div>
+            </div>
+        </div>
+        
+        <div class="glass-card">
+            <div class="h6" style="margin-bottom: 16px;">Détail des Leurres Déployés</div>
+            <div class="data-table-wrap">
+                <table class="data-table">
+                    <thead><tr><th>Fichier Cible</th><th>Machine Assignée</th><th>Emplacement</th><th>Gravité</th><th>Statut Actuel</th></tr></thead>
+                    <tbody>
+                        {% for instance in instances %}
+                        <tr>
+                            <td style="font-weight: 500;">
+                                <i data-lucide="file-text" style="width: 14px; margin-right: 4px; color: var(--text-muted); display: inline;"></i>
+                                {{ instance.template.file_name }}.{{ instance.template.file_extension }}
+                            </td>
+                            <td class="mono-text" style="font-size: 0.85rem;">{{ instance.agent.hostname }}</td>
+                            <td style="font-size: 0.8rem; color: var(--text-muted);" title="{{ instance.file_path }}">
+                                {% if "En attente" in instance.file_path %}
+                                    <span style="color: var(--color-warning);">En attente de l'Agent...</span>
+                                {% else %}
+                                    {{ instance.template.get_target_directory_display }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle);">Lvl {{ instance.template.weight }}</span>
+                            </td>
+                            <td>
+                                {% if instance.triggered %}
+                                    <span class="badge badge-danger badge-dot" title="Déclenché le {{ instance.triggered_at|date:'d/m/Y H:i' }}">Déclenché</span>
+                                {% else %}
+                                    <span class="badge badge-success badge-dot">Intact</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Aucun leurre n'a été généré pour ce périmètre.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if 'AI_LEAK' in module_codes %}
+    <div id="tab-shadow-ai" class="tab-content" style="display: none;">
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+            <div class="glass-card" style="padding: 20px; border-left: 4px solid var(--color-warning);">
+                <div class="info-card-title text-muted" style="font-size: 0.8rem; margin-bottom: 8px;">TOTAL DES FUITES DÉTECTÉES</div>
+                <div style="font-size: 2rem; font-weight: bold; color: var(--color-warning);">{{ ai_stats.total }}</div>
+            </div>
+            
+            <div class="glass-card" style="padding: 20px; border-left: 4px solid var(--color-danger);">
+                <div class="info-card-title text-muted" style="font-size: 0.8rem; margin-bottom: 8px;">FUITES CRITIQUES (Sévérité 4-5)</div>
+                <div style="font-size: 2rem; font-weight: bold; color: var(--color-danger);">{{ ai_stats.critical }}</div>
+            </div>
+
+            <div class="glass-card" style="padding: 20px; border-left: 4px solid var(--violet-bright, #a78bfa);">
+                <div class="info-card-title text-muted" style="font-size: 0.8rem; margin-bottom: 8px;">PLATEFORME IA N°1</div>
+                <div style="font-size: 1.5rem; font-weight: bold; color: var(--violet-bright, #a78bfa); margin-top: 5px;">{{ ai_stats.top_platform }}</div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="h5" style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="shield-alert" style="color: var(--color-danger);"></i> Historique des Incidents (Privacy by Design)
+            </div>
+            <p class="body-sm text-muted" style="margin-bottom: 20px;">Conformément aux normes RGPD, le contenu textuel n'est pas stocké. Seules les métadonnées de l'infraction sont conservées.</p>
+
+            <div class="data-table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Horodatage</th>
+                            <th>Agent / Employé</th>
+                            <th>Plateforme IA</th>
+                            <th>Type de Donnée Détectée</th>
+                            <th>Volume (Caractères)</th>
+                            <th>Sévérité</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in ai_alerts %}
+                        <tr>
+                            <td class="text-muted" style="font-size: 0.8rem;">{{ alert.timestamp|date:"d M Y - H:i:s" }}</td>
+                            <td style="font-weight: 500;">{{ alert.agent.hostname }} <br> <span style="font-size: 0.75rem; color: var(--text-muted);">{{ alert.agent.employee.department }}</span></td>
+                            <td><span class="badge" style="background: rgba(var(--violet-bright-rgb, 138,43,226), 0.1); color: var(--violet-bright, #a78bfa);">{{ alert.ai_platform }}</span></td>
+                            <td class="mono-text" style="font-weight: bold; color: var(--text-primary);">{{ alert.data_type_detected }}</td>
+                            <td>{{ alert.clipboard_length }}</td>
+                            <td>
+                                {% if alert.severity == 5 %}
+                                    <span class="badge" style="background: rgba(var(--color-danger-rgb), 0.1); color: var(--color-danger);">5 - CRITIQUE</span>
+                                {% elif alert.severity == 4 %}
+                                    <span class="badge" style="background: rgba(var(--color-warning-rgb), 0.1); color: var(--color-warning);">4 - ÉLEVÉE</span>
+                                {% elif alert.severity == 3 %}
+                                    <span class="badge" style="background: rgba(var(--color-info-rgb), 0.1); color: var(--color-info);">3 - MODÉRÉE</span>
+                                {% else %}
+                                    <span class="badge" style="background: rgba(255,255,255,0.1); color: var(--text-muted);">{{ alert.severity }} - FAIBLE</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                                <i data-lucide="check-circle" style="width: 32px; height: 32px; margin-bottom: 10px; opacity: 0.5;"></i><br>
+                                Aucune fuite de données détectée pour le moment.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div id="tab-agents" class="tab-content" style="display: none;">
+        <div class="glass-card" style="padding:0; overflow: hidden;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Machine</th>
+                        <th>Employé</th>
+                        <th>Département</th>
+                        <th>Statut</th>
+                        <th>Actions Rapides</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in active_agents %}
+                    <tr>
+                        <td class="mono-text" style="font-size: 0.85rem;">{{ agent.hostname }}</td>
+                        <td>{{ agent.employee.full_name }}</td>
+                        <td>{{ agent.employee.department }}</td>
+                        <td>
+                            {% if agent.status == 'Compromised' %}
+                                <span class="badge badge-danger badge-dot">Compromis</span>
+                            {% elif agent.is_online_realtime %}
+                                <span class="badge badge-success badge-dot">En ligne</span>
+                            {% else %}
+                                <span class="badge badge-neutral">Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-ghost btn-sm" title="Ping"><i data-lucide="radio"></i></button>
+                            <button class="btn btn-ghost btn-sm" title="Voir les logs"><i data-lucide="terminal"></i></button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-logs" class="tab-content" style="display: none;">
+        <div class="glass-card" style="display: flex; flex-direction: column; height: 500px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <div style="display: flex; gap: 8px;">
+                    <select id="logAgentFilter" class="form-select form-select-sm" style="min-width: 150px;">
+                        <option value="ALL">Tous les agents</option>
+                        {% for agent in active_agents %}
+                            <option value="{{ agent.hostname }}">{{ agent.hostname }}</option>
+                        {% endfor %}
+                    </select>
+                    <select id="logLevelFilter" class="form-select form-select-sm" style="min-width: 150px;">
+                        <option value="ALL">Toutes sévérités</option>
+                        <option value="ALERT">Alertes uniquement</option>
+                        <option value="WARNING">Warnings</option>
+                    </select>
+                </div>
+                <span class="badge badge-success badge-dot" id="logConnectionStatus">Live Stream</span>
+            </div>
+            
+            <div class="code-block" style="flex: 1; overflow-y: auto;" id="globalLogStream">
+                <span class="code-comment">// Récupération du flux...</span><br>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div id="extendModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="glass-card" style="padding: 24px; width: 100%; max-width: 400px; position: relative;">
+            <div class="h5" style="margin-bottom: 8px;"><i data-lucide="clock" style="display: inline; width: 18px; margin-right: 8px; color: var(--color-primary);"></i>Prolonger la Campagne</div>
+            <p class="body-sm text-muted" style="margin-bottom: 20px;">Ajoutez du temps supplémentaire. Le chronomètre sera mis à jour automatiquement.</p>
+            
+            <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+                <input type="number" id="extendVal" class="form-select" value="1" min="1" style="flex: 1;">
+                <select id="extendUnit" class="form-select" style="flex: 2;">
+                    <option value="60">Heure(s)</option>
+                    <option value="1440">Jour(s)</option>
+                    <option value="10080">Semaine(s)</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-ghost" style="flex: 1;" onclick="document.getElementById('extendModalOverlay').style.display='none'">Annuler</button>
+                <button class="btn btn-primary" style="flex: 1;" onclick="submitExtend()"><i data-lucide="check"></i> Appliquer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="stopConfirmModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="glass-card" style="padding: 24px; width: 100%; max-width: 400px; text-align: center;">
+            <div style="background: rgba(var(--color-danger-rgb), 0.1); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+                <i data-lucide="alert-triangle" style="width: 32px; height: 32px; color: var(--color-danger);"></i>
+            </div>
+            <div class="h5" style="margin-bottom: 8px; color: var(--text-primary);">Arrêter la campagne ?</div>
+            <p class="body-sm text-muted" style="margin-bottom: 24px;">Cette action est définitive. Les agents en ligne recevront l'ordre de nettoyer les leurres et de cesser toute activité liée à ce test.</p>
+            
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-ghost" style="flex: 1;" onclick="document.getElementById('stopConfirmModalOverlay').style.display='none'">Annuler</button>
+                <button class="btn btn-danger" style="flex: 1;" onclick="executeAction('STOP')"><i data-lucide="square"></i> Forcer l'Arrêt</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="missingAgentsModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="glass-card" style="padding: 32px; width: 90%; max-width: 850px; position: relative; max-height: 85vh; display: flex; flex-direction: column;">
+            
+            <button onclick="document.getElementById('missingAgentsModalOverlay').style.display='none'" style="position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: var(--text-muted); cursor: pointer;">
+                <i data-lucide="x" style="width: 24px;"></i>
+            </button>
+            
+            <div style="margin-bottom: 24px;">
+                <div class="h5" style="margin-bottom: 4px; display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="microchip" style="color: var(--color-primary);"></i> 
+                    Analyse de l'État de Déploiement
+                </div>
+                <p class="body-sm text-muted">Répartition détaillée de la couverture pour les {{ total_targets }} cibles du périmètre.</p>
+            </div>
+
+            <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 20px; padding-bottom: 1px;">
+                <button class="modal-tab-btn active" onclick="switchModalTab('modal-no-agent', this)" style="border-bottom-color: var(--color-danger);">
+                    <span style="color: var(--color-danger);">●</span> Aucun Agent ({{ no_agent_count }})
+                </button>
+                <button class="modal-tab-btn" onclick="switchModalTab('modal-pending', this)" style="border-bottom-color: var(--color-warning);">
+                    <span style="color: var(--color-warning);">●</span> En attente ({{ pending_count }})
+                </button>
+                <button class="modal-tab-btn" onclick="switchModalTab('modal-active', this)" style="border-bottom-color: var(--color-success);">
+                    <span style="color: var(--color-success);">●</span> Actifs ({{ active_count }})
+                </button>
+            </div>
+
+            <div style="overflow-y: auto; flex: 1; min-height: 300px;">
+                
+                <div id="modal-no-agent" class="modal-tab-content">
+                    <div style="background: rgba(var(--color-danger-rgb), 0.05); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid rgba(var(--color-danger-rgb), 0.1); color: var(--color-danger); font-size: 0.8rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="shield-off" style="width: 16px;"></i> Ces employés n'ont aucun agent assigné. Visibilité nulle.
+                    </div>
+                    <div class="data-table-wrap">
+                        <table class="data-table">
+                            <thead><tr><th>Employé</th><th>Département</th><th>Risque</th></tr></thead>
+                            <tbody>
+                                {% for emp in no_agent_employees %}
+                                <tr>
+                                    <td style="font-weight: 500;">{{ emp.full_name }}</td>
+                                    <td>{{ emp.department }}</td>
+                                    <td><span class="badge" style="background: rgba(var(--color-danger-rgb), 0.1); color: var(--color-danger);">CRITIQUE</span></td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">Aucun employé dans cette catégorie.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="modal-pending" class="modal-tab-content" style="display: none;">
+                    <div style="background: rgba(var(--color-warning-rgb), 0.05); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid rgba(var(--color-warning-rgb), 0.1); color: var(--color-warning); font-size: 0.8rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="clock" style="width: 16px;"></i> Agents créés mais l'installeur n'a pas encore été exécuté sur le poste.
+                    </div>
+                    <div class="data-table-wrap">
+                        <table class="data-table">
+                            <thead><tr><th>Employé</th><th>Département</th><th>Token</th><th>Statut</th></tr></thead>
+                            <tbody>
+                                {% for agent in pending_agents %}
+                                <tr>
+                                    <td style="font-weight: 500;">{{ agent.employee.full_name }}</td>
+                                    <td>{{ agent.employee.department }}</td>
+                                    <td class="mono-text" style="font-size: 0.7rem;">{{ agent.token|truncatechars:12 }}</td>
+                                    <td><span class="badge badge-warning">En attente</span></td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Aucun agent en attente.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="modal-active" class="modal-tab-content" style="display: none;">
+                    <div style="background: rgba(var(--color-success-rgb), 0.05); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid rgba(var(--color-success-rgb), 0.1); color: var(--color-success); font-size: 0.8rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="check-circle" style="width: 16px;"></i> Agents installés et communiquant avec le serveur.
+                    </div>
+                    <div class="data-table-wrap">
+                        <table class="data-table">
+                            <thead><tr><th>Employé</th><th>Hostname</th><th>Département</th><th>Dernier Ping</th></tr></thead>
+                            <tbody>
+                                {% for agent in active_agents_list %}
+                                <tr>
+                                    <td style="font-weight: 500;">{{ agent.employee.full_name }}</td>
+                                    <td class="mono-text">{{ agent.hostname }}</td>
+                                    <td>{{ agent.employee.department }}</td>
+                                    <td style="font-size: 0.75rem;">{{ agent.last_seen|date:"H:i"|default:"Récent" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Aucun agent actif détecté.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+<style>
+    .tab-btn {
+        background: transparent; border: none; color: var(--text-muted); 
+        padding: 8px 0 12px 0; font-size: 0.95rem; font-weight: 500; cursor: pointer;
+        border-bottom: 2px solid transparent; transition: 0.2s;
+    }
+    .tab-btn:hover { color: var(--text-primary); }
+    .tab-btn.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+    .tab-content { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+<!-- Conteneur pour les notifications Toasts -->
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+    <!-- Modale de Confirmation de Suppression -->
+    <div id="deleteConfirmModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="glass-card" style="padding: 24px; width: 100%; max-width: 400px; text-align: center;">
+            <div style="background: rgba(var(--color-danger-rgb), 0.1); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+                <i data-lucide="trash-2" style="width: 32px; height: 32px; color: var(--color-danger);"></i>
+            </div>
+            <div class="h5" style="margin-bottom: 8px;">Archiver la campagne ?</div>
+            <p class="body-sm text-muted" style="margin-bottom: 24px;">Cette campagne disparaîtra de la liste. Ses données seront conservées en arrière-plan pour l'historique global.</p>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-ghost" style="flex: 1;" onclick="closeDeleteModal()">Annuler</button>
+                <button class="btn btn-danger" style="flex: 1;" id="confirmDeleteBtn">Oui, Archiver</button>
+            </div>
+        </div>
+    </div>
+<script>
+    // --- SYSTÈME DE NOTIFICATIONS TOAST ---
+    function showToast(msg, type="info") {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        let color = 'var(--color-primary)';
+        let icon = 'info';
+        
+        if(type === 'error') { color = 'var(--color-danger)'; icon = 'alert-circle'; }
+        if(type === 'success') { color = 'var(--color-success)'; icon = 'check-circle'; }
+
+        toast.style.cssText = `background: var(--bg-surface); border-left: 4px solid ${color}; padding: 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); color: var(--text-primary); font-size: 0.9rem; display: flex; align-items: center; gap: 12px; transform: translateX(100%); transition: transform 0.3s ease, opacity 0.3s ease;`;
+        
+        toast.innerHTML = `<i data-lucide="${icon}" style="color: ${color}; width: 20px;"></i> <span>${msg}</span>`;
+        container.appendChild(toast);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        // Animation d'entrée
+        setTimeout(() => toast.style.transform = 'translateX(0)', 10);
+
+        // Disparition après 3 secondes
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // --- LOGIQUE DE SUPPRESSION ---
+    let campaignToDelete = null;
+
+    function openDeleteModal(id) {
+        campaignToDelete = id;
+        document.getElementById('deleteConfirmModalOverlay').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        campaignToDelete = null;
+        document.getElementById('deleteConfirmModalOverlay').style.display = 'none';
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+        if (!campaignToDelete) return;
+        
+        // On remplace le bouton par un état de chargement pour éviter les double-clics
+        const originalText = this.innerHTML;
+        this.innerHTML = "Suppression...";
+        this.disabled = true;
+
+        try {
+            const response = await fetch(`/behavioral/api/campaign/${campaignToDelete}/action/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ action: 'DELETE' })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                window.location.reload(); 
+            } else {
+                showToast("Erreur: " + data.error, "error");
+                closeDeleteModal();
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
+        } catch (e) {
+            showToast("Erreur réseau. Veuillez réessayer.", "error");
+            closeDeleteModal();
+            this.innerHTML = originalText;
+            this.disabled = false;
+        }
+    });
+
+    // Initialisation des icônes de la barre de recherche
+    document.addEventListener("DOMContentLoaded", () => {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+    // --- 1. GESTION DU CHRONOMÈTRE (AVEC PAUSE ET STOP) ---
+    var currentCampaignStatus = "{{ campaign.status }}";
+    
+    {% if not is_expired %}
+    var campaignEndTime = new Date("{{ end_time.isoformat }}").getTime();
+    
+    if (window.campaignTimerId) clearInterval(window.campaignTimerId);
+    
+    window.campaignTimerId = setInterval(function() {
+        // NOUVEAU : On arrête tout si la campagne est stoppée/terminée
+        if (currentCampaignStatus === 'Completed') {
+            clearInterval(window.campaignTimerId);
+            document.getElementById("countdownTimer").innerHTML = '<span style="color: var(--text-muted);">00:00:00</span>';
+            return;
+        }
+
+        if (currentCampaignStatus === 'Paused') {
+            document.getElementById("countdownTimer").innerHTML = '<span style="color: var(--color-warning);">En Pause</span>';
+            return;
+        }
+
+        var now = new Date().getTime();
+        var distance = campaignEndTime - now;
+        
+        if (distance < 0) {
+            clearInterval(window.campaignTimerId);
+            document.getElementById("countdownTimer").innerHTML = "00:00:00";
+            var badge = document.getElementById("campaignStatusBadge");
+            if(badge) {
+                badge.className = "badge badge-neutral";
+                badge.innerHTML = "Terminé";
+            }
+            return;
+        }
+        
+        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        
+        let display = "";
+        if(days > 0) display += days + "j ";
+        display += (hours < 10 ? "0" : "") + hours + ":";
+        display += (minutes < 10 ? "0" : "") + minutes + ":";
+        display += (seconds < 10 ? "0" : "") + seconds;
+        
+        document.getElementById("countdownTimer").innerHTML = display;
+    }, 1000);
+    {% endif %}
+
+    // --- LE RESTE DE VOTRE SCRIPT (Gestion des onglets, etc.) RESTE IDENTIQUE ---
+
+    // --- 2. GESTION DES ONGLETS ET DU LIVE STREAM ---
+    let logStreamInterval = null;
+
+    function switchTab(tabId, btnElement) {
+        // Cacher tous les contenus
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        // Retirer la classe active de tous les boutons
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        // Afficher le bon onglet
+        document.getElementById(tabId).style.display = 'block';
+        
+        // Ajouter la classe active au bouton cliqué
+        if (btnElement) {
+            btnElement.classList.add('active');
+        }
+
+        // Démarrer ou arrêter le Flux de Logs
+        if (tabId === 'tab-logs') {
+            fetchLiveLogs();
+            if (!logStreamInterval) logStreamInterval = setInterval(fetchLiveLogs, 5000);
+        } else {
+            if (logStreamInterval) { 
+                clearInterval(logStreamInterval); 
+                logStreamInterval = null; 
+            }
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+
+    // --- 3. ACTIONS DE LA CAMPAGNE (Pause, Stop, Extend) ---
+    async function executeAction(actionType, customMinutes = null) {
+        // Définit les minutes à envoyer (par défaut 0 pour Stop/Pause/Resume, ou les minutes custom pour Extend)
+        const mins = customMinutes || 0;
+        
+        try {
+            const response = await fetch(`{% url 'behavioral:campaign_action' campaign.id %}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ action: actionType, minutes: mins })
+            });
+            const data = await response.json();
+            if (data.success) {
+                window.location.reload(); 
+            } else {
+                alert("Erreur: " + data.error);
+            }
+        } catch (e) {
+            alert("Erreur réseau");
+        }
+    }
+
+    function submitExtend() {
+        const val = parseInt(document.getElementById('extendVal').value);
+        const unitMultiplier = parseInt(document.getElementById('extendUnit').value);
+        
+        if (isNaN(val) || val <= 0) {
+            alert("Veuillez entrer une valeur valide.");
+            return;
+        }
+        
+        const totalMinutesToAdd = val * unitMultiplier;
+        
+        // Ferme la modale et exécute l'action
+        document.getElementById('extendModalOverlay').style.display = 'none';
+        executeAction('EXTEND', totalMinutesToAdd);
+    }
+
+
+    // --- 4. RÉCUPÉRATION DU FLUX DE LOGS ---
+    async function fetchLiveLogs() {
+        const streamContainer = document.getElementById('globalLogStream');
+        const agentFilter = document.getElementById('logAgentFilter').value;
+        const levelFilter = document.getElementById('logLevelFilter').value;
+
+        try {
+            const response = await fetch(`{% url 'behavioral:campaign_live_logs' campaign.id %}`);
+            const data = await response.json();
+            
+            streamContainer.innerHTML = '';
+            
+            data.logs.forEach(log => {
+                if (agentFilter !== 'ALL' && log.agent !== agentFilter) return;
+                if (levelFilter !== 'ALL' && log.level !== levelFilter) return;
+
+                let color = 'var(--text-primary)';
+                if (log.level === 'ERROR' || log.level === 'ALERT') color = 'var(--color-danger)';
+                if (log.level === 'WARNING') color = 'var(--color-warning)';
+                if (log.level === 'INFO') color = 'var(--color-success)';
+                
+                streamContainer.innerHTML += `<span style="color: ${color};">[${log.time}] [${log.agent}] [${log.level}] ${log.msg}</span><br>`;
+            });
+            
+            if (streamContainer.innerHTML === '') {
+                streamContainer.innerHTML = '<span class="code-comment">// Aucun log ne correspond aux filtres.</span><br>';
+            }
+        } catch (e) {
+            const statusBadge = document.getElementById('logConnectionStatus');
+            if(statusBadge) {
+                statusBadge.className = 'badge badge-danger badge-dot';
+                statusBadge.innerText = 'Déconnecté';
+            }
+        }
+    }
+
+    // --- 5. INITIALISATION DES ICÔNES ---
+    document.addEventListener("DOMContentLoaded", () => {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+   
+   function switchModalTab(tabId, btn) {
+        // Cacher tous les contenus d'onglets de la modale
+        document.querySelectorAll('.modal-tab-content').forEach(content => {
+            content.style.display = 'none';
+        });
+        
+        // Retirer la classe active de tous les boutons d'onglets de la modale
+        document.querySelectorAll('.modal-tab-btn').forEach(button => {
+            button.classList.remove('active');
+            button.style.background = 'transparent';
+        });
+
+        // Afficher le contenu sélectionné
+        document.getElementById(tabId).style.display = 'block';
+        
+        // Activer le bouton cliqué
+        btn.classList.add('active');
+        btn.style.background = 'rgba(255,255,255,0.08)';
+        
+        // Recréer les icônes lucide pour être sûr
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+</script>
+{% endblock %}

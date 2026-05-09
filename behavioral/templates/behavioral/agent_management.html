@@ -289,8 +289,25 @@
     }
 
     function copyModalCmd() {
+        if (!currentCmdToCopy) {
+            alert("Aucune commande à copier.");
+            return;
+        }
         navigator.clipboard.writeText(currentCmdToCopy).then(() => {
+            // Petit feedback visuel (optionnel mais recommandé)
+            const copyBtn = document.querySelector('button[onclick="copyModalCmd()"]');
+            const originalIcon = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i data-lucide="check" style="color: var(--color-success);"></i>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            
+            setTimeout(() => {
+                copyBtn.innerHTML = originalIcon;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }, 2000);
+            
             alert("Commande PowerShell copiée !");
+        }).catch(err => {
+            alert("Erreur lors de la copie. Vérifiez les permissions de votre navigateur.");
         });
     }
 

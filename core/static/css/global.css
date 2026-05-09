@@ -1718,3 +1718,37 @@ body.sidebar-collapsed .sidenav-link svg {
   margin: 0; /* Centers the icon */
 }
 
+/* ==========================================
+       CUSTOM SCROLLBAR (Design Glassmorphism)
+       ========================================== */
+       
+    /* Pour Firefox */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    }
+
+    /* Pour Chrome, Edge et Safari */
+    ::-webkit-scrollbar {
+        width: 8px;  /* Rend la barre plus fine et élégante */
+        height: 8px; /* Pour le défilement horizontal si besoin */
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent; /* Fond transparent pour se fondre dans la modale */
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2); /* Couleur semi-transparente douce */
+        border-radius: 10px;
+        /* Petite astuce pour créer un effet de marge interne */
+        border: 2px solid transparent; 
+        background-clip: padding-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.4); /* S'illumine doucement au survol */
+        border: 2px solid transparent; 
+        background-clip: padding-box;
+    }
