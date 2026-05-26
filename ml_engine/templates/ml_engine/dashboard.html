@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Psyche Sentinel | Engine Silent Drills</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-void: #0f111a;
+            --bg-surface: #171a2b;
+            --border-subtle: #2d324d;
+            --text-primary: #ffffff;
+            --text-secondary: #8a94ad;
+            --color-primary: #a29bfe;
+        }
+
+        body {
+            background-color: var(--bg-void);
+            color: var(--text-primary);
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 35px;
+            background: linear-gradient(135deg, #171a2b 0%, #111422 100%);
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .icon-box {
+            background: rgba(162, 155, 254, 0.15);
+            padding: 16px;
+            border-radius: 10px;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+        }
+
+        .title { margin: 0; font-size: 1.65rem; font-weight: 700; letter-spacing: -0.02em; }
+        .subtitle { margin: 6px 0 0 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .stat-label { color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-value { margin: 12px 0 0 0; font-size: 2.2rem; font-weight: 700; }
+
+        .table-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+
+        th {
+            background: #1f2438;
+            color: var(--text-secondary);
+            padding: 16px 18px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.03em;
+        }
+
+        .section-divider { border-left: 2px dashed #3d4466 !important; }
+
+        td { padding: 16px 18px; border-bottom: 1px solid var(--border-subtle); color: #cbd5e1; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.72rem;
+            display: inline-block;
+        }
+        .badge-critical { background: rgba(255, 118, 117, 0.15); color: #ff7675; }
+        .badge-high { background: rgba(255, 177, 66, 0.15); color: #ffb142; }
+        .badge-medium { background: rgba(52, 152, 219, 0.15); color: #3498db; }
+        .badge-low { background: rgba(46, 204, 113, 0.15); color: #2ecc71; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="header">
+        <div class="icon-box">
+            <i data-lucide="shield-alert" style="width: 32px; height: 32px;"></i>
+        </div>
+        <div>
+            <h2 class="title">Moteur Behavioral ML — Silent Drills Detection </h2>
+            <p class="subtitle">
+                Analyse corrélative avancée de la télémétrie défensive : <strong>Agent Command & Control (C2) WebSockets</strong>, 
+                déclenchement de <strong>Honeytokens</strong> et détection de comportements déviants de <strong>Shadow AI</strong>.
+            </p>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card" style="border-top: 3px solid var(--color-primary);">
+            <div class="stat-label">Utilisateurs Évalués</div>
+            <div class="stat-value">{{ stats.total }}</div>
+        </div>
+        <div class="stat-card" style="border-top: 3px solid #3498db;">
+            <div class="stat-label">Alertes Modérées (MEDIUM)</div>
+            <div class="stat-value" style="color: #3498db;">{{ stats.medium }}</div>
+        </div>
+        <div class="stat-card" style="border-top: 3px solid #ffb142;">
+            <div class="stat-label">Menaces Élevées (HIGH)</div>
+            <div class="stat-value" style="color: #ffb142;">{{ stats.high }}</div>
+        </div>
+        <div class="stat-card" style="border-top: 3px solid #ff7675;">
+            <div class="stat-label">Anomalies Critiques (CRITICAL)</div>
+            <div class="stat-value" style="color: #ff7675;">{{ stats.critical }}</div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Département</th>
+                    <th style="color: #a29bfe;">Honeytoken Score</th>
+                    <th style="color: #a29bfe;">Shadow AI Score</th>
+                    <th style="color: #a29bfe;">C2 WebSocket (AZK)</th>
+                    <th style="color: #ffffff;">Score Global</th>
+                    <th class="section-divider">Honeytoken Risk</th>
+                    <th>AI Risk</th>
+                    <th>AZK Risk</th>
+                    <th>Risk Score Global</th>
+                    <th>Global Risk Label</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for profile in profiles %}
+                <tr>
+                    <td style="color: #ffffff; font-weight: 600;">{{ profile.department }}</td>
+                    
+                    <td>{{ profile.honeytoken_score }}%</td>
+                    <td>{{ profile.ai_score }}%</td>
+                    <td>{{ profile.azk_score }}%</td>
+                    <td style="color: #ffffff; font-weight: bold;">{{ profile.global_score }}%</td>
+                    
+                    <td class="section-divider">
+                        {% if profile.honeytoken_score >= 65 %}<span style="color:#ff7675;">High</span>{% else %}<span style="color:#2ecc71;">Low</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if profile.ai_score >= 65 %}<span style="color:#ff7675;">High</span>{% else %}<span style="color:#2ecc71;">Low</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if profile.azk_score >= 65 %}<span style="color:#ff7675;">High</span>{% else %}<span style="color:#2ecc71;">Low</span>{% endif %}
+                    </td>
+                    <td style="color: var(--color-primary); font-weight: 700;">{{ profile.global_score }}%</td>
+                    <td>
+                        {% if profile.risk_label == 'CRITICAL' %}
+                            <span class="badge badge-critical">CRITICAL</span>
+                        {% elif profile.risk_label == 'HIGH' %}
+                            <span class="badge badge-high">HIGH</span>
+                        {% elif profile.risk_label == 'MEDIUM' %}
+                            <span class="badge badge-medium">MEDIUM</span>
+                        {% else %}
+                            <span class="badge badge-low">LOW</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                        Aucune donnée comportementale présente. Exécutez le script d'alimentation.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>

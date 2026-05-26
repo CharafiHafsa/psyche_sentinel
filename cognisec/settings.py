@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
+    'ml_engine',
 ]
 
 MIDDLEWARE = [
@@ -80,7 +81,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'cognisec_db',
         'USER' : 'postgres',
-        'PASSWORD': 'P@$$w0rd',
+        'PASSWORD': '1234',
         'HOST': 'localhost',
         'PORT' : '5432',
     }
