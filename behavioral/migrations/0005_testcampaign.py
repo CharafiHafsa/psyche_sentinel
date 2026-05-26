@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name='TestCampaign',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(default=behavioral.models.generate_campaign_name, max_length=50, unique=True)),
+                ('name', models.CharField(default=behavioral.models.generate_meaningful_name, max_length=50, unique=True)),
                 ('test_type', models.CharField(choices=[('HONEYTOKEN', 'Leurres (Honeytokens)'), ('ZKA', 'Zero-Knowledge Auth (ZKA)'), ('AI', 'Manipulation IA'), ('PHISHING', 'Phishing Comportemental')], max_length=50)),
                 ('target_department', models.CharField(default='ALL', max_length=100)),
                 ('duration_days', models.IntegerField(help_text='Durée du test en jours')),

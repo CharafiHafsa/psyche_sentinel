@@ -23,4 +23,7 @@ urlpatterns = [
     path('api/campaign/<int:campaign_id>/logs/', views.campaign_live_logs, name='campaign_live_logs'),
     path('campaigns/manage/', views.campaign_management, name='campaign_management'),
     path('api/ai_leak/trigger/', views.ai_leak_trigger, name='api_ai_leak_trigger'),
+    path('api/azk/trigger/', views.azk_trigger, name='api_azk_trigger'),
+    path('api/honeytoken/deployed/', views.honeytoken_deployed_ack, name='honeytoken_deployed_ack'),
+    path('agent/<int:agent_id>/details/', views.agent_details, name='agent_details'),
 ]

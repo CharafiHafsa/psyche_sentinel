@@ -140,3 +140,5 @@ import os
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
 ]
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None

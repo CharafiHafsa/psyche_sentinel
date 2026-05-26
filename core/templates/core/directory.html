@@ -30,73 +30,44 @@
             </button>
         </div>
     </div>
+    
 
     <div class="component-stage" style="padding:0; overflow:hidden;">
         <div class="data-table-wrap" style="border-radius:var(--radius-lg); border:none;">
             <table class="data-table" id="employeeTable">
-                <thead>
-                    <tr>
-                        <th>Employé</th>
-                        <th>Département</th>
-                        <th>Score HRN</th>
-                        <th>Progression</th>
-                        <th>Dernier Évènement</th>
-                        <th>Statut</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for emp in employees %}
-                    <tr class="employee-row">
-                        <td>
-                            <div class="table-user-cell">
-                                <div class="table-avatar dynamic-avatar">{{ emp.full_name.0|upper }}</div>
-                                <div>
-                                    <div class="table-user-name employee-name">{{ emp.full_name }}</div>
-                                    <div class="table-user-email">{{ emp.email|default:"Non spécifié" }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="employee-dept"><span class="badge dynamic-dept" style="border: 1px solid transparent;">{{ emp.department|default:"Non assigné" }}</span></td>
-                        
-                        <td>
-                            <span class="risk-score {% if emp.hrn_score >= 70 %}risk-high{% elif emp.hrn_score >= 40 %}risk-medium{% else %}risk-low{% endif %}">
-                                {{ emp.hrn_score }}
-                            </span>
-                        </td>
-                        
-                        <td>
-                            <div class="table-progress">
-                                <div class="table-bar-track">
-                                    <div class="table-bar-fill" style="width:{{ emp.drill_progress }}%; background: {% if emp.drill_progress < 50 %}var(--color-danger){% elif emp.drill_progress < 80 %}var(--color-warning){% else %}var(--color-success){% endif %}"></div>
-                                </div>
-                                <span class="table-bar-pct">{{ emp.drill_progress }}%</span>
-                            </div>
-                        </td>
-                        
-                        <td class="body-sm">{{ emp.last_event }}</td>
-                        
-                        <td>
-                            <span class="badge {% if emp.status == 'Alert' %}badge-danger{% elif emp.status == 'Watch' or emp.status == 'Monitor' %}badge-warning{% else %}badge-success{% endif %} badge-dot">
-                                {{ emp.status }}
-                            </span>
-                        </td>
-                        
-                        <td>
-                            <button class="btn btn-ghost btn-sm" onclick="openEmpModal('{{ emp.id }}', '{{ emp.full_name|escapejs }}', '{{ emp.sam_account_name|escapejs }}', '{{ emp.department|escapejs }}', '{{ emp.hrn_score }}', '{{ emp.drill_progress }}', '{{ emp.last_event|escapejs }}', '{{ emp.status|escapejs }}')">
-                                <i data-lucide="eye"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                            Aucun employé trouvé. Veuillez synchroniser l'Active Directory.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <thead>
+        <tr>
+            <th onclick="sortTable(0, 'employeeTable')">Employé <i data-lucide="arrow-up-down" style="width: 12px; opacity: 0.4;"></i></th>
+            <th onclick="sortTable(1, 'employeeTable')">Email <i data-lucide="arrow-up-down" style="width: 12px; opacity: 0.4;"></i></th>
+            <th onclick="sortTable(2, 'employeeTable')">Département <i data-lucide="arrow-up-down" style="width: 12px; opacity: 0.4;"></i></th>
+            <th style="text-align: right;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for emp in employees %}
+        <tr class="employee-row">
+            <td>
+                <div class="table-user-cell">
+                    <div class="table-avatar dynamic-avatar">{{ emp.full_name.0|upper }}</div>
+                    <div class="table-user-name employee-name">{{ emp.full_name }}</div>
+                </div>
+            </td>
+            <td class="searchable">{{ emp.email|default:"-" }}</td>
+            <td><span class="badge dynamic-dept" style="border: 1px solid transparent;">{{ emp.department|default:"Non assigné" }}</span></td>
+            <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 8px;">
+                    <button class="btn btn-ghost btn-sm" onclick="openEmpModal('{{ emp.id }}', '{{ emp.full_name|escapejs }}', '{{ emp.sam_account_name|escapejs }}', '{{ emp.department|escapejs }}', '{{ emp.hrn_score }}', '{{ emp.drill_progress }}', '{{ emp.last_event|escapejs }}', '{{ emp.status|escapejs }}')">
+                        <i data-lucide="eye"></i>
+                    </button>
+                    <button class="btn btn-ghost btn-sm" style="color: var(--color-warning);" onclick="if(confirm('Archiver cet employé ?')) { /* Logique d'archivage */ }">
+                        <i data-lucide="archive"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
         </div>
     </div>
 

@@ -7,6 +7,8 @@ from django.http import JsonResponse
 from .utils import perform_ldap_sync
 from django.contrib.auth import logout
 from django.contrib.auth import update_session_auth_hash
+from behavioral.models import SystemNotification, AgentCampaignRisk, AgentLog, Agent
+from django.db.models import Avg, Max
 
 def landing_view(request):
     return render(request, 'core/landing_page.html')
@@ -152,38 +154,34 @@ def system_settings(request):
 
 @login_required(login_url='login')
 def notifications(request):
-    # Plus tard, nous ajouterons la logique de la base de données ici
-    # ex: notifs = Notification.objects.filter(user=request.user)
-    return render(request, 'core/notifications.html')
+    behavioral_notifs = SystemNotification.objects.all().order_by('-created_at')
+    
+    context = {
+        'notifications': behavioral_notifs
+    }
+    return render(request, 'core/notifications.html', context)
 
 @login_required(login_url='login')
-def employee_directory(request):
-    # Si l'administrateur soumet la modale (Modification ou Suppression)
+def directory(request):
     if request.method == 'POST':
-        action = request.POST.get('action')
         emp_id = request.POST.get('employee_id')
+        action = request.POST.get('action')
+        emp = get_object_or_404(Employee, id=emp_id)
         
-        if action == 'delete' and emp_id:
-            Employee.objects.filter(id=emp_id).delete()
-            messages.success(request, "L'employé a été supprimé de l'annuaire cible.")
-            
-        elif action == 'edit' and emp_id:
-            try:
-                emp = Employee.objects.get(id=emp_id)
-                emp.department = request.POST.get('department', emp.department)
-                emp.status = request.POST.get('status', emp.status)
-                # On sauvegarde les modifications
-                emp.save()
-                messages.success(request, "Le profil de l'employé a été mis à jour.")
-            except Employee.DoesNotExist:
-                messages.error(request, "Erreur : Employé introuvable.")
-                
+        if action == 'delete':
+            emp.delete()
+            messages.success(request, f"L'employé {emp.full_name} a été retiré de l'annuaire.")
+        elif action == 'edit':
+            emp.department = request.POST.get('department')
+            emp.status = request.POST.get('status')
+            emp.save()
+            messages.success(request, f"Profil de {emp.full_name} mis à jour.")
         return redirect('directory')
 
-    # Chargement normal de la page : on récupère tous les employés
-    employees = Employee.objects.all().order_by('-hrn_score') # On trie par les plus risqués en premier
-    return render(request, 'core/employees.html', {'employees': employees})
-    
+    employees = Employee.objects.all().order_by('full_name')
+    return render(request, 'core/directory.html', {'employees': employees})
+
+ 
 @login_required(login_url='login')
 def ldap_management(request):
     # Récupérer la config actuelle (on suppose qu'il n'y en a qu'une, ID=1)
@@ -237,3 +235,6 @@ def ldap_management(request):
         'config': config,
         'logs': logs
     })
+
+def documentation(request):
+    return render(request, 'core/documentation.html')

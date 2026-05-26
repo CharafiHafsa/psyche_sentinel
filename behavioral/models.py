@@ -1,10 +1,12 @@
 from django.db import models
 from django.utils import timezone
+from datetime import timedelta
 import uuid
 from core.models import Employee
 import string
 import random
-
+from django.contrib import messages
+import datetime
 
 class Agent(models.Model):
     STATUS_CHOICES = [
@@ -69,6 +71,7 @@ class AgentLog(models.Model):
     LOG_LEVELS = [('INFO', 'Info'), ('WARNING', 'Warning'), ('ERROR', 'Error'), ('ALERT', 'Alert')]
     
     agent = models.ForeignKey(Agent, on_delete=models.CASCADE, related_name='logs')
+    campaign = models.ForeignKey('TestCampaign', on_delete=models.CASCADE, null=True, blank=True)
     level = models.CharField(max_length=20, choices=LOG_LEVELS, default='INFO')
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -91,6 +94,7 @@ class AgentCommand(models.Model):
         ]
     
     agent = models.ForeignKey(Agent, on_delete=models.CASCADE, related_name='commands')
+    campaign = models.ForeignKey('TestCampaign', on_delete=models.CASCADE, null=True, blank=True)
     command = models.CharField(max_length=50, choices=COMMAND_CHOICES)
     
     payload = models.JSONField(null=True, blank=True)
@@ -103,9 +107,25 @@ class AgentCommand(models.Model):
     def __str__(self):
         return f"{self.command} for {self.agent.hostname} (Executed: {self.is_executed})"
     
-def generate_campaign_name():
-    chars = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
-    return f"OP-{chars}"
+def generate_meaningful_name(modules, department):
+    """
+    Exemple : 
+    Modules: [HONEYTOKEN, AI_LEAK] -> HT-AI
+    Dept: HR
+    Date: 05/26
+    Résultat : "OP-HR-HT-AI-0526"
+    """
+    # 1. Récupération des abréviations des modules
+    # On prend les 2 premières lettres de chaque code module
+    mod_codes = "-".join([m.code[:2] for m in modules])
+    
+    # 2. Nettoyage du département
+    dept_short = department[:3].upper() if department != 'ALL' else 'ALL'
+    
+    # 3. Date (Mois/Année)
+    date_str = datetime.datetime.now().strftime("%m%y")
+    
+    return f"OP-{dept_short}-{mod_codes}-{date_str}"
 
 class SimulationModule(models.Model):
     """ Table dynamique stockant les types de tests disponibles """
@@ -118,8 +138,7 @@ class SimulationModule(models.Model):
         return self.name
 
 class TestCampaign(models.Model):
-    name = models.CharField(max_length=50, default=generate_campaign_name, unique=True)
-    
+    name = models.CharField(max_length=50, unique=True)    
     # NOUVEAU : Relation ManyToMany pour plusieurs tests à la fois
     modules = models.ManyToManyField(SimulationModule, related_name='campaigns')
     
@@ -136,6 +155,15 @@ class TestCampaign(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     last_paused_at = models.DateTimeField(null=True, blank=True)
     total_paused_minutes = models.IntegerField(default=0, help_text="Minutes passées en pause")
+
+    global_risk_score = models.FloatField(null=True, blank=True, help_text="Score global final (0-100)")
+    global_risk_label = models.CharField(max_length=20, null=True, blank=True, help_text="LOW / MEDIUM / HIGH / CRITICAL")
+    
+    honeytoken_risk_score = models.FloatField(null=True, blank=True, help_text="Score Honeytoken")
+    ai_risk_score = models.FloatField(null=True, blank=True, help_text="Score DLP (Shadow AI)")
+    azk_risk_score = models.FloatField(null=True, blank=True, help_text="Score AZK (Zero-Knowledge Auth)")
+    
+    risk_calculated_at = models.DateTimeField(null=True, blank=True, help_text="Date du dernier calcul")
 
     def __str__(self):
         return self.name
@@ -241,26 +269,20 @@ class HoneytokenInstance(models.Model):
     highest_severity = models.FloatField(default=0.0)
 
     def update_severity(self):
-        """ Calcule la sévérité basée sur la séquence d'actions """
-        if not self.action_sequence:
-            return 0.0
+        if not self.action_sequence: return 0.0
 
-        # Dictionnaire des facteurs d'action de vos notes
-        action_factors = {
-            'OPEN': 1.0,   # Curiosity
-            'MODIFY': 1.5, # Interaction
-            'DELETE': 2.0  # Intentional cover-up
-        }
+        action_factors = {'OPEN': 1.0, 'MODIFY': 1.5, 'DELETE': 2.0}
+        
+        # NOUVEAU : On extrait l'action même si c'est un dictionnaire
+        factors_used = []
+        for item in self.action_sequence:
+            action_name = item.get('action') if isinstance(item, dict) else item
+            factors_used.append(action_factors.get(action_name, 1.0))
 
-        # Trouver le facteur maximum parmi les actions effectuées
-        factors_used = [action_factors.get(action, 1.0) for action in self.action_sequence]
         max_action_factor = max(factors_used) if factors_used else 1.0
-
-        # Formule : Data Sensitivity x Action Factor
-        sensitivity = self.template.data_sensitivity
-        self.highest_severity = sensitivity * max_action_factor
+        self.highest_severity = self.template.data_sensitivity * max_action_factor
         self.save()
-
+        
     def __str__(self):
         return f"Piège {self.template.file_name} sur {self.agent.hostname} - Sévérité Max: {self.highest_severity}"
 
@@ -274,6 +296,15 @@ class SystemNotification(models.Model):
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     link = models.CharField(max_length=255, blank=True, null=True, help_text="URL de redirection optionnelle")
+    
+    # NOUVEAU : Champ d'expiration pour l'auto-nettoyage (ex: 7 jours)
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        # Définir l'expiration par défaut à 7 jours si non spécifiée
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(days=7)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"[{self.type}] {self.title}"
@@ -309,8 +340,49 @@ class AILeakAlert(models.Model):
     
     # Gravité de l'incident (1 à 5) basée sur vos regex
     severity = models.IntegerField(default=1)
+    confidence = models.IntegerField(default=4)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    reasons = models.JSONField(default=list, blank=True)
+
+    def __str__(self):
+        return f"Fuite {self.data_type_detected} sur {self.ai_platform} par {self.agent.hostname} (Gravité: {self.severity})"
+    
+class AZKAuthRecord(models.Model):
+    agent = models.ForeignKey(Agent, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(TestCampaign, on_delete=models.CASCADE)
+    
+    # Métadonnées envoyées par l'agent
+    length = models.IntegerField()
+    entropy = models.IntegerField()
+    is_breached = models.BooleanField(default=False)
+    has_common_pattern = models.BooleanField(default=False)
+    score = models.IntegerField() # De 0 à 10
+    is_policy_compliant = models.BooleanField(default=False)
     
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Fuite {self.data_type_detected} sur {self.ai_platform} par {self.agent.hostname} (Gravité: {self.severity})"
+        return f"AZK Audit - {self.agent.hostname} - Score: {self.score}/10"
+    
+class AgentCampaignRisk(models.Model):
+    """ Stocke le score de risque comportemental d'un agent pour une campagne spécifique """
+    agent = models.ForeignKey(Agent, on_delete=models.CASCADE, related_name='campaign_risks')
+    campaign = models.ForeignKey(TestCampaign, on_delete=models.CASCADE, related_name='agent_risks')
+    
+    # Sous-scores
+    honeytoken_score = models.FloatField(default=0.0)
+    ai_score = models.FloatField(default=0.0)
+    azk_score = models.FloatField(default=0.0)
+    
+    # Score Global
+    global_score = models.FloatField(default=0.0)
+    risk_label = models.CharField(max_length=20, default='LOW')
+    
+    calculated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        # Un agent n'a qu'un seul profil de risque par campagne
+        unique_together = ('agent', 'campaign')
+
+    def __str__(self):
+        return f"Risk {self.global_score}% - {self.agent.hostname} (Campagne: {self.campaign.name})"

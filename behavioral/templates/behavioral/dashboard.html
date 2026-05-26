@@ -2,7 +2,60 @@
 
 {% block content %}
 <div style="max-width: auto;">
+{% if messages %}
+<div id="behavioral-toast-container" style="position: fixed; top: 80px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;">
+    {% for message in messages %}
+        {% if 'behavioral_app' in message.tags %}
+            <div class="glass-card toast-message" style="pointer-events: auto; padding: 16px; border-left: 4px solid {% if 'success' in message.tags %}var(--color-success){% elif 'error' in message.tags %}var(--color-danger){% elif 'warning' in message.tags %}var(--color-warning){% else %}var(--color-primary){% endif %}; width: 350px; display: flex; justify-content: space-between; align-items: flex-start; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
+                
+                <div style="display: flex; gap: 12px;">
+                    <i data-lucide="{% if 'success' in message.tags %}check-circle{% elif 'error' in message.tags %}shield-alert{% elif 'warning' in message.tags %}alert-triangle{% else %}info{% endif %}" style="color: {% if 'success' in message.tags %}var(--color-success){% elif 'error' in message.tags %}var(--color-danger){% elif 'warning' in message.tags %}var(--color-warning){% else %}var(--color-primary){% endif %}; flex-shrink: 0; margin-top: 2px;"></i>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 4px;">{{ message.message|slice:":message.message.index('|')"|default:message.message }}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">{{ message.message|slice:"message.message.index('|')+1:"|default:"" }}</div>
+                    </div>
+                </div>
+                
+                <button onclick="closeToast(this)" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 0; margin-left: 12px; opacity: 0.6; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
 
+<style>
+    @keyframes slideInRight {
+        from { transform: translateX(120%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    .toast-fadeOut {
+        opacity: 0;
+        transform: translateX(20px);
+        transition: all 0.4s ease-out;
+    }
+</style>
+
+<script>
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    function closeToast(btn) {
+        const toast = btn.closest('.toast-message');
+        toast.classList.add('toast-fadeOut');
+        setTimeout(() => toast.remove(), 400);
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+        const toasts = document.querySelectorAll('.toast-message');
+        toasts.forEach((toast, index) => {
+            setTimeout(() => {
+                if(document.body.contains(toast)) {
+                    toast.classList.add('toast-fadeOut');
+                    setTimeout(() => toast.remove(), 400);
+                }
+            }, 6000 + (index * 500));
+        });
+    });
+</script>
+{% endif %}
     <div class="section-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
         <div class="section-title-group">
             <div class="section-title">Évaluations Comportementales</div>
@@ -53,7 +106,12 @@
             <div class="info-card-value" style="font-size: 1.5rem; color: var(--text-muted);">{{ metrics.offline }}</div>
         </div>
     </div>
-
+    <div class="section-header" style="margin-top: 10px; margin-bottom: 24px;">
+        <div class="section-title-group">
+            <div class="section-title">Flotte d'Agents EDR</div>
+            <div class="section-desc">Supervision des terminaux connectés et en attente de déploiement.</div>
+        </div>
+    </div>
     <div class="glass-card" style="padding: 0; overflow: hidden;">
         
         <div style="padding: 16px 24px; border-bottom: 1px solid var(--border-subtle); background: rgba(0,0,0,0.2);">
@@ -78,13 +136,23 @@
 
         <div class="data-table-wrap" style="border: none; border-radius: 0;">
             <table class="data-table">
-                <thead>
+               <thead>
                     <tr>
-                        <th>Machine (Hostname)</th>
-                        <th>Employé Associé</th>
-                        <th>Adresse IP</th>
-                        <th>Statut Réseau</th>
-                        <th>Dernier Ping</th>
+                        <th onclick="sortTable(0)" style="cursor: pointer; user-select: none;">
+                            Machine (Hostname) <i data-lucide="arrow-up-down" style="width: 12px; height: 12px; display: inline-block; opacity: 0.4; margin-left: 4px;"></i>
+                        </th>
+                        <th onclick="sortTable(1)" style="cursor: pointer; user-select: none;">
+                            Employé Associé <i data-lucide="arrow-up-down" style="width: 12px; height: 12px; display: inline-block; opacity: 0.4; margin-left: 4px;"></i>
+                        </th>
+                        <th onclick="sortTable(2)" style="cursor: pointer; user-select: none;">
+                            Adresse IP <i data-lucide="arrow-up-down" style="width: 12px; height: 12px; display: inline-block; opacity: 0.4; margin-left: 4px;"></i>
+                        </th>
+                        <th onclick="sortTable(3)" style="cursor: pointer; user-select: none;">
+                            Statut Réseau <i data-lucide="arrow-up-down" style="width: 12px; height: 12px; display: inline-block; opacity: 0.4; margin-left: 4px;"></i>
+                        </th>
+                        <th onclick="sortTable(4)" style="cursor: pointer; user-select: none;">
+                            Dernier Ping <i data-lucide="arrow-up-down" style="width: 12px; height: 12px; display: inline-block; opacity: 0.4; margin-left: 4px;"></i>
+                        </th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -133,7 +201,7 @@
                                     <i data-lucide="key"></i>
                                 </button>
                             {% else %}
-                                <button class="btn btn-ghost btn-sm" title="Voir les détails de l'agent">
+                                <button class="btn btn-ghost btn-sm" title="Voir les détails de l'agent" onclick="openAgentDetails('{{ agent.id }}', '{{ agent.hostname }}', '{{ agent.status }}', '{{ agent.ip_address|default:"-" }}', '{{ agent.token }}')">
                                     <i data-lucide="terminal"></i>
                                 </button>
                             {% endif %}
@@ -169,14 +237,24 @@
 
     <div class="glass-card" style="padding: 0; overflow: hidden;">
         <div class="data-table-wrap" style="border: none; border-radius: 0;">
-            <table class="data-table">
+            <table class="data-table" id="campaignTable">
                 <thead>
                     <tr>
-                        <th>Nom de l'Opération</th>
-                        <th>Cible</th>
-                        <th>Modules</th>
-                        <th>Statut</th>
-                        <th>Date de Création</th>
+                        <th onclick="sortTable(0, 'campaignTable')" style="cursor: pointer; user-select: none;">
+                            Nom de l'Opération <i data-lucide="arrow-up-down" style="width: 12px; height: 12px; display: inline-block; opacity: 0.4; margin-left: 4px;"></i>
+                        </th>
+                        <th onclick="sortTable(1, 'campaignTable')" style="cursor: pointer; user-select: none;">
+                            Cible <i data-lucide="arrow-up-down" style="width: 12px; height: 12px; display: inline-block; opacity: 0.4; margin-left: 4px;"></i>
+                        </th>
+                        <th onclick="sortTable(2, 'campaignTable')" style="cursor: pointer; user-select: none;">
+                            Modules <i data-lucide="arrow-up-down" style="width: 12px; height: 12px; display: inline-block; opacity: 0.4; margin-left: 4px;"></i>
+                        </th>
+                        <th onclick="sortTable(3, 'campaignTable')" style="cursor: pointer; user-select: none;">
+                            Statut <i data-lucide="arrow-up-down" style="width: 12px; height: 12px; display: inline-block; opacity: 0.4; margin-left: 4px;"></i>
+                        </th>
+                        <th onclick="sortTable(4, 'campaignTable')" style="cursor: pointer; user-select: none;">
+                            Date de Création <i data-lucide="arrow-up-down" style="width: 12px; height: 12px; display: inline-block; opacity: 0.4; margin-left: 4px;"></i>
+                        </th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -187,8 +265,27 @@
                             {{ camp.name }}
                         </td>
                         <td>{{ camp.target_department }}</td>
+                        
                         <td style="color: var(--text-muted); font-size: 0.85rem;">
-                            {{ camp.modules.count }} Module(s)
+                            
+                            <div class="module-hover-wrap">
+                                <span style="border-bottom: 1px dashed var(--border-default); padding-bottom: 2px;">
+                                    {{ camp.modules.count }} Module(s)
+                                </span>
+                                
+                                <div class="module-tooltip">
+                                    <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Modules Actifs :</div>
+                                    {% for mod in camp.modules.all %}
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                            <i data-lucide="{{ mod.icon|default:'box' }}" style="width: 14px; height: 14px; color: var(--color-primary);"></i>
+                                            <span style="color: white; font-size: 0.8rem; font-weight: 500;">{{ mod.name }}</span>
+                                        </div>
+                                    {% empty %}
+                                        <span style="color: var(--text-muted); font-size: 0.75rem;">Aucun module assigné</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
                         </td>
                         <td>
                             {% if camp.status == 'Running' %}
@@ -339,11 +436,18 @@
                 <label class="form-label">Vecteurs d'Attaque (Choix multiples)</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     {% for mod in modules %}
-                    <label style="display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); cursor: pointer; transition: 0.2s; background: rgba(0,0,0,0.2);">
-                        <input type="checkbox" name="selected_modules" value="{{ mod.id }}" style="margin-top: 4px;">
-                        <div>
-                            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">
-                                <i data-lucide="{{ mod.icon }}" style="width: 14px; display: inline; vertical-align: middle; color: var(--color-primary);"></i> {{ mod.name }}
+                    <label style="display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); cursor: pointer; transition: 0.2s; background: rgba(0,0,0,0.2); {% if mod.code == 'PHISHING' %}opacity: 0.6;{% endif %}">
+                        
+                        <input type="checkbox" name="selected_modules" value="{{ mod.id }}" style="margin-top: 4px;" {% if mod.code == 'PHISHING' %}onclick="blockPhishing(event)"{% endif %}>
+                        
+                        <div style="width: 100%;">
+                            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; display: flex; justify-content: space-between;">
+                                <span>
+                                    <i data-lucide="{{ mod.icon }}" style="width: 14px; display: inline; vertical-align: middle; color: var(--color-primary);"></i> {{ mod.name }}
+                                </span>
+                                {% if mod.code == 'PHISHING' %}
+                                    <span class="badge" style="font-size: 0.6rem; background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 2px 6px;">En Dév</span>
+                                {% endif %}
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.3;">{{ mod.description }}</div>
                         </div>
@@ -407,8 +511,190 @@
         </form>
     </div>
 </div>
+<div id="detailsModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="glass-card" style="padding: 0; width: 100%; max-width: 750px; position: relative; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column;">
+        
+        <div style="padding: 20px 24px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px;">
+                    <i data-lucide="monitor" style="color: var(--text-primary);"></i>
+                </div>
+                <div>
+                    <div class="h5" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                        Centre de Contrôle <span id="modalStatusBadge" class="badge">Statut</span>
+                    </div>
+                    <div class="mono-text text-muted" id="modalHostname" style="font-size: 0.85rem; margin-top: 4px;">DESKTOP-XXX</div>
+                </div>
+            </div>
+            <button onclick="closeDetailsModal()" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+        </div>
+
+        <div style="padding: 24px;">
+            <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+                <input type="hidden" id="currentAgentId">
+                <button type="button" id="btnCheck" class="btn btn-outline" style="flex: 1;" onclick="sendC2Command('PING')">
+                    <i data-lucide="radio"></i> Vérifier (Ping)
+                </button>
+                <button type="button" id="btnRestart" class="btn btn-outline" style="flex: 1;" onclick="sendC2Command('RESTART')">
+                    <i data-lucide="refresh-cw"></i> Redémarrer Agent
+                </button>
+                <button type="button" id="btnContain" class="btn btn-primary" style="flex: 1; background: var(--color-danger); border-color: var(--color-danger);" onclick="sendC2Command('CONTAIN')">
+                    <i data-lucide="shield-off"></i> Isoler la machine
+                </button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 8px;">
+                    <div class="body-xs text-muted" style="margin-bottom: 4px; text-transform: uppercase;">Adresse IP Publique</div>
+                    <div class="mono-text" id="modalIp" style="font-size: 0.95rem; color: var(--text-primary);">192.168.x.x</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 8px;">
+                    <div class="body-xs text-muted" style="margin-bottom: 4px; text-transform: uppercase;">Token Cryptographique</div>
+                    <div class="mono-text" id="modalTokenStr" style="font-size: 0.95rem; color: var(--color-primary);">abcd...</div>
+                </div>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+                <div class="body-xs text-muted" style="text-transform: uppercase; font-weight: 600;">Journal d'Audit Système</div>
+                <button class="btn btn-ghost btn-sm" onclick="refreshModalData()" title="Rafraîchir les logs" style="padding: 4px 8px;">
+                    <i data-lucide="refresh-cw" style="width: 14px;"></i> Actualiser
+                </button>
+            </div>
+            
+            <div id="realLogsContainer" class="custom-scrollbar" style="height: 220px; background: #09090B; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #a1a1aa; overflow-y: auto; line-height: 1.6;">
+                <div style="color: #52525b; margin-bottom: 12px;">// Connexion au flux télémétrique de l'agent établie...</div>
+                </div>
+        </div>
+    </div>
+</div>
+<div id="phishingDevModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="glass-card" style="padding: 32px; width: 100%; max-width: 450px; position: relative; text-align: center; border-radius: 16px;">
+        <div style="background: rgba(245, 158, 11, 0.1); width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; border: 1px solid rgba(245, 158, 11, 0.2);">
+            <i data-lucide="construction" style="color: #f59e0b; width: 36px; height: 36px;"></i>
+        </div>
+        <h3 class="h4" style="margin-bottom: 12px; color: var(--text-primary);">Module en cours de conception</h3>
+        <p class="text-muted body-sm" style="margin-bottom: 24px; line-height: 1.6;">
+            Le module <strong>Ingénierie Sociale (Phishing)</strong> est actuellement en développement actif par l'équipe spécialisée. Il sera activé lors de la prochaine mise à jour de l'architecture Psyche Sentinel.
+        </p>
+        <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; background: #f59e0b; border-color: #f59e0b;" onclick="document.getElementById('phishingDevModalOverlay').style.display='none'">
+            Compris, merci
+        </button>
+    </div>
+</div>
 
 <script>
+    function blockPhishing(e) {
+    e.preventDefault(); // Empêche la case d'être cochée
+    document.getElementById('phishingDevModalOverlay').style.display = 'flex';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+const detailsModal = document.getElementById('detailsModalOverlay');
+// --- FONCTION DE TRI MISE À JOUR (Supporte plusieurs tables) ---
+function sortTable(n, tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return; // Sécurité au cas où l'ID n'existe pas
+
+    let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+    switching = true;
+    dir = "asc"; 
+    
+    while (switching) {
+        switching = false;
+        rows = table.rows;
+        
+        for (i = 1; i < (rows.length - 1); i++) {
+            shouldSwitch = false;
+            
+            x = rows[i].getElementsByTagName("TD")[n];
+            y = rows[i + 1].getElementsByTagName("TD")[n];
+            
+            let valX = x.textContent.trim().toLowerCase();
+            let valY = y.textContent.trim().toLowerCase();
+
+            if (dir === "asc") {
+                if (valX > valY) {
+                    shouldSwitch = true;
+                    break;
+                }
+            } else if (dir === "desc") {
+                if (valX < valY) {
+                    shouldSwitch = true;
+                    break;
+                }
+            }
+        }
+        if (shouldSwitch) {
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true;
+            switchcount++;
+        } else {
+            if (switchcount === 0 && dir === "asc") {
+                dir = "desc";
+                switching = true;
+            }
+        }
+    }
+}
+function openAgentDetails(id, hostname, status, ip, token, isOnline) {
+    document.getElementById('currentAgentId').value = id;
+    document.getElementById('modalHostname').textContent = hostname;
+    document.getElementById('modalIp').textContent = ip;
+    document.getElementById('modalTokenStr').textContent = token.substring(0, 12) + "...";
+
+    // --- CORRECTION DU BADGE DE STATUT ---
+    const badge = document.getElementById('modalStatusBadge');
+    badge.className = "badge"; // Reset de toutes les classes
+    
+    if (status === 'Compromised') {
+        badge.classList.add('badge-danger');
+        badge.textContent = "Compromis";
+    } else if (status === 'Pending') {
+        badge.classList.add('badge-neutral');
+        badge.textContent = "En attente";
+    } else if (isOnline) {
+        // L'agent est connecté !
+        badge.classList.add('badge-success');
+        badge.textContent = "En ligne";
+    } else {
+        // C'est ici qu'il manquait la condition pour les agents HORS LIGNE
+        badge.classList.add('badge-neutral');
+        badge.style.opacity = "0.7";
+        badge.textContent = "Hors ligne";
+    }
+
+    // --- GESTION DES BOUTONS D'ACTION ---
+    const btnCheck = document.getElementById('btnCheck');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnContain = document.getElementById('btnContain');
+    
+    const actionButtons = [btnCheck, btnRestart, btnContain];
+
+    if (isOnline) {
+        actionButtons.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        });
+        btnCheck.title = "Forcer un ping immédiat";
+        btnRestart.title = "Redémarrer le processus";
+        btnContain.title = "Isoler la machine";
+    } else {
+        actionButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.3';
+            btn.style.cursor = 'not-allowed';
+            btn.title = "Action impossible : L'agent est hors-ligne";
+        });
+    }
+
+    // Charger les logs
+    loadAgentTerminalLogs(hostname);
+
+    const detailsModal = document.getElementById('detailsModalOverlay');
+    detailsModal.style.display = 'flex';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
     // --- 1. DÉGRADÉS DYNAMIQUES POUR LES AVATARS ---
     document.addEventListener("DOMContentLoaded", () => {
         const gradients = [
@@ -503,32 +789,46 @@
     }
 
     function copyInstallCommandAndClose() {
-        // Pour être sûr à 100%, on récupère le texte directement depuis l'élément HTML
-        // (Vérifiez que l'ID correspond bien à celui de votre balise contenant la commande)
-        let textElement = document.getElementById('installCmdText'); 
-        let textToCopy = typeof generatedCommandText !== 'undefined' ? generatedCommandText : (textElement ? textElement.innerText : "");
-
-        if (!textToCopy) {
-            alert("Aucune commande à copier.");
-            return;
-        }
-
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            alert("Commande PowerShell copiée avec succès dans le presse-papier !");
-            
-            // On ferme la modale (Assurez-vous que la variable installModal existe bien, ou utilisez l'ID)
-            const modal = document.getElementById('installModalOverlay') || installModal;
-            if (modal) modal.style.display = 'none';
-            
-            // On rafraîchit la page pour voir le nouvel agent apparaître "En attente"
-            window.location.reload();
-            
-        }).catch(err => {
-            console.error(err);
-            alert("Erreur du navigateur lors de la copie. Veuillez sélectionner le texte et faire CTRL+C.");
-        });
+    if (!generatedCommandText) {
+        alert("Aucune commande à copier.");
+        return;
     }
 
+    // Fonction de secours si l'API Clipboard est bloquée (environnement sans HTTPS)
+    const fallbackCopy = (text) => {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.top = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+        } catch (err) {
+            console.error('Fallback copy failed', err);
+        }
+        document.body.removeChild(textArea);
+    };
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(generatedCommandText)
+            .then(finishCopyProcess)
+            .catch(() => {
+                fallbackCopy(generatedCommandText);
+                finishCopyProcess();
+            });
+    } else {
+        fallbackCopy(generatedCommandText);
+        finishCopyProcess();
+    }
+}
+function finishCopyProcess() {
+    // Fermeture de la modale et rechargement de la page après copie
+    const modal = document.getElementById('installModalOverlay');
+    if (modal) modal.style.display = 'none';
+    window.location.reload();
+}
     function reopenCommandModal(token) {
         const serverUrl = window.location.origin;
         document.getElementById('displayTokenId').textContent = token.substring(0, 8) + '...';
@@ -632,6 +932,51 @@
             btn.disabled = false;
         }
     }
+
+    function closeDetailsModal() {
+    detailsModal.style.display = 'none';
+}
+
+function sendC2Command(command) {
+    const hostname = document.getElementById('modalHostname').textContent;
+    alert(`Ordre C2 [${command}] placé dans la file d'attente pour ${hostname}. L'agent l'exécutera à son prochain Heartbeat.`);
+}
+
+function refreshModalData() {
+    const hostname = document.getElementById('modalHostname').textContent;
+    loadAgentTerminalLogs(hostname); // Simule un rafraîchissement
+}
+function loadAgentTerminalLogs(hostname) {
+    const container = document.getElementById('realLogsContainer');
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('fr-FR');
+    
+    // Structure HTML d'un log formaté
+    const logHTML = `
+        <div style="margin-bottom: 6px; display: flex; gap: 12px;">
+            <span style="color: #52525b; min-width: 60px;">${timeStr}</span>
+            <span style="color: #10b981; font-weight: bold; min-width: 70px;">[SUCCESS]</span>
+            <span style="color: #a7f3d0;">Agent ${hostname} synchronisé avec succès.</span>
+        </div>
+        <div style="margin-bottom: 6px; display: flex; gap: 12px;">
+            <span style="color: #52525b; min-width: 60px;">${timeStr}</span>
+            <span style="color: #a1a1aa; font-weight: bold; min-width: 70px;">[INFO]</span>
+            <span style="color: #e4e4e7;">Chargement de la configuration système locale...</span>
+        </div>
+        <div style="margin-bottom: 6px; display: flex; gap: 12px;">
+            <span style="color: #52525b; min-width: 60px;">${timeStr}</span>
+            <span style="color: #f59e0b; font-weight: bold; min-width: 70px;">[WARNING]</span>
+            <span style="color: #fde68a;">Antivirus tiers détecté. Ajustement des permissions.</span>
+        </div>
+    `;
+
+    container.innerHTML = `
+        <div style="color: #52525b; margin-bottom: 12px;">// Fetching remote I/O streams for ${hostname}...</div>
+        ${logHTML}
+    `;
+    
+    // Auto-scroll en bas
+    container.scrollTop = container.scrollHeight; }
     // Gestion du clic en dehors des modales
     deployModal.addEventListener('click', (e) => { if (e.target === deployModal) closeDeployModal(); });
     installModal.addEventListener('click', (e) => { if (e.target === installModal) installModal.style.display = 'none'; });

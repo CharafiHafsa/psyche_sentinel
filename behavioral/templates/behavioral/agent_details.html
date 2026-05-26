@@ -1,0 +1,535 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+{% if messages %}
+<div id="behavioral-toast-container" style="position: fixed; top: 80px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;">
+    {% for message in messages %}
+        {% if 'behavioral_app' in message.tags %}
+            <div class="glass-card toast-message" style="pointer-events: auto; padding: 16px; border-left: 4px solid {% if 'success' in message.tags %}var(--color-success){% elif 'error' in message.tags %}var(--color-danger){% elif 'warning' in message.tags %}var(--color-warning){% else %}var(--color-primary){% endif %}; width: 350px; display: flex; justify-content: space-between; align-items: flex-start; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
+                <div style="display: flex; gap: 12px;">
+                    <i data-lucide="{% if 'success' in message.tags %}check-circle{% elif 'error' in message.tags %}shield-alert{% elif 'warning' in message.tags %}alert-triangle{% else %}info{% endif %}" style="color: {% if 'success' in message.tags %}var(--color-success){% elif 'error' in message.tags %}var(--color-danger){% elif 'warning' in message.tags %}var(--color-warning){% else %}var(--color-primary){% endif %}; flex-shrink: 0; margin-top: 2px;"></i>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 4px;">{{ message.message|slice:":message.message.index('|')"|default:message.message }}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">{{ message.message|slice:"message.message.index('|')+1:"|default:"" }}</div>
+                    </div>
+                </div>
+                <button onclick="closeToast(this)" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 0; margin-left: 12px; opacity: 0.6; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'"><i data-lucide="x" style="width: 16px; height: 16px;"></i></button>
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+<div style="max-width: auto; margin: 0 auto; padding-bottom: 60px;">
+    
+    <div style="margin-bottom: 32px;">
+        <div class="glass-card" style="display: flex; justify-content: space-between; align-items: center; padding: 24px;">
+            <div style="display: flex; align-items: center; gap: 24px;">
+                <div class="avatar dynamic-avatar" style="width: 72px; height: 72px; font-size: 1.8rem; background: linear-gradient(135deg, #4f46e5, #9333ea); color: white; border: none; display: flex; align-items: center; justify-content: center;">
+                    {{ employee.full_name.0|upper }}
+                </div>
+                <div>
+                    <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary); margin: 0 0 8px 0; display: flex; align-items: center; gap: 12px; line-height: 1;">
+                        {{ employee.full_name }}
+                        {% if agent.status == 'Compromised' %}
+                            <span class="badge badge-danger" style="font-size: 0.75rem; transform: translateY(-1px);">Machine Compromise</span>
+                        {% elif agent.is_online_realtime %}
+                            <span class="badge badge-success" style="font-size: 0.75rem; transform: translateY(-1px);">En ligne</span>
+                        {% else %}
+                            <span class="badge badge-neutral" style="font-size: 0.75rem; opacity: 0.7; transform: translateY(-1px);">Hors ligne</span>
+                        {% endif %}
+                    </h1>
+                    <div style="color: var(--text-muted); font-size: 0.95rem; display: flex; align-items: center; gap: 12px;">
+                        <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="briefcase" style="width: 14px; height: 14px;"></i> {{ employee.department|default:"Département inconnu" }}</span>
+                        <span style="color: var(--border-default);">|</span>
+                        <span class="mono-text" style="display: flex; align-items: center; gap: 6px;"><i data-lucide="monitor" style="width: 14px; height: 14px;"></i> {{ agent.hostname|default:"Machine inconnue" }}</span>
+                        <span style="color: var(--border-default);">|</span>
+                        <span class="mono-text" style="display: flex; align-items: center; gap: 6px;"><i data-lucide="network" style="width: 14px; height: 14px;"></i> {{ agent.ip_address|default:"-" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-outline" onclick="sendC2Command('RESTART')" {% if not agent.is_online_realtime %}disabled style="opacity:0.3; cursor:not-allowed;"{% endif %}>
+                    <i data-lucide="refresh-cw"></i> Redémarrer Agent
+                </button>
+                <button class="btn btn-primary" style="background: var(--color-danger); border-color: var(--color-danger);" onclick="sendC2Command('CONTAIN')" {% if not agent.is_online_realtime %}disabled style="opacity:0.3; cursor:not-allowed;"{% endif %}>
+                    <i data-lucide="shield-off"></i> Isoler la Machine
+                </button>
+                <a href="{% url 'behavioral:dashboard' %}" class="btn btn-outline btn-sm">
+                <i data-lucide="arrow-left"></i> Retour au Dashboard
+            </a>
+            </div>
+        </div>
+    </div>
+
+    <h2 style="font-size: 1.4rem; color: var(--text-primary); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; line-height: 1;">
+        <i data-lucide="target" style="color: var(--text-muted); width: 24px; height: 24px;"></i> Résultats par Opération
+    </h2>
+    
+    <div style="display: grid; grid-template-columns: 260px 1fr; gap: 24px; margin-bottom: 40px;">
+        
+        <div class="glass-card" style="padding: 0; max-height: 600px; overflow-y: auto;">
+            <div style="padding: 16px; border-bottom: 1px solid var(--border-subtle); position: sticky; top: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 10;">
+                <h3 style="margin: 0; font-size: 0.95rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Historique</h3>
+            </div>
+            
+            {% for camp in agent_campaigns %}
+                <div class="campaign-list-item" onclick="switchCampaignView({{ camp.id }})" id="tab-camp-{{ camp.id }}" style="padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: 0.2s; border-left: 3px solid transparent;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <strong style="color: var(--text-primary); font-size: 0.9rem; font-family: var(--font-mono); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ camp.name }}</strong>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="display: flex; align-items: center; gap: 6px;">
+                            {% if camp.status == 'Running' %}<span style="width: 6px; height: 6px; border-radius: 50%; background: var(--color-success);"></span> En cours
+                            {% else %}<span style="width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted);"></span> Terminé{% endif %}
+                        </span>
+                        <span>{{ camp.created_at|date:"d/m/y" }}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <div style="padding: 32px 16px; text-align: center; color: var(--text-muted);">
+                    <i data-lucide="shield-off" style="width: 24px; margin-bottom: 8px; opacity: 0.5;"></i><br>
+                    <span style="font-size: 0.85rem;">Aucune opération.</span>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="glass-card" style="padding: 0; max-height: 600px; position: relative; overflow: hidden; display: flex; flex-direction: column;">
+            
+            <div id="empty-campaign-state" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); z-index: 5;">
+                <i data-lucide="mouse-pointer-click" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.2;"></i>
+                <p>Sélectionnez une opération dans le menu de gauche.</p>
+            </div>
+
+            {% for result in campaign_results %}
+                <div class="campaign-detail-view" id="content-camp-{{ result.campaign.id }}" style="display: none; height: 100%; flex-direction: column;">
+                    
+                    <div style="padding: 24px 24px 0 24px;">
+                        <h3 style="margin: 0 0 4px 0; font-size: 1.4rem; color: var(--text-primary); font-family: var(--font-mono);">Opération {{ result.campaign.name }}</h3>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Déployée le {{ result.campaign.created_at|date:"d M Y à H:i" }}</p>
+                    </div>
+
+                    <div style="display: flex; border-bottom: 1px solid var(--border-subtle); margin-top: 24px; padding: 0 12px; overflow-x: auto;" class="custom-scrollbar">
+                        <button class="module-tab active" onclick="switchModuleTab({{ result.campaign.id }}, 'overview')" id="tab-btn-{{ result.campaign.id }}-overview">
+                            <i data-lucide="layout-dashboard" style="width: 16px;"></i> Diagnostic
+                        </button>
+                        <button class="module-tab" onclick="switchModuleTab({{ result.campaign.id }}, 'azk')" id="tab-btn-{{ result.campaign.id }}-azk">
+                            <i data-lucide="key" style="width: 16px;"></i> AZK Auth
+                        </button>
+                        <button class="module-tab" onclick="switchModuleTab({{ result.campaign.id }}, 'dlp')" id="tab-btn-{{ result.campaign.id }}-dlp">
+                            <i data-lucide="bot" style="width: 16px;"></i> Shadow AI
+                        </button>
+                        <button class="module-tab" onclick="switchModuleTab({{ result.campaign.id }}, 'honey')" id="tab-btn-{{ result.campaign.id }}-honey">
+                            <i data-lucide="file-warning" style="width: 16px;"></i> Honeytokens
+                        </button>
+                    </div>
+
+                    <div style="padding: 24px; flex-grow: 1; overflow-y: auto;" class="custom-scrollbar">
+                        
+                        <div class="module-content-{{ result.campaign.id }}" id="module-content-{{ result.campaign.id }}-overview" style="display: block; animation: fadeIn 0.3s ease-out;">
+                            
+                            {% if result.risk.explanations %}
+                            <div style="background: rgba(0,0,0,0.3); border-left: 4px solid {{ result.risk.color }}; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                    <div>
+                                        <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Diagnostic Analytique SOC</div>
+                                        <div style="color: {{ result.risk.color }}; font-size: 2.2rem; font-weight: 800; line-height: 1; margin-top: 4px;">
+                                            {{ result.risk.global_score }}% <span style="font-size:1.1rem; font-weight:600;">{{ result.risk.global_label }}</span>
+                                        </div>
+                                    </div>
+                                    <i data-lucide="shield-alert" style="color: {{ result.risk.color }}; width: 40px; height: 40px; opacity: 0.8;"></i>
+                                </div>
+                                <div style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 16px; display: flex; flex-direction: column; gap: 10px;">
+                                    {% for exp in result.risk.explanations %}
+                                    <div style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: flex-start; gap: 8px;">
+                                        <i data-lucide="info" style="width: 16px; color: {{ result.risk.color }}; flex-shrink: 0; margin-top: 2px;"></i>
+                                        <span>{{ exp }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div style="background: rgba(16, 185, 129, 0.05); border-left: 4px solid var(--color-success); padding: 20px; border-radius: 8px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Comportement Sain</div>
+                                    <div style="color: var(--color-success); font-size: 2.2rem; font-weight: 800; line-height: 1; margin-top: 4px;">0% <span style="font-size:1.1rem; font-weight:600;">LOW</span></div>
+                                </div>
+                                <i data-lucide="shield-check" style="color: var(--color-success); width: 40px; height: 40px; opacity: 0.8;"></i>
+                            </div>
+                            {% endif %}
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                                
+                                {% if result.risk.honeytoken.score > 0 %}
+                                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 8px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 16px; color: #10b981; font-weight: 600; font-size: 0.85rem; text-transform: uppercase;">
+                                        <span><i data-lucide="target" style="width: 14px; display: inline;"></i> Honeytokens</span>
+                                        <span>{{ result.risk.honeytoken.score }}%</span>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;"><span>Moyenne Sévérité</span> <span class="mono-text">{{ result.risk.honeytoken.metrics.severity }}/100</span></div>
+                                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px;"><div style="height: 100%; width: {{ result.risk.honeytoken.metrics.severity }}%; background: var(--color-primary);"></div></div>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;"><span>Agressivité (Modify/Delete)</span> <span class="mono-text">{{ result.risk.honeytoken.metrics.escalation }}/100</span></div>
+                                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px;"><div style="height: 100%; width: {{ result.risk.honeytoken.metrics.escalation }}%; background: var(--color-primary);"></div></div>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;"><span>Récidive</span> <span class="mono-text">{{ result.risk.honeytoken.metrics.recurrence }}/100</span></div>
+                                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px;"><div style="height: 100%; width: {{ result.risk.honeytoken.metrics.recurrence }}%; background: var(--color-primary);"></div></div>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;"><span>Curiosité (Urgency)</span> <span class="mono-text">{{ result.risk.honeytoken.metrics.urgency }}/100</span></div>
+                                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px;"><div style="height: 100%; width: {{ result.risk.honeytoken.metrics.urgency }}%; background: var(--color-primary);"></div></div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if result.risk.ai_leak.score > 0 %}
+                                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 8px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 16px; color: #3b82f6; font-weight: 600; font-size: 0.85rem; text-transform: uppercase;">
+                                        <span><i data-lucide="bot" style="width: 14px; display: inline;"></i> Shadow AI (DLP)</span>
+                                        <span>{{ result.risk.ai_leak.score }}%</span>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;"><span>Criticité des données</span> <span class="mono-text">{{ result.risk.ai_leak.metrics.sensitivity }}/100</span></div>
+                                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px;"><div style="height: 100%; width: {{ result.risk.ai_leak.metrics.sensitivity }}%; background: var(--color-primary);"></div></div>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;"><span>Répétition</span> <span class="mono-text">{{ result.risk.ai_leak.metrics.repetition }}/100</span></div>
+                                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px;"><div style="height: 100%; width: {{ result.risk.ai_leak.metrics.repetition }}%; background: var(--color-primary);"></div></div>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;"><span>Certitude (Confidence)</span> <span class="mono-text">{{ result.risk.ai_leak.metrics.confidence }}/100</span></div>
+                                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px;"><div style="height: 100%; width: {{ result.risk.ai_leak.metrics.confidence }}%; background: var(--color-primary);"></div></div>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;"><span>Volume exfiltré</span> <span class="mono-text">{{ result.risk.ai_leak.metrics.volume }}/100</span></div>
+                                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px;"><div style="height: 100%; width: {{ result.risk.ai_leak.metrics.volume }}%; background: var(--color-primary);"></div></div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if result.risk.azk.score > 0 %}
+                                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 8px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 16px; color: #a78bfa; font-weight: 600; font-size: 0.85rem; text-transform: uppercase;">
+                                        <span><i data-lucide="key" style="width: 14px; display: inline;"></i> Auth (AZK)</span>
+                                        <span>{{ result.risk.azk.score }}%</span>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;"><span>Faiblesse Mathématique</span> <span class="mono-text">{{ result.risk.azk.metrics.weakness }}/100</span></div>
+                                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px;"><div style="height: 100%; width: {{ result.risk.azk.metrics.weakness }}%; background: var(--color-primary);"></div></div>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;"><span>Compromission Pwned</span> <span class="mono-text">{{ result.risk.azk.metrics.breach }}/100</span></div>
+                                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px;"><div style="height: 100%; width: {{ result.risk.azk.metrics.breach }}%; background: var(--color-primary);"></div></div>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;"><span>Non-Conformité Politique</span> <span class="mono-text">{{ result.risk.azk.metrics.compliance }}/100</span></div>
+                                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px;"><div style="height: 100%; width: {{ result.risk.azk.metrics.compliance }}%; background: var(--color-primary);"></div></div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                            </div>
+                        </div>
+
+                        <div class="module-content-{{ result.campaign.id }}" id="module-content-{{ result.campaign.id }}-azk" style="display: none; animation: fadeIn 0.3s ease-out;">
+                            {% if result.azk_records %}
+                                {% for record in result.azk_records %}
+                                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-left: 3px solid {% if record.is_breached %}#f43f5e{% elif record.score < 5 %}#f59e0b{% else %}#a78bfa{% endif %}; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                            <div>
+                                                <strong style="color: var(--text-primary);">Audit Cryptographique Local</strong>
+                                                <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;">le {{ record.timestamp|date:"d M Y, H:i:s" }}</span>
+                                            </div>
+                                            <span class="badge {% if record.score < 5 %}badge-danger{% else %}badge-success{% endif %}">Score Final : {{ record.score }}/10</span>
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-size: 0.85rem; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 6px;">
+                                            <div><span style="color: var(--text-muted); display: block; margin-bottom: 4px;">Longueur</span><strong class="mono-text" style="color: var(--text-primary);">{{ record.length }} car.</strong></div>
+                                            <div><span style="color: var(--text-muted); display: block; margin-bottom: 4px;">Entropie (Shannon)</span><strong class="mono-text" style="color: var(--text-primary);">{{ record.entropy }} bits</strong></div>
+                                            <div><span style="color: var(--text-muted); display: block; margin-bottom: 4px;">Pattern connu</span><strong style="color: {% if record.has_common_pattern %}var(--color-danger){% else %}var(--color-success){% endif %};">{{ record.has_common_pattern|yesno:"OUI,NON" }}</strong></div>
+                                            <div><span style="color: var(--text-muted); display: block; margin-bottom: 4px;">Base HIBP</span><strong style="color: {% if record.is_breached %}var(--color-danger){% else %}var(--color-success){% endif %};">{{ record.is_breached|yesno:"COMPROMIS,SAIN" }}</strong></div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div style="text-align: center; padding: 40px; color: var(--text-muted);"><i data-lucide="key" style="width: 32px; height: 32px; opacity: 0.2; margin-bottom: 12px;"></i><br>Aucun audit AZK enregistré.</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="module-content-{{ result.campaign.id }}" id="module-content-{{ result.campaign.id }}-dlp" style="display: none; animation: fadeIn 0.3s ease-out;">
+                            {% if result.leaks %}
+                                {% for leak in result.leaks %}
+                                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-left: 3px solid {% if leak.severity >= 4 %}#f43f5e{% else %}#3b82f6{% endif %}; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                            <div>
+                                                <strong style="color: var(--text-primary); font-size: 1.05rem;">Fuite vers {{ leak.ai_platform }}</strong>
+                                                <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;">le {{ leak.timestamp|date:"d M, H:i:s" }}</span>
+                                            </div>
+                                            <span class="badge {% if leak.severity >= 4 %}badge-danger{% else %}badge-warning{% endif %}">Sévérité {{ leak.severity }}/5</span>
+                                        </div>
+                                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+                                            Donnée interceptée : <strong style="color: var(--text-secondary);">{{ leak.data_type_detected }}</strong> ({{ leak.clipboard_length }} caractères via {{ leak.action_type }})
+                                        </div>
+                                        <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 12px; font-family: 'JetBrains Mono', var(--font-mono); font-size: 0.75rem; color: #a1a1aa; border: 1px solid rgba(255,255,255,0.05);">
+                                            <div style="margin-bottom: 6px; color: #3b82f6;">// Matrice de décision heuristique :</div>
+                                            {% for reason in leak.reasons %}
+                                                <div style="margin-bottom: 4px;">> {{ reason }}</div>
+                                            {% empty %}
+                                                <div>> Aucune justification détaillée.</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div style="text-align: center; padding: 40px; color: var(--text-muted);"><i data-lucide="bot" style="width: 32px; height: 32px; opacity: 0.2; margin-bottom: 12px;"></i><br>Aucune fuite DLP détectée.</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="module-content-{{ result.campaign.id }}" id="module-content-{{ result.campaign.id }}-honey" style="display: none; animation: fadeIn 0.3s ease-out;">
+                            {% if result.honeytokens %}
+                                {% for h in result.honeytokens %}
+                                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-left: 3px solid #10b981; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                            <div>
+                                                <strong style="color: var(--text-primary); font-size: 1.05rem;">{{ h.template.file_name }}.{{ h.template.file_extension }}</strong>
+                                                <div class="mono-text" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">{{ h.file_path }}</div>
+                                            </div>
+                                            <div style="text-align: right;">
+                                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Gravité : <strong>{{ h.highest_severity|floatformat:1 }}</strong></div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
+                                            <span style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center;">Chronologie d'accès :</span>
+                                            {% for action in h.action_sequence %}
+                                                {% if action == 'DELETE' %}<span class="badge badge-danger" style="font-size: 0.7rem;">DELETE</span>
+                                                {% elif action == 'MODIFY' %}<span class="badge badge-warning" style="font-size: 0.7rem;">MODIFY</span>
+                                                {% else %}<span class="badge badge-neutral" style="font-size: 0.7rem; color: #10b981; background: rgba(16, 185, 129, 0.1);">{{ action }}</span>
+                                                {% endif %}
+                                                {% if not forloop.last %}<span style="color: var(--border-default);">→</span>{% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div style="text-align: center; padding: 40px; color: var(--text-muted);"><i data-lucide="file-warning" style="width: 32px; height: 32px; opacity: 0.2; margin-bottom: 12px;"></i><br>Aucun leurre n'a été compromis.</div>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="margin: 0; font-size: 1.4rem; color: var(--text-primary); display: flex; align-items: center; gap: 12px; line-height: 1;">
+            <i data-lucide="terminal" style="color: var(--text-muted); width: 24px; height: 24px;"></i> Journal Télémétrique (RAW)
+        </h2>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn btn-ghost btn-sm" onclick="resetFilters()"><i data-lucide="filter-x"></i> Réinitialiser</button>
+            <button class="btn btn-outline btn-sm" onclick="exportLogsCSV()"><i data-lucide="download"></i> Exporter CSV</button>
+        </div>
+    </div>
+
+    <div class="glass-card" style="padding: 12px 16px; margin-bottom: 16px; display: flex; gap: 16px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <label class="body-xs text-muted" style="display: block; margin-bottom: 4px;">Filtrer par Date</label>
+            <input type="date" id="filterDate" class="form-select" style="width: 100%;" onchange="filterLogs()">
+        </div>
+        <div style="flex: 1;">
+            <label class="body-xs text-muted" style="display: block; margin-bottom: 4px;">Niveau d'Alerte</label>
+            <select id="filterLevel" class="form-select" style="width: 100%;" onchange="filterLogs()">
+                <option value="ALL">Tous les niveaux</option>
+                <option value="INFO">Informations (INFO)</option>
+                <option value="SUCCESS">Succès (OK)</option>
+                <option value="WARNING">Avertissements (WARN)</option>
+                <option value="ERROR">Erreurs / Alertes</option>
+            </select>
+        </div>
+        <div style="flex: 2;">
+            <label class="body-xs text-muted" style="display: block; margin-bottom: 4px;">Filtrer par Source / Campagne</label>
+            <select id="filterCampaign" class="form-select" style="width: 100%;" onchange="filterLogs()">
+                <option value="ALL">Toutes les sources</option>
+                <option value="GENERAL">Système Général (Hors campagne)</option>
+                {% for camp in agent_campaigns %}
+                    <option value="{{ camp.id }}">Opération: {{ camp.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="custom-scrollbar" id="terminalBox" style="background: #09090B; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; height: 500px; padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #a1a1aa; overflow-y: auto; line-height: 1.6; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);">
+        
+        <div style="color: #52525b; margin-bottom: 16px; border-bottom: 1px dashed #52525b; padding-bottom: 8px;">
+            // CONNEXION SÉCURISÉE ÉTABLIE VERS {{ agent.hostname|upper }}<br>
+            // MOTEUR D'INVESTIGATION (FILTRAGE ACTIF)<br>
+            // SESSION DÉMARRÉE
+        </div>
+
+        <div id="no-logs-msg" style="display: none; color: #f59e0b; font-style: italic; margin-top: 20px;">
+            // Aucun événement ne correspond à vos filtres...
+        </div>
+
+        {% for log in logs %}
+            <div class="log-entry" 
+                 data-date="{{ log.timestamp|date:'Y-m-d' }}" 
+                 data-level="{% if log.level == 'CRITICAL' or log.level == 'ALERT' %}ERROR{% else %}{{ log.level }}{% endif %}" 
+                 data-campaign="{{ log.campaign_id|default:'GENERAL' }}"
+                 style="margin-bottom: 6px; display: flex; gap: 16px; border-left: 2px solid transparent; padding-left: 8px; transition: 0.2s;" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.02)'; this.style.borderLeftColor='var(--color-primary)'" onmouseout="this.style.backgroundColor='transparent'; this.style.borderLeftColor='transparent'">
+                <span style="color: #52525b; min-width: 140px; flex-shrink: 0;" class="log-date">[{{ log.timestamp|date:"Y-m-d H:i:s" }}]</span>
+                
+                {% if log.level == 'INFO' %}
+                    <span style="color: #3b82f6; font-weight: bold; min-width: 80px; flex-shrink: 0;" class="log-lvl">[INFO]</span>
+                    <span style="color: #e4e4e7;" class="log-msg">{{ log.message }}</span>
+                {% elif log.level == 'SUCCESS' %}
+                    <span style="color: #10b981; font-weight: bold; min-width: 80px; flex-shrink: 0;" class="log-lvl">[OK]</span>
+                    <span style="color: #a7f3d0;" class="log-msg">{{ log.message }}</span>
+                {% elif log.level == 'WARNING' %}
+                    <span style="color: #f59e0b; font-weight: bold; min-width: 80px; flex-shrink: 0;" class="log-lvl">[WARN]</span>
+                    <span style="color: #fde68a;" class="log-msg">{{ log.message }}</span>
+                {% else %}
+                    <span style="color: #f43f5e; font-weight: bold; min-width: 80px; flex-shrink: 0;" class="log-lvl">[ALERT]</span>
+                    <span style="color: #fecdd3; background: rgba(244, 63, 94, 0.1); padding: 0 4px;" class="log-msg">{{ log.message }}</span>
+                {% endif %}
+            </div>
+        {% empty %}
+            <div style="color: #52525b; font-style: italic; margin-top: 20px;">// Aucun événement enregistré pour cet agent...</div>
+        {% endfor %}
+        <div style="color: var(--color-primary); margin-top: 16px; animation: blink 1s infinite;">_</div>
+    </div>
+</div>
+
+<style>
+    @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .campaign-list-item.active { background: rgba(var(--color-primary-rgb), 0.1) !important; border-left-color: var(--color-primary) !important; }
+    
+    /* STYLES DES ONGLETS */
+    .module-tab {
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--text-muted);
+        padding: 16px 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+    .module-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.02); }
+    .module-tab.active {
+        color: var(--color-primary);
+        border-bottom-color: var(--color-primary);
+        background: rgba(var(--color-primary-rgb), 0.05);
+    }
+</style>
+
+<script>
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    // TOASTS
+    function closeToast(btn) {
+        const toast = btn.closest('.toast-message');
+        toast.classList.add('toast-fadeOut');
+        setTimeout(() => toast.remove(), 400);
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll('.toast-message').forEach((toast, index) => {
+            setTimeout(() => { if(document.body.contains(toast)) { toast.classList.add('toast-fadeOut'); setTimeout(() => toast.remove(), 400); } }, 6000 + (index * 500));
+        });
+    });
+
+    // NAVIGATION PAR CAMPAGNE
+    function switchCampaignView(campaignId) {
+        document.getElementById('empty-campaign-state').style.display = 'none';
+        document.querySelectorAll('.campaign-detail-view').forEach(el => { el.style.display = 'none'; el.style.display = 'none'; });
+        document.querySelectorAll('.campaign-list-item').forEach(el => el.classList.remove('active'));
+        
+        const targetView = document.getElementById('content-camp-' + campaignId);
+        if (targetView) {
+            targetView.style.display = 'flex'; // Utilisation de flex au lieu de block pour la structure
+        }
+        
+        const targetTab = document.getElementById('tab-camp-' + campaignId);
+        if (targetTab) targetTab.classList.add('active');
+        
+        // On remet l'onglet par défaut (Synthèse)
+        switchModuleTab(campaignId, 'overview');
+
+        // Auto-filtrage des logs
+        document.getElementById('filterCampaign').value = campaignId;
+        filterLogs();
+    }
+
+    // NAVIGATION PAR ONGLET DE MODULE
+    function switchModuleTab(campaignId, tabName) {
+        // Cacher tous les contenus de cette campagne
+        document.querySelectorAll(`.module-content-${campaignId}`).forEach(el => el.style.display = 'none');
+        // Retirer la classe active des boutons
+        document.querySelectorAll(`#content-camp-${campaignId} .module-tab`).forEach(el => el.classList.remove('active'));
+
+        // Afficher le contenu
+        const targetContent = document.getElementById(`module-content-${campaignId}-${tabName}`);
+        if (targetContent) targetContent.style.display = 'block';
+        
+        // Activer le bouton
+        const targetBtn = document.getElementById(`tab-btn-${campaignId}-${tabName}`);
+        if (targetBtn) targetBtn.classList.add('active');
+    }
+
+    // FILTRAGE ET EXPORT LOGS (Identique)
+    function filterLogs() {
+        const dateFilter = document.getElementById('filterDate').value;
+        const levelFilter = document.getElementById('filterLevel').value;
+        const campFilter = document.getElementById('filterCampaign').value;
+        const logs = document.querySelectorAll('.log-entry');
+        let visibleCount = 0;
+
+        logs.forEach(log => {
+            let matchDate = (dateFilter === "") || (log.getAttribute('data-date') === dateFilter);
+            let matchLevel = (levelFilter === "ALL") || (log.getAttribute('data-level') === levelFilter);
+            let matchCamp = (campFilter === "ALL") || (log.getAttribute('data-campaign') === campFilter);
+
+            if (matchDate && matchLevel && matchCamp) { log.style.display = "flex"; visibleCount++; } 
+            else { log.style.display = "none"; }
+        });
+        document.getElementById('no-logs-msg').style.display = (visibleCount === 0 && logs.length > 0) ? 'block' : 'none';
+    }
+
+    function resetFilters() {
+        document.getElementById('filterDate').value = "";
+        document.getElementById('filterLevel').value = "ALL";
+        document.getElementById('filterCampaign').value = "ALL";
+        filterLogs();
+    }
+
+    function exportLogsCSV() {
+        let csvContent = "Date,Niveau,Message\n";
+        let exportCount = 0;
+        document.querySelectorAll('.log-entry').forEach(log => {
+            if (log.style.display !== "none") {
+                const dateText = log.querySelector('.log-date').textContent.replace('[', '').replace(']', '').trim();
+                const lvlText = log.querySelector('.log-lvl').textContent.replace('[', '').replace(']', '').trim();
+                const msgText = log.querySelector('.log-msg').textContent.replace(/"/g, '""').trim();
+                csvContent += `"${dateText}","${lvlText}","${msgText}"\n`;
+                exportCount++;
+            }
+        });
+        if (exportCount === 0) { alert("Aucun log à exporter."); return; }
+        const link = document.createElement("a");
+        link.setAttribute("href", URL.createObjectURL(new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' })));
+        link.setAttribute("download", "PsycheSentinel_Audit_{{ agent.hostname }}.csv");
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+    
+    function sendC2Command(command) { alert(`Ordre C2 [${command}] ajouté à la file d'attente.`); }
+</script>
+{% endblock %}

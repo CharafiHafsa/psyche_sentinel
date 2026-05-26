@@ -53,62 +53,46 @@
 
     <div class="glass-card" style="padding: 0; overflow: hidden;">
         <div class="data-table-wrap" style="border: none; border-radius: 0;">
-            <table class="data-table">
+            <table class="data-table" id="campaignTable">
                 <thead>
                     <tr>
-                        <th>Nom de l'Opération</th>
-                        <th>Cible</th>
-                        <th>Modules</th>
-                        <th>Statut</th>
-                        <th>Création</th>
-                        <th>Actions</th>
+                        <th onclick="sortTable(0, 'campaignTable')" style="cursor: pointer;">Nom <i data-lucide="arrow-up-down" style="width: 12px; height: 12px ; display: inline-block; margin-left: 4px; opacity: 0.4;"></i></th>
+                        <th onclick="sortTable(1, 'campaignTable')" style="cursor: pointer;">Cible <i data-lucide="arrow-up-down" style="width: 12px; height: 12px ; display: inline-block; margin-left: 4px; opacity: 0.4;"></i></th>
+                        <th onclick="sortTable(2, 'campaignTable')" style="cursor: pointer;">Modules <i data-lucide="arrow-up-down" style="width: 12px; height: 12px ; display: inline-block; margin-left: 4px; opacity: 0.4;"></i></th>
+                        <th onclick="sortTable(3, 'campaignTable')" style="cursor: pointer;">Statut <i data-lucide="arrow-up-down" style="width: 12px; height: 12px ; display: inline-block; margin-left: 4px; opacity: 0.4;"></i></th>
+                        <th onclick="sortTable(4, 'campaignTable')" style="cursor: pointer;">Création <i data-lucide="arrow-up-down" style="width: 12px; height: 12px ; display: inline-block; margin-left: 4px;  opacity: 0.4;"></i></th>
+                        <th style="text-align: right;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for camp in campaigns %}
                     <tr class="campaign-row">
-                        <td class="searchable" style="font-weight: 600; font-family: var(--font-mono); font-size: 0.85rem; color: var(--color-primary);">
-                            {{ camp.name }}
-                        </td>
+                        <td class="searchable" style="font-weight: 600; font-family: var(--font-mono); font-size: 0.85rem; color: var(--color-primary);">{{ camp.name }}</td>
                         <td class="searchable">{{ camp.target_department }}</td>
                         <td>
-                            <div style="display: flex; gap: 4px;">
+                            <div style="display: flex; gap: 6px;">
                                 {% for mod in camp.modules.all %}
-                                    <span title="{{ mod.name }}" style="padding: 2px 6px; background: rgba(0,0,0,0.2); border-radius: 4px; font-size: 0.75rem; color: var(--text-muted);">
-                                        <i data-lucide="{{ mod.icon }}" style="width: 12px; display: inline;"></i>
+                                    <span title="{{ mod.name }}" style="padding: 4px; background: rgba(255,255,255,0.05); border-radius: 6px; color: var(--text-muted); border: 1px solid var(--border-subtle);">
+                                        <i data-lucide="{{ mod.icon }}" style="width: 14px; height: 14px;"></i>
                                     </span>
                                 {% endfor %}
                             </div>
                         </td>
                         <td class="searchable">
-                            {% if camp.status == 'Running' %}
-                                <span class="badge badge-success badge-dot">En cours</span>
-                            {% elif camp.status == 'Paused' %}
-                                <span class="badge badge-warning">En Pause</span>
-                            {% elif camp.status == 'Completed' %}
-                                <span class="badge badge-neutral">Terminé</span>
-                            {% else %}
-                                <span class="badge badge-neutral">{{ camp.status }}</span>
-                            {% endif %}
+                            {% if camp.status == 'Running' %}<span class="badge badge-success badge-dot">En cours</span>
+                            {% elif camp.status == 'Paused' %}<span class="badge badge-warning">En Pause</span>
+                            {% else %}<span class="badge badge-neutral">Terminé</span>{% endif %}
                         </td>
-                        <td class="body-sm" style="color: var(--text-muted);">
-                            {{ camp.created_at|date:"d/m/Y H:i" }}
-                        </td>
-                        <td>
-                            <div style="display: flex; gap: 8px;">
-                                <a href="{% url 'behavioral:campaign_dashboard' camp.id %}" class="btn btn-ghost btn-sm" title="Ouvrir le tableau de bord">
-                                    <i data-lucide="external-link"></i> Dashboard
+                        <td class="body-sm" style="color: var(--text-muted);">{{ camp.created_at|date:"d/m/Y H:i" }}</td>
+                        <td style="text-align: right;">
+                            <div style="display: inline-flex; gap: 4px;">
+                                <a href="{% url 'behavioral:campaign_dashboard' camp.id %}" class="btn btn-ghost btn-sm" title="Dashboard">
+                                    <i data-lucide="external-link" style="width: 16px;"></i>
                                 </a>
-                                <button onclick="openDeleteModal({{ camp.id }})" class="btn btn-ghost btn-sm" style="color: var(--color-danger);" title="Archiver/Supprimer">
-                                    <i data-lucide="trash-2"></i>
+                                <button onclick="openDeleteModal({{ camp.id }})" class="btn btn-ghost btn-sm" style="color: var(--color-danger);" title="Archiver">
+                                    <i data-lucide="trash-2" style="width: 16px;"></i>
                                 </button>
-                                </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                            Aucune campagne trouvée.
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -226,6 +210,30 @@
             row.style.display = text.includes(filter) ? '' : 'none';
         });
     });
-    
+    function sortTable(n, tableId) {
+    const table = document.getElementById(tableId);
+    let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+    switching = true; dir = "asc";
+    while (switching) {
+        switching = false; rows = table.rows;
+        for (i = 1; i < (rows.length - 1); i++) {
+            shouldSwitch = false;
+            x = rows[i].getElementsByTagName("TD")[n];
+            y = rows[i + 1].getElementsByTagName("TD")[n];
+            if (dir == "asc") {
+                if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) { shouldSwitch = true; break; }
+            } else if (dir == "desc") {
+                if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) { shouldSwitch = true; break; }
+            }
+        }
+        if (shouldSwitch) {
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true; switchcount++;
+        } else {
+            if (switchcount == 0 && dir == "asc") { dir = "desc"; switching = true; }
+        }
+    }
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
 </script>
 {% endblock %}

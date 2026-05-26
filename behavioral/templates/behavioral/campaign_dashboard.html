@@ -86,16 +86,16 @@
 
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
         
-        <div class="glass-card info-card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border-left: 4px solid {{ risk_data.color }}; min-height: 140px;">
+        <div class="glass-card info-card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border-left: 4px solid {{ global_risk.color }}; min-height: 140px;">
             <div>
                 <div class="info-card-icon" style="background:rgba(0,0,0,0.2); width: 32px; height: 32px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
-                    <i data-lucide="shield-alert" style="width:16px; color:{{ risk_data.color }};"></i>
+                    <i data-lucide="shield-alert" style="width:16px; color:{{ global_risk.color }};"></i>
                 </div>
-                <div class="info-card-title" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">Score de Risque</div>
+                <div class="info-card-title" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">Score de Risque Global</div>
             </div>
             <div style="display: flex; align-items: baseline; gap: 8px;">
-                <div class="info-card-value" style="font-size: 2rem; font-weight: bold; color: {{ risk_data.color }};">{{ risk_data.score }}<span style="font-size:1.1rem; color:var(--text-muted)">/100</span></div>
-                <div style="font-size: 0.85rem; font-weight: bold; color: {{ risk_data.color }};">{{ risk_data.label }}</div>
+                <div class="info-card-value" style="font-size: 2rem; font-weight: bold; color: {{ global_risk.color }};">{{ global_risk.score }}<span style="font-size:1.1rem; color:var(--text-muted)">/100</span></div>
+                <div style="font-size: 0.85rem; font-weight: bold; color: {{ global_risk.color }};">{{ global_risk.label }}</div>
             </div>
         </div>
 
@@ -156,333 +156,1155 @@
         {% if 'AI_LEAK' in module_codes %}
         <button class="tab-btn" onclick="switchTab('tab-shadow-ai', this)"><i data-lucide="brain-circuit" style="width:14px; display:inline; margin-right:4px;"></i> Shadow AI & DLP</button>
         {% endif %}
+        {% if 'AUTH' in module_codes %}
+        <button class="tab-btn" onclick="switchTab('tab-azk', this)">
+            <i data-lucide="key" style="width:14px; display:inline; margin-right:4px;"></i> Audit Mots de Passe (AZK)
+        </button>
+        {% endif %}
 
         <button class="tab-btn" onclick="switchTab('tab-agents', this)">Agents & Terminaux</button>
         <button class="tab-btn" onclick="switchTab('tab-logs', this)">Flux de Logs</button>
     </div>
 
 
-    <div id="tab-risk" class="tab-content" style="display: block;">
+    <div id="tab-risk" class="tab-content" style="display: block; animation: fadeIn 0.5s ease-out;">
+    
+    <div class="glass-card" style="margin-bottom: 24px; padding: 32px; border-radius: 20px; background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba({{ global_risk.color | slice:'1:' }}, 0.05) 100%); border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden;">
         
-        <div class="glass-card" style="margin-bottom: 24px; padding: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                <div>
-                    <div class="h5" style="margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-                        <i data-lucide="bar-chart-2" style="color: var(--color-primary);"></i> Modélisation du Risque
-                    </div>
-                    <div class="mono-text" style="font-size: 0.85rem; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; display: inline-block;">
-                        Risk = (0.4 × Exposure) + (0.3 × Behavior) + (0.3 × Impact)
-                    </div>
-                </div>
-                <div style="text-align: right;">
-                    <span class="badge" style="background: {{ risk_data.color }}; color: #fff; font-size: 1.5rem; padding: 8px 16px; border-radius: 8px;">
-                        {{ risk_data.score }} <span style="font-size: 1rem; opacity: 0.8;">/ 100</span>
-                    </span>
-                </div>
-            </div>
+        <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: {{ global_risk.color }}; filter: blur(100px); opacity: 0.15; border-radius: 50%;"></div>
 
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 20px;">
-                <div style="background: rgba(var(--cyan-bright-rgb, 0, 255, 255), 0.05); border: 1px solid rgba(var(--cyan-bright-rgb, 0, 255, 255), 0.2); padding: 16px; border-radius: 8px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="font-weight: 600; color: var(--cyan-bright, #22d3ee);">Exposure</span>
-                        <span class="badge" style="background: rgba(var(--cyan-bright-rgb, 0, 255, 255), 0.1); color: var(--cyan-bright, #22d3ee);">Poids: 40%</span>
-                    </div>
-                    <div style="font-size: 1.8rem; font-weight: bold; font-family: var(--font-mono); margin-bottom: 4px;">{{ risk_data.exposure }}%</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">Compromised agents ratio</div>
-                </div>
-                
-                <div style="background: rgba(var(--violet-bright-rgb, 138, 43, 226), 0.05); border: 1px solid rgba(var(--violet-bright-rgb, 138, 43, 226), 0.2); padding: 16px; border-radius: 8px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="font-weight: 600; color: var(--violet-bright, #a78bfa);">Behavior</span>
-                        <span class="badge" style="background: rgba(var(--violet-bright-rgb, 138, 43, 226), 0.1); color: var(--violet-bright, #a78bfa);">Poids: 30%</span>
-                    </div>
-                    <div style="font-size: 1.8rem; font-weight: bold; font-family: var(--font-mono); margin-bottom: 4px;">{{ risk_data.behavior }}%</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">User interaction severity</div>
-                </div>
-
-                <div style="background: rgba(var(--color-primary-rgb), 0.05); border: 1px solid rgba(var(--color-primary-rgb), 0.2); padding: 16px; border-radius: 8px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="font-weight: 600; color: var(--color-primary);">Impact</span>
-                        <span class="badge" style="background: rgba(var(--color-primary-rgb), 0.1); color: var(--color-primary);">Poids: 30%</span>
-                    </div>
-                    <div style="font-size: 1.8rem; font-weight: bold; font-family: var(--font-mono); margin-bottom: 4px;">{{ risk_data.impact }}%</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">Sensitivity of targeted data</div>
-                </div>
-            </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-            
-            <div style="display: flex; flex-direction: column; gap: 24px;">
-                
-                <div class="glass-card" style="padding: 16px;">
-                    <div class="h6" style="margin-bottom: 16px;"><i data-lucide="eye" style="display: inline; width: 16px; margin-right: 6px;"></i> Behavioral Interpretation</div>
-                    <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: var(--text-primary);">
-                        <li style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                            <span style="color: var(--color-info);">●</span> 
-                            <strong>{{ honeytoken_stats.triggered }} employee(s)</strong> interacted with a honeytoken.
-                        </li>
-                        
-                        <li style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                            {% if destructive_count > 0 %}
-                                <span style="color: var(--color-danger);">●</span> 
-                                <strong>Destructive behavior detected</strong> ({{ destructive_count }} modification/deletion actions).
-                            {% else %}
-                                <span style="color: var(--color-success);">●</span> 
-                                No destructive behavior detected (read-only interactions).
-                            {% endif %}
-                        </li>
-
-                        {% if campaign.target_department == 'ALL' and dept_triggers %}
-                            <li style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
-                                <span style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 8px; display: block;">Result by department:</span>
-                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                    {% for dept, count in dept_triggers.items %}
-                                        <span class="badge" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle);">{{ dept }} : {{ count }}</span>
-                                    {% endfor %}
-                                </div>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </div>
-
-                <div class="glass-card" style="padding: 16px;">
-                    <div class="h6" style="margin-bottom: 16px;"><i data-lucide="pie-chart" style="display: inline; width: 16px; margin-right: 6px;"></i> Risk Distribution (Actions)</div>
-                    <div style="display: flex; gap: 16px;">
-                        <div style="flex: 1; text-align: center; background: rgba(var(--color-info-rgb), 0.05); border: 1px solid rgba(var(--color-info-rgb), 0.2); padding: 12px; border-radius: 8px;">
-                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--color-info);">{{ action_counts.OPEN }}</div>
-                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">OPEN</div>
-                        </div>
-                        <div style="flex: 1; text-align: center; background: rgba(var(--color-warning-rgb), 0.05); border: 1px solid rgba(var(--color-warning-rgb), 0.2); padding: 12px; border-radius: 8px;">
-                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--color-warning);">{{ action_counts.MODIFY }}</div>
-                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">MODIFY</div>
-                        </div>
-                        <div style="flex: 1; text-align: center; background: rgba(var(--color-danger-rgb), 0.05); border: 1px solid rgba(var(--color-danger-rgb), 0.2); padding: 12px; border-radius: 8px;">
-                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--color-danger);">{{ action_counts.DELETE }}</div>
-                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">DELETE</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+        <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1;">
             <div>
-                <div class="glass-card" style="height: 100%; border-top: 4px solid {{ reliability_color }}; padding: 16px;">
-                    <div class="h6" style="margin-bottom: 16px;"><i data-lucide="shield" style="display: inline; width: 16px; margin-right: 6px;"></i> Fiabilité de l'Évaluation</div>
-                    
-                    <div style="margin-bottom: 16px;">
-                        <span style="font-size: 0.8rem; color: var(--text-muted);">Coverage reliability:</span>
-                        <div style="font-size: 1.2rem; font-weight: bold; color: {{ reliability_color }}; margin-top: 4px;">{{ reliability_level }}</div>
-                    </div>
-
-                    <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
-                        Only <strong>{{ coverage_percent }}%</strong> of targeted employees had active agents. 
-                        {% if coverage_percent < 70 %}
-                            <br><br><span style="color: var(--color-warning);">The final risk score may not accurately reflect the overall organizational posture due to low visibility.</span>
-                        {% else %}
-                            <br><br><span style="color: var(--color-success);">The sample size is sufficient to consider this evaluation statistically relevant.</span>
-                        {% endif %}
-                    </p>
+                <div class="h3" style="margin-bottom: 8px; display: flex; align-items: center; gap: 12px; font-weight: 700; color: var(--text-primary);">
+                    <i data-lucide="activity" style="color: {{ global_risk.color }}; width: 28px; height: 28px;"></i> Posture de Sécurité
+                </div>
+                <p class="text-muted" style="margin-bottom: 20px; max-width: 400px; line-height: 1.5;">Évaluation normalisée en temps réel basée sur la moyenne pondérée des modules d'analyse comportementale actifs.</p>
+                
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    {% if 'HONEYTOKEN' in global_risk.weights %}
+                        <span class="badge" style="background: rgba(34, 211, 238, 0.1); color: #22d3ee; padding: 6px 12px; border-radius: 20px; font-weight: 500;">
+                            <i data-lucide="target" style="width: 14px; display: inline; margin-right: 4px;"></i> Leurre: {% widthratio global_risk.weights.HONEYTOKEN 1 100 %}%
+                        </span>
+                    {% endif %}
+                    {% if 'AI_LEAK' in global_risk.weights %}
+                        <span class="badge" style="background: rgba(167, 139, 250, 0.1); color: #a78bfa; padding: 6px 12px; border-radius: 20px; font-weight: 500;">
+                            <i data-lucide="brain-circuit" style="width: 14px; display: inline; margin-right: 4px;"></i> Shadow AI: {% widthratio global_risk.weights.AI_LEAK 1 100 %}%
+                        </span>
+                    {% endif %}
+                    {% if 'AUTH' in global_risk.weights %}
+                        <span class="badge" style="background: rgba(244, 114, 182, 0.1); color: #f472b6; padding: 6px 12px; border-radius: 20px; font-weight: 500;">
+                            <i data-lucide="key" style="width: 14px; display: inline; margin-right: 4px;"></i> ZK-Auth: {% widthratio global_risk.weights.AUTH 1 100 %}%
+                        </span>
+                    {% endif %}
                 </div>
             </div>
 
+            <div style="text-align: center;">
+                <div style="position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 4px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
+                    <svg style="position: absolute; top: -4px; left: -4px; width: 140px; height: 140px; transform: rotate(-90deg);">
+    <circle cx="70" cy="70" r="66" fill="none" stroke="{{ global_risk.color }}" stroke-width="4" stroke-dasharray="414" stroke-dashoffset="{{ global_risk.dashoffset }}" style="transition: stroke-dashoffset 1s ease-out;"></circle>
+</svg>
+                    <div>
+                        <div style="font-size: 3.5rem; font-weight: 800; color: {{ global_risk.color }}; line-height: 1; letter-spacing: -1px;">{{ global_risk.score }}</div>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; font-size: 1.1rem; font-weight: 600; color: {{ global_risk.color }}; letter-spacing: 2px; text-transform: uppercase;">{{ global_risk.label }}</div>
+            </div>
         </div>
     </div>
 
-    <div id="tab-overview" class="tab-content" style="display: none;">
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-            <div class="glass-card" style="padding: 16px;">
-                <div class="h6" style="margin-bottom: 16px;">Statut des Modules Déployés</div>
-                <div style="display: flex; flex-direction: column; gap: 16px;">
-                    {% for mod in modules %}
-                    <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: var(--radius-sm); border-left: 3px solid var(--color-primary);">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <strong style="font-size: 0.9rem;"><i data-lucide="{{ mod.icon }}" style="width:14px; margin-right:6px; color:var(--color-primary);"></i>{{ mod.name }}</strong>
-                            <span class="badge badge-success badge-dot">Actif</span>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 24px;">
+        
+        {% if 'HONEYTOKEN' in module_codes %}
+        <div class="glass-card" style="padding: 24px; border-radius: 16px; border-top: 3px solid {{ honeytoken_risk.color }}; transition: transform 0.2s; cursor: default;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="folder-open" style="color: #22d3ee;"></i> Honeytoken
+                </div>
+                <span style="font-weight: 800; font-size: 1.2rem; color: {{ honeytoken_risk.color }};">{{ honeytoken_risk.score }}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; color: var(--text-muted);"><span>Exposition</span><span>{{ honeytoken_risk.exposure }}%</span></div>
+                    <div style="width: 100%; background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px;"><div style="width: {{ honeytoken_risk.exposure }}%; height: 100%; background: #22d3ee; border-radius: 3px;"></div></div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; color: var(--text-muted);"><span>Comportement</span><span>{{ honeytoken_risk.behavior }}%</span></div>
+                    <div style="width: 100%; background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px;"><div style="width: {{ honeytoken_risk.behavior }}%; height: 100%; background: #22d3ee; border-radius: 3px;"></div></div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; color: var(--text-muted);"><span>Impact</span><span>{{ honeytoken_risk.impact }}%</span></div>
+                    <div style="width: 100%; background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px;"><div style="width: {{ honeytoken_risk.impact }}%; height: 100%; background: #22d3ee; border-radius: 3px;"></div></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if 'AI_LEAK' in module_codes %}
+        <div class="glass-card" style="padding: 24px; border-radius: 16px; border-top: 3px solid {{ ai_risk.color }}; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="brain-circuit" style="color: #a78bfa;"></i> Shadow AI
+                </div>
+                <span style="font-weight: 800; font-size: 1.2rem; color: {{ ai_risk.color }};">{{ ai_risk.score }}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; color: var(--text-muted);"><span>Exposition</span><span>{{ ai_risk.exposure }}%</span></div>
+                    <div style="width: 100%; background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px;"><div style="width: {{ ai_risk.exposure }}%; height: 100%; background: #a78bfa; border-radius: 3px;"></div></div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; color: var(--text-muted);"><span>Sensibilité</span><span>{{ ai_risk.sensitivity }}%</span></div>
+                    <div style="width: 100%; background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px;"><div style="width: {{ ai_risk.sensitivity }}%; height: 100%; background: #a78bfa; border-radius: 3px;"></div></div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; color: var(--text-muted);"><span>Confiance</span><span>{{ ai_risk.confidence }}%</span></div>
+                    <div style="width: 100%; background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px;"><div style="width: {{ ai_risk.confidence }}%; height: 100%; background: #a78bfa; border-radius: 3px;"></div></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if 'AUTH' in module_codes %}
+        <div class="glass-card" style="padding: 24px; border-radius: 16px; border-top: 3px solid {{ auth_risk.color }}; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="key" style="color: #f472b6;"></i> ZK-Auth
+                </div>
+                <span style="font-weight: 800; font-size: 1.2rem; color: {{ auth_risk.color }};">{{ auth_risk.score }}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; color: var(--text-muted);"><span>Vulnérabilité</span><span>{{ auth_risk.exposure }}%</span></div>
+                    <div style="width: 100%; background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px;"><div style="width: {{ auth_risk.exposure }}%; height: 100%; background: #f472b6; border-radius: 3px;"></div></div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; color: var(--text-muted);"><span>Risque de Fuite (Pwned)</span><span>{{ auth_risk.breach_risk }}%</span></div>
+                    <div style="width: 100%; background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px;"><div style="width: {{ auth_risk.breach_risk }}%; height: 100%; background: #f472b6; border-radius: 3px;"></div></div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; color: var(--text-muted);"><span>Non-Conformité</span><span>{{ auth_risk.compliance }}%</span></div>
+                    <div style="width: 100%; background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px;"><div style="width: {{ auth_risk.compliance }}%; height: 100%; background: #f472b6; border-radius: 3px;"></div></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+        
+        <div class="glass-card" style="padding: 24px; border-radius: 16px;">
+            <div style="margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; font-weight: 600;">
+                <i data-lucide="shield-alert" style="color: var(--text-primary);"></i> Intelligence sur les Menaces (Évidences)
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                {% if 'HONEYTOKEN' in module_codes %}
+                    <div style="display: flex; gap: 16px; align-items: flex-start; padding: 12px; background: rgba(34, 211, 238, 0.03); border-radius: 8px; border-left: 2px solid #22d3ee;">
+                        <i data-lucide="crosshair" style="color: #22d3ee; margin-top: 2px;"></i>
+                        <div>
+                            <div style="font-weight: 600; font-size: 0.95rem;">Interaction Cible Détectée</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;"><strong>{{ honeytoken_stats.triggered }} agent(s)</strong> ont interagi avec les fichiers piégés.</div>
+                            {% if destructive_count > 0 %}
+                                <div style="font-size: 0.85rem; color: var(--color-danger); margin-top: 4px; font-weight: 500;">⚠️ {{ destructive_count }} action(s) destructrice(s) (Modification/Suppression).</div>
+                            {% endif %}
                         </div>
-                        <div class="body-sm text-muted">{{ mod.description }}</div>
                     </div>
-                    {% endfor %}
-                </div>
-            </div>
+                {% endif %}
 
-            <div class="glass-card" style="border-color: rgba(var(--color-warning-rgb), 0.3); padding: 16px;">
-                <div class="h6" style="margin-bottom: 16px; color: var(--color-warning);"><i data-lucide="alert-triangle" style="width:16px; display:inline;"></i> Trous dans la raquette</div>
-                <p class="body-sm text-muted" style="margin-bottom: 16px;">Ces employés font partie du périmètre ciblé mais aucun agent n'est installé ou en ligne pour eux.</p>
-                <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; max-height: 200px; overflow-y: auto;">
-                    {% for emp in missing_employees %}
-                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between;">
-                            <span>{{ emp.full_name }}</span>
-                            <span style="color: var(--text-muted);">{{ emp.department }}</span>
-                        </li>
-                    {% empty %}
-                        <li style="color: var(--color-success); padding: 12px; background: rgba(var(--color-success-rgb), 0.1); border-radius: 4px; text-align: center;">Couverture à 100% !</li>
-                    {% endfor %}
-                </ul>
+                {% if 'AI_LEAK' in module_codes %}
+                    <div style="display: flex; gap: 16px; align-items: flex-start; padding: 12px; background: rgba(167, 139, 250, 0.03); border-radius: 8px; border-left: 2px solid #a78bfa;">
+                        <i data-lucide="database" style="color: #a78bfa; margin-top: 2px;"></i>
+                        <div>
+                            <div style="font-weight: 600; font-size: 0.95rem;">Fuites de Données Exfiltrées</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;"><strong>{{ ai_stats.total }} fuite(s)</strong> vers des IAs externes (Leader : {{ ai_stats.top_platform }}).</div>
+                            {% if ai_stats.critical > 0 %}
+                                <div style="font-size: 0.85rem; color: var(--color-danger); margin-top: 4px; font-weight: 500;">🚨 {{ ai_stats.critical }} fuite(s) critique(s) contenant du code, API ou données bancaires.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if 'AUTH' in module_codes %}
+                    <div style="display: flex; gap: 16px; align-items: flex-start; padding: 12px; background: rgba(244, 114, 182, 0.03); border-radius: 8px; border-left: 2px solid #f472b6;">
+                        <i data-lucide="unlock" style="color: #f472b6; margin-top: 2px;"></i>
+                        <div>
+                            <div style="font-weight: 600; font-size: 0.95rem;">Bilan d'Authentification</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;"><strong>{{ azk_stats.total_audits }} audit(s)</strong> cryptographique(s) terminés.</div>
+                            {% if azk_stats.breached_count > 0 %}
+                                <div style="font-size: 0.85rem; color: var(--color-danger); margin-top: 4px; font-weight: 500;">💥 {{ azk_stats.breached_count }} mot(s) de passe compromis identifié(s).</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if not honeytoken_stats.triggered and ai_stats.total == 0 %}
+                    <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+                        <i data-lucide="shield-check" style="width: 40px; height: 40px; opacity: 0.3; margin-bottom: 12px;"></i>
+                        <p>Aucune menace critique active détectée.</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
+
+        <div class="glass-card" style="padding: 24px; border-radius: 16px; display: flex; flex-direction: column; justify-content: center; text-align: center;">
+            <div style="margin-bottom: 20px;">
+                <i data-lucide="radar" style="width: 48px; height: 48px; color: {{ reliability_color }}; opacity: 0.8;"></i>
+            </div>
+            <div style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Fiabilité du Score</div>
+            <div style="font-size: 1.8rem; font-weight: bold; color: {{ reliability_color }}; margin: 8px 0;">{{ reliability_level }}</div>
+            
+            <div style="margin-top: 16px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; background: rgba(0,0,0,0.15); padding: 16px; border-radius: 8px;">
+                Déploiement sur <strong>{{ coverage_percent }}%</strong> du parc.
+                {% if coverage_percent < 70 %}
+                    <div style="color: var(--color-warning); margin-top: 8px;">L'échantillon de données est insuffisant. Le risque réel peut être supérieur.</div>
+                {% else %}
+                    <div style="color: var(--color-success); margin-top: 8px;">Visibilité excellente. Confiance statistique validée.</div>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
+</div>
+
+<div id="tab-overview" class="tab-content" style="display: none; animation: fadeIn 0.5s ease-out;">
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+        
+        <div class="glass-card" style="padding: 24px; border-radius: 16px;">
+            <div class="h5" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                <i data-lucide="server" style="color: var(--color-primary);"></i> Matrice des Capteurs Actifs
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                {% for mod in modules %}
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 12px; position: relative; overflow: hidden; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                    
+                    <div style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--color-success);"></div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="background: rgba(var(--color-primary-rgb), 0.15); padding: 8px; border-radius: 8px;">
+                                <i data-lucide="{{ mod.icon }}" style="width: 18px; height: 18px; color: var(--color-primary);"></i>
+                            </div>
+                            <strong style="font-size: 1rem; color: var(--text-primary);">{{ mod.name }}</strong>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 4px 10px; border-radius: 20px;">
+                            <div style="width: 6px; height: 6px; background: var(--color-success); border-radius: 50%; box-shadow: 0 0 8px var(--color-success); animation: pulse 2s infinite;"></div>
+                            <span style="font-size: 0.75rem; color: var(--color-success); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">En ligne</span>
+                        </div>
+                    </div>
+                    
+                    <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; padding-left: 2px;">
+                        {{ mod.description }}
+                    </div>
+                </div>
+                {% empty %}
+                <div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);">
+                    <i data-lucide="server-off" style="width: 40px; height: 40px; opacity: 0.3; margin-bottom: 12px;"></i>
+                    <p>Aucun module n'est déployé dans cette campagne.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="glass-card" style="padding: 24px; border-radius: 16px; border-top: 4px solid var(--color-warning); background: linear-gradient(180deg, rgba(var(--color-warning-rgb), 0.05) 0%, transparent 100%);">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="h6" style="color: var(--color-warning); display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="scan-line" style="width:18px;"></i> Angles Morts (Blind Spots)
+                </div>
+                <span style="font-size: 1.2rem; font-weight: bold; color: var(--text-primary);">{{ missing_employees|length }}</span>
+            </div>
+            
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">
+                Ces employés appartiennent au périmètre cible, mais leur agent EDR est hors-ligne ou désinstallé. L'audit est aveugle sur ces machines.
+            </p>
+            
+            <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; max-height: 300px; overflow-y: auto; padding-right: 8px;" class="custom-scrollbar">
+                {% for emp in missing_employees %}
+                    <li style="padding: 12px; margin-bottom: 8px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: bold; font-size: 0.8rem;">
+                                {{ emp.full_name|slice:":1" }}
+                            </div>
+                            <span style="font-weight: 500; color: var(--text-primary);">{{ emp.full_name }}</span>
+                        </div>
+                        <span style="background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color: var(--text-muted);">
+                            {{ emp.department }}
+                        </span>
+                    </li>
+                {% empty %}
+                    <li style="padding: 24px; text-align: center; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px;">
+                        <i data-lucide="shield-check" style="width: 32px; height: 32px; color: var(--color-success); margin-bottom: 8px;"></i>
+                        <div style="color: var(--color-success); font-weight: 600; font-size: 1rem;">Couverture parfaite !</div>
+                        <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">100% du périmètre est sous surveillance active.</div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+    </div>
+</div>
+
+<style>
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    /* Scrollbar personnalisée pour la liste des employés */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+</style>
 
     {% if 'HONEYTOKEN' in module_codes %}
-    <div id="tab-honeytoken" class="tab-content" style="display: none;">
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
-            <div class="glass-card" style="text-align: center; padding: 24px;">
-                <div style="font-size: 2.5rem; font-weight: bold; color: var(--color-primary);">{{ honeytoken_stats.deployed_real }}<span style="font-size: 1.2rem; color: var(--text-muted)">/{{ honeytoken_stats.expected }}</span></div>
-                <div class="body-sm text-muted">Leurres physiquement créés</div>
+    <div id="tab-honeytoken" class="tab-content" style="display: none; animation: fadeIn 0.5s ease-out;">
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px;">
+            <div class="glass-card" style="text-align: center; padding: 24px; border-top: 3px solid #22d3ee; background: linear-gradient(180deg, rgba(34, 211, 238, 0.05) 0%, transparent 100%);">
+                <i data-lucide="file-check-2" style="color: #22d3ee; width: 24px; height: 24px; margin-bottom: 12px;"></i>
+                <div style="font-size: 2.5rem; font-weight: 800; color: #22d3ee;">
+                    {{ honeytoken_stats.deployed_real }}<span style="font-size: 1.2rem; color: var(--text-muted); opacity: 0.5;">/{{ honeytoken_stats.expected }}</span>
+                </div>
+                <div style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase;">Leurres Déployés</div>
             </div>
-            <div class="glass-card" style="text-align: center; padding: 24px; {% if honeytoken_stats.triggered > 0 %}border-color: var(--color-danger);{% endif %}">
-                <div style="font-size: 2.5rem; font-weight: bold; color: {% if honeytoken_stats.triggered > 0 %}var(--color-danger){% else %}var(--text-muted){% endif %};">{{ honeytoken_stats.triggered }}</div>
-                <div class="body-sm text-muted">Pièges Déclenchés</div>
+            <div class="glass-card" style="text-align: center; padding: 24px; border-top: 3px solid {% if honeytoken_stats.triggered > 0 %}var(--color-danger){% else %}rgba(255,255,255,0.1){% endif %}; background: linear-gradient(180deg, {% if honeytoken_stats.triggered > 0 %}rgba(244, 63, 94, 0.05){% else %}transparent{% endif %} 0%, transparent 100%);">
+                <i data-lucide="flame" style="color: {% if honeytoken_stats.triggered > 0 %}var(--color-danger){% else %}var(--text-muted){% endif %}; width: 24px; height: 24px; margin-bottom: 12px;"></i>
+                <div style="font-size: 2.5rem; font-weight: 800; color: {% if honeytoken_stats.triggered > 0 %}var(--color-danger){% else %}var(--text-muted){% endif %};">
+                    {{ honeytoken_stats.triggered }}
+                </div>
+                <div style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase;">Pièges Déclenchés</div>
             </div>
-            <div class="glass-card" style="text-align: center; padding: 24px;">
-                <div style="font-size: 2.5rem; font-weight: bold; color: var(--color-success);">{{ honeytoken_stats.safe }}</div>
-                <div class="body-sm text-muted">Fichiers Intacts</div>
+            <div class="glass-card" style="text-align: center; padding: 24px; border-top: 3px solid var(--color-success); background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, transparent 100%);">
+                <i data-lucide="shield-check" style="color: var(--color-success); width: 24px; height: 24px; margin-bottom: 12px;"></i>
+                <div style="font-size: 2.5rem; font-weight: 800; color: var(--color-success);">
+                    {{ honeytoken_stats.safe }}
+                </div>
+                <div style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase;">Fichiers Intacts</div>
             </div>
         </div>
         
-        <div class="glass-card">
-            <div class="h6" style="margin-bottom: 16px;">Détail des Leurres Déployés</div>
-            <div class="data-table-wrap">
-                <table class="data-table">
-                    <thead><tr><th>Fichier Cible</th><th>Machine Assignée</th><th>Emplacement</th><th>Gravité</th><th>Statut Actuel</th></tr></thead>
+        <div class="glass-card" style="border-radius: 16px; overflow: hidden;">
+            <div style="padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;">
+                <div class="h6" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="list-tree" style="color: #22d3ee; width: 18px;"></i> Cartographie des Leurres
+                </div>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Cliquez sur un fichier compromis pour voir la timeline</span>
+            </div>
+            
+            <div style="width: 100%; overflow-x: auto;" class="custom-scrollbar">
+                <table class="data-table" style="width: 100%; min-width: 900px; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: rgba(0,0,0,0.2);">
+                            <th style="padding: 16px 24px; text-align: left; font-size: 0.8rem; color: var(--text-muted);">Cible & Extension</th>
+                            <th style="padding: 16px 24px; text-align: left; font-size: 0.8rem; color: var(--text-muted);">Machine</th>
+                            <th style="padding: 16px 24px; text-align: left; font-size: 0.8rem; color: var(--text-muted);">Chemin Absolu</th>
+                            <th style="padding: 16px 24px; text-align: center; font-size: 0.8rem; color: var(--text-muted);">Sensibilité</th>
+                            <th style="padding: 16px 24px; text-align: right; font-size: 0.8rem; color: var(--text-muted);">État Opérationnel</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {% for instance in instances %}
-                        <tr>
-                            <td style="font-weight: 500;">
-                                <i data-lucide="file-text" style="width: 14px; margin-right: 4px; color: var(--text-muted); display: inline;"></i>
-                                {{ instance.template.file_name }}.{{ instance.template.file_extension }}
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s; {% if instance.triggered %}cursor: pointer;{% endif %}" 
+                            onmouseover="this.style.background='rgba(255,255,255,0.04)'" 
+                            onmouseout="this.style.background='transparent'"
+                            {% if instance.triggered %}onclick="openTimelineModal('{{ instance.id }}')"{% endif %}>
+                            
+                            <td style="padding: 16px 24px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="background: rgba(34, 211, 238, 0.1); padding: 8px; border-radius: 8px;">
+                                        <i data-lucide="file-{{ instance.template.file_extension|lower }}" style="width: 16px; color: #22d3ee;"></i>
+                                    </div>
+                                    <span style="font-weight: 600; color: {% if instance.triggered %}var(--color-danger){% else %}var(--text-primary){% endif %}; font-size: 0.95rem;">
+                                        {{ instance.template.file_name }}.<span style="opacity: 0.5;">{{ instance.template.file_extension }}</span>
+                                    </span>
+                                </div>
                             </td>
-                            <td class="mono-text" style="font-size: 0.85rem;">{{ instance.agent.hostname }}</td>
-                            <td style="font-size: 0.8rem; color: var(--text-muted);" title="{{ instance.file_path }}">
+                            
+                            <td style="padding: 16px 24px;">
+                                <span class="mono-text" style="font-size: 0.85rem; color: var(--text-muted);">
+                                    {{ instance.agent.hostname }}
+                                </span>
+                            </td>
+                            
+                            <td style="padding: 16px 24px; max-width: 300px;">
                                 {% if "En attente" in instance.file_path %}
-                                    <span style="color: var(--color-warning);">En attente de l'Agent...</span>
+                                    <div style="color: var(--color-warning); font-size: 0.8rem; background: rgba(var(--color-warning-rgb), 0.1); padding: 4px 8px; border-radius: 4px; display: inline-block;">
+                                        Jitter en cours...
+                                    </div>
                                 {% else %}
-                                    {{ instance.template.get_target_directory_display }}
+                                    <div class="mono-text" style="font-size: 0.75rem; color: var(--text-muted); word-break: break-all; background: rgba(0,0,0,0.2); padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);">
+                                        {{ instance.file_path }}
+                                    </div>
                                 {% endif %}
                             </td>
-                            <td>
-                                <span class="badge" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle);">Lvl {{ instance.template.weight }}</span>
+                            
+                            <td style="padding: 16px 24px; text-align: center;">
+                                <span style="font-size: 0.8rem; font-weight: bold; color: var(--text-primary); background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px;">
+                                    Lvl {{ instance.template.data_sensitivity }}
+                                </span>
                             </td>
-                            <td>
+                            
+                            <td style="padding: 16px 24px; text-align: right;">
                                 {% if instance.triggered %}
-                                    <span class="badge badge-danger badge-dot" title="Déclenché le {{ instance.triggered_at|date:'d/m/Y H:i' }}">Déclenché</span>
+                                    <span class="badge badge-danger badge-dot" style="padding: 6px 12px;">Compromis</span>
                                 {% else %}
-                                    <span class="badge badge-success badge-dot">Intact</span>
+                                    <span class="badge badge-success badge-dot" style="padding: 6px 12px;">Intact</span>
                                 {% endif %}
                             </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Aucun leurre n'a été généré pour ce périmètre.</td></tr>
+                        <tr><td colspan="5" style="text-align:center; padding: 40px; color:var(--text-muted);">Aucun leurre généré.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-    </div>
-    {% endif %}
-
-    {% if 'AI_LEAK' in module_codes %}
-    <div id="tab-shadow-ai" class="tab-content" style="display: none;">
         
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
-            <div class="glass-card" style="padding: 20px; border-left: 4px solid var(--color-warning);">
-                <div class="info-card-title text-muted" style="font-size: 0.8rem; margin-bottom: 8px;">TOTAL DES FUITES DÉTECTÉES</div>
-                <div style="font-size: 2rem; font-weight: bold; color: var(--color-warning);">{{ ai_stats.total }}</div>
-            </div>
-            
-            <div class="glass-card" style="padding: 20px; border-left: 4px solid var(--color-danger);">
-                <div class="info-card-title text-muted" style="font-size: 0.8rem; margin-bottom: 8px;">FUITES CRITIQUES (Sévérité 4-5)</div>
-                <div style="font-size: 2rem; font-weight: bold; color: var(--color-danger);">{{ ai_stats.critical }}</div>
-            </div>
-
-            <div class="glass-card" style="padding: 20px; border-left: 4px solid var(--violet-bright, #a78bfa);">
-                <div class="info-card-title text-muted" style="font-size: 0.8rem; margin-bottom: 8px;">PLATEFORME IA N°1</div>
-                <div style="font-size: 1.5rem; font-weight: bold; color: var(--violet-bright, #a78bfa); margin-top: 5px;">{{ ai_stats.top_platform }}</div>
+        <div id="timelineModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; animation: fadeIn 0.3s;">
+            <div class="glass-card" style="width: 500px; max-width: 90%; border-radius: 16px; border-top: 4px solid var(--color-danger); position: relative; overflow: hidden;">
+                <div style="padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
+                    <button onclick="closeTimelineModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem;">✕</button>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <i data-lucide="search" style="color: var(--color-danger); width: 24px; height: 24px;"></i>
+                        <h3 class="h5" id="modalFilename" style="margin: 0; color: var(--text-primary);">Fichier.txt</h3>
+                    </div>
+                    <div id="modalPath" class="mono-text" style="font-size: 0.75rem; color: var(--text-muted); word-break: break-all;">C:\...</div>
+                </div>
+                
+                <div style="padding: 24px; max-height: 60vh; overflow-y: auto;" class="custom-scrollbar">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">Séquence d'événements (Kill Chain)</div>
+                    
+                    <div id="timelineContainer" style="position: relative; padding-left: 20px; border-left: 2px solid rgba(255,255,255,0.1);">
+                        </div>
+                </div>
             </div>
         </div>
 
-        <div class="glass-card">
-            <div class="h5" style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                <i data-lucide="shield-alert" style="color: var(--color-danger);"></i> Historique des Incidents (Privacy by Design)
-            </div>
-            <p class="body-sm text-muted" style="margin-bottom: 20px;">Conformément aux normes RGPD, le contenu textuel n'est pas stocké. Seules les métadonnées de l'infraction sont conservées.</p>
+        <script>
+            // On précharge les données de toutes les instances depuis Django en JSON
+            const honeytokenData = {
+                {% for instance in instances %}
+                "{{ instance.id }}": {
+                    "name": "{{ instance.template.file_name }}.{{ instance.template.file_extension }}",
+                    "path": "{{ instance.file_path|escapejs }}",
+                    "created": "{{ instance.created_at|date:'d/m/Y H:i:s' }}",
+                    "actions": {{ instance.action_sequence|safe|default:"[]" }}
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            };
 
-            <div class="data-table-wrap">
-                <table class="data-table">
+            function openTimelineModal(instanceId) {
+                const data = honeytokenData[instanceId];
+                if (!data) return;
+
+                document.getElementById('modalFilename').innerText = data.name;
+                document.getElementById('modalPath').innerText = data.path;
+                
+                const timeline = document.getElementById('timelineContainer');
+                timeline.innerHTML = ''; // Nettoyer
+
+                // Événement 1 : Création (Toujours présent)
+                timeline.innerHTML += createTimelineItem('file-plus', 'var(--text-muted)', 'Fichier généré sur le disque', data.created);
+
+                // Événements d'action (S'ils existent)
+                if (data.actions && Array.isArray(data.actions)) {
+                    data.actions.forEach(act => {
+                        // Rétrocompatibilité avec les anciennes données string ("OPEN")
+                        let actionName = typeof act === 'string' ? act : act.action;
+                        let actionTime = typeof act === 'string' ? "Heure inconnue" : act.time;
+                        
+                        let color = '#22d3ee'; // OPEN (Bleu)
+                        let icon = 'eye';
+                        let desc = "Fichier ouvert/lu";
+
+                        if (actionName === 'MODIFY') {
+                            color = 'var(--color-warning)'; // Jaune
+                            icon = 'edit-3';
+                            desc = "Contenu modifié ou altéré";
+                        } else if (actionName === 'DELETE') {
+                            color = 'var(--color-danger)'; // Rouge
+                            icon = 'trash-2';
+                            desc = "Fichier supprimé du disque";
+                        }
+
+                        timeline.innerHTML += createTimelineItem(icon, color, desc, actionTime, actionName);
+                    });
+                }
+
+                document.getElementById('timelineModal').style.display = 'flex';
+                lucide.createIcons(); // Rafraîchir les icônes dans la modal
+            }
+
+            function closeTimelineModal() {
+                document.getElementById('timelineModal').style.display = 'none';
+            }
+
+            function createTimelineItem(icon, color, text, time, badgeText="") {
+                let badge = badgeText ? `<span style="background: ${color}20; border: 1px solid ${color}50; color: ${color}; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">${badgeText}</span>` : "";
+                
+                return `
+                <div style="position: relative; margin-bottom: 24px;">
+                    <div style="position: absolute; left: -29px; top: 0; background: #13131A; border: 2px solid ${color}; width: 16px; height: 16px; border-radius: 50%;"></div>
+                    <div style="display: flex; gap: 12px; margin-top: -4px;">
+                        <i data-lucide="${icon}" style="color: ${color}; width: 18px; margin-top: 2px;"></i>
+                        <div>
+                            <div style="color: var(--text-primary); font-size: 0.95rem; font-weight: 500;">${text} ${badge}</div>
+                            <div class="mono-text" style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">${time}</div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+        </script>
+    </div>
+{% endif %}
+
+{% if 'AI_LEAK' in module_codes %}
+    <div id="tab-shadow-ai" class="tab-content" style="display: none; animation: fadeIn 0.5s ease-out;">
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px;">
+            <div class="glass-card" style="text-align: center; padding: 24px; border-top: 3px solid var(--color-warning); background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, transparent 100%);">
+                <i data-lucide="database-zap" style="color: var(--color-warning); width: 24px; height: 24px; margin-bottom: 12px;"></i>
+                <div style="font-size: 2.5rem; font-weight: 800; color: var(--color-warning); line-height: 1;">{{ ai_stats.total }}</div>
+                <div style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">Fuites Détectées</div>
+            </div>
+            
+            <div class="glass-card" style="text-align: center; padding: 24px; border-top: 3px solid {% if ai_stats.critical > 0 %}var(--color-danger){% else %}rgba(255,255,255,0.1){% endif %}; background: linear-gradient(180deg, {% if ai_stats.critical > 0 %}rgba(244, 63, 94, 0.05){% else %}transparent{% endif %} 0%, transparent 100%);">
+                <i data-lucide="alert-triangle" style="color: {% if ai_stats.critical > 0 %}var(--color-danger){% else %}var(--text-muted){% endif %}; width: 24px; height: 24px; margin-bottom: 12px;"></i>
+                <div style="font-size: 2.5rem; font-weight: 800; color: {% if ai_stats.critical > 0 %}var(--color-danger){% else %}var(--text-muted){% endif %}; line-height: 1;">{{ ai_stats.critical }}</div>
+                <div style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">Fuites Critiques (Sév. 4-5)</div>
+            </div>
+
+            <div class="glass-card" style="text-align: center; padding: 24px; border-top: 3px solid #a78bfa; background: linear-gradient(180deg, rgba(167, 139, 250, 0.05) 0%, transparent 100%);">
+                <i data-lucide="bot" style="color: #a78bfa; width: 24px; height: 24px; margin-bottom: 12px;"></i>
+                <div style="font-size: 2rem; font-weight: 800; color: #a78bfa; line-height: 1.2;">{{ ai_stats.top_platform }}</div>
+                <div style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">Plateforme IA N°1</div>
+            </div>
+        </div>
+
+        <div class="glass-card" style="border-radius: 16px; overflow: hidden;">
+            
+            <div style="padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <div class="h5" style="margin: 0 0 12px 0; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i data-lucide="brain-circuit" style="color: #a78bfa; width: 22px;"></i> Historique d'Exfiltration DLP
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">Cliquez sur un incident pour voir le rapport détaillé</span>
+                </div>
+                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 8px 12px; border-radius: 8px; color: var(--text-muted); font-size: 0.85rem;">
+                    <i data-lucide="shield-check" style="color: var(--color-success); width: 16px;"></i>
+                    <span><strong>Privacy by Design :</strong> Contenu textuel non stocké. Seule l'empreinte comportementale est conservée.</span>
+                </div>
+            </div>
+
+            <div style="width: 100%; overflow-x: auto;" class="custom-scrollbar">
+                <table class="data-table" style="width: 100%; min-width: 900px; border-collapse: collapse;">
                     <thead>
-                        <tr>
-                            <th>Horodatage</th>
-                            <th>Agent / Employé</th>
-                            <th>Plateforme IA</th>
-                            <th>Type de Donnée Détectée</th>
-                            <th>Volume (Caractères)</th>
-                            <th>Sévérité</th>
+                        <tr style="background: rgba(0,0,0,0.2);">
+                            <th style="padding: 16px 24px; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Horodatage</th>
+                            <th style="padding: 16px 24px; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Cible & Plateforme</th>
+                            <th style="padding: 16px 24px; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Signature (Type de donnée)</th>
+                            <th style="padding: 16px 24px; text-align: center; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Évaluation</th>
+                            <th style="padding: 16px 24px; text-align: right; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Analyse</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for alert in ai_alerts %}
-                        <tr>
-                            <td class="text-muted" style="font-size: 0.8rem;">{{ alert.timestamp|date:"d M Y - H:i:s" }}</td>
-                            <td style="font-weight: 500;">{{ alert.agent.hostname }} <br> <span style="font-size: 0.75rem; color: var(--text-muted);">{{ alert.agent.employee.department }}</span></td>
-                            <td><span class="badge" style="background: rgba(var(--violet-bright-rgb, 138,43,226), 0.1); color: var(--violet-bright, #a78bfa);">{{ alert.ai_platform }}</span></td>
-                            <td class="mono-text" style="font-weight: bold; color: var(--text-primary);">{{ alert.data_type_detected }}</td>
-                            <td>{{ alert.clipboard_length }}</td>
-                            <td>
-                                {% if alert.severity == 5 %}
-                                    <span class="badge" style="background: rgba(var(--color-danger-rgb), 0.1); color: var(--color-danger);">5 - CRITIQUE</span>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s; cursor: pointer;" 
+                            onmouseover="this.style.background='rgba(255,255,255,0.04)'" 
+                            onmouseout="this.style.background='transparent'"
+                            onclick="openAIModal('{{ alert.id }}')">
+                            
+                            <td style="padding: 16px 24px;">
+                                <div style="display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.85rem;">
+                                    <i data-lucide="clock" style="width: 14px; opacity: 0.7;"></i>
+                                    {{ alert.timestamp|date:"d/m/Y - H:i" }}
+                                </div>
+                            </td>
+                            
+                            <td style="padding: 16px 24px;">
+                                <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem; margin-bottom: 4px;">
+                                    {{ alert.agent.hostname }}
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">{{ alert.agent.employee.department }}</span>
+                                    <span style="color: var(--text-muted);">➔</span>
+                                    <span style="font-size: 0.75rem; font-weight: bold; color: #a78bfa;">{{ alert.platform|default:alert.ai_platform }}</span>
+                                </div>
+                            </td>
+                            
+                            <td style="padding: 16px 24px;">
+                                <div class="mono-text" style="font-weight: bold; color: var(--text-primary); font-size: 0.85rem; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px;" title="{{ alert.data_type_detected }}">
+                                    {{ alert.data_type_detected }}
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                    Vol: {{ alert.clipboard_length }} caractères
+                                </div>
+                            </td>
+                            
+                            <td style="padding: 16px 24px; text-align: center;">
+                                {% if alert.severity >= 5 %}
+                                    <span class="badge" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); padding: 4px 10px;">CRITIQUE (5)</span>
                                 {% elif alert.severity == 4 %}
-                                    <span class="badge" style="background: rgba(var(--color-warning-rgb), 0.1); color: var(--color-warning);">4 - ÉLEVÉE</span>
+                                    <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 10px;">ÉLEVÉE (4)</span>
                                 {% elif alert.severity == 3 %}
-                                    <span class="badge" style="background: rgba(var(--color-info-rgb), 0.1); color: var(--color-info);">3 - MODÉRÉE</span>
+                                    <span class="badge" style="background: rgba(34, 211, 238, 0.15); color: #22d3ee; border: 1px solid rgba(34, 211, 238, 0.3); padding: 4px 10px;">MODÉRÉE (3)</span>
                                 {% else %}
-                                    <span class="badge" style="background: rgba(255,255,255,0.1); color: var(--text-muted);">{{ alert.severity }} - FAIBLE</span>
+                                    <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid rgba(255, 255, 255, 0.1); padding: 4px 10px;">FAIBLE ({{ alert.severity }})</span>
                                 {% endif %}
                             </td>
+                            
+                            <td style="padding: 16px 24px; text-align: right;">
+                                <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #a78bfa; background: rgba(167, 139, 250, 0.1); padding: 6px 12px; border-radius: 20px;">
+                                    <i data-lucide="file-search" style="width: 14px;"></i> Rapport
+                                </div>
+                            </td>
+                            
                         </tr>
                         {% empty %}
-                        <tr>
-                            <td colspan="6" style="text-align: center; padding: 30px; color: var(--text-muted);">
-                                <i data-lucide="check-circle" style="width: 32px; height: 32px; margin-bottom: 10px; opacity: 0.5;"></i><br>
-                                Aucune fuite de données détectée pour le moment.
-                            </td>
-                        </tr>
+                        <tr><td colspan="5" style="text-align: center; padding: 50px; color: var(--text-muted);">Aucune fuite détectée.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-    </div>
-    {% endif %}
 
-    <div id="tab-agents" class="tab-content" style="display: none;">
-        <div class="glass-card" style="padding:0; overflow: hidden;">
-            <table class="data-table">
+        <div id="aiModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); z-index: 9999; justify-content: center; align-items: center; animation: fadeIn 0.3s;">
+            
+            <div class="glass-card" style="width: 750px; max-width: 95%; border-radius: 16px; position: relative; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                
+                <div id="aiModalHeader" style="padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px;">
+                            <i data-lucide="shield-alert" style="color: var(--text-primary); width: 24px; height: 24px;"></i>
+                        </div>
+                        <div>
+                            <h3 class="h5" style="margin: 0; color: var(--text-primary);">Rapport d'Incident DLP</h3>
+                            <div id="aiModalTime" class="mono-text" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Date et Heure</div>
+                        </div>
+                    </div>
+                    <button onclick="closeAIModal()" style="background: rgba(255,255,255,0.1); border: none; color: var(--text-muted); cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">✕</button>
+                </div>
+                
+                <div style="padding: 24px;">
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; margin-bottom: 24px;">
+                        
+                        <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.02); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Source (Agent)</div>
+                                <div id="aiModalAgent" style="font-weight: 600; font-size: 1rem; color: var(--text-primary);">Hostname</div>
+                                <div id="aiModalDept" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Département</div>
+                            </div>
+                            <div style="padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05);">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Destination</div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i data-lucide="bot" style="color: #a78bfa; width: 18px;"></i>
+                                    <span id="aiModalPlatform" style="font-weight: 600; font-size: 1rem; color: #a78bfa;">Plateforme</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.02); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Signature Détectée</div>
+                                <div id="aiModalDataTypes" class="mono-text" style="font-size: 0.85rem; color: var(--text-primary); background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); word-break: break-all; min-height: 48px;">
+                                    Type de donnée
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 16px;">
+                                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-muted);">
+                                    <i data-lucide="hard-drive" style="width: 14px;"></i>
+                                    <span id="aiModalLength">Volume: 0 caractères</span>
+                                </div>
+                                <div id="aiModalConfidence" style="font-size: 0.8rem; color: var(--color-success); font-weight: bold; background: rgba(16, 185, 129, 0.1); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                                    Confiance: 0/5
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="cpu" style="width: 16px;"></i> Justifications du Blocage (IA Engine)
+                        </div>
+                        <ul id="aiModalReasons" style="list-style-type: none; padding-left: 0; margin: 0; font-size: 0.85rem; color: var(--text-primary); line-height: 1.6;">
+                            </ul>
+                    </div>
+
+                    <div style="margin-top: 24px; text-align: center; font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px;">
+                        <i data-lucide="shield" style="width: 12px; display: inline; margin-bottom: -2px;"></i> Le texte copié original a été purgé selon la politique de confidentialité (RGPD).
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Préchargement des données IA
+            const aiAlertData = {
+                {% for alert in ai_alerts %}
+                "{{ alert.id }}": {
+                    "timestamp": "{{ alert.timestamp|date:'d/m/Y - H:i:s' }}",
+                    "agent": "{{ alert.agent.hostname }}",
+                    "dept": "{{ alert.agent.employee.department }}",
+                    "platform": "{{ alert.platform|default:alert.ai_platform }}",
+                    "length": "{{ alert.clipboard_length }}",
+                    "dataType": "{{ alert.data_type_detected }}",
+                    "severity": {{ alert.severity }},
+                    "confidence": {{ alert.confidence }},
+                    "reasons": {{ alert.reasons|safe|default:"[]" }}
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            };
+
+            function openAIModal(id) {
+                const data = aiAlertData[id];
+                if (!data) return;
+
+                // Mise à jour des textes simples
+                document.getElementById('aiModalTime').innerText = data.timestamp;
+                document.getElementById('aiModalAgent').innerText = data.agent;
+                document.getElementById('aiModalDept').innerText = data.dept;
+                document.getElementById('aiModalPlatform').innerText = data.platform;
+                
+                // Formatage des Data Types (on remplace les "+" par de jolis badges)
+                const types = data.dataType.split('+').map(t => t.trim());
+                let typesHtml = types.map(t => `<span style="display:inline-block; background:rgba(167, 139, 250, 0.15); border:1px solid rgba(167, 139, 250, 0.3); color:#a78bfa; padding:2px 8px; border-radius:4px; margin:2px 4px 2px 0;">${t}</span>`).join('');
+                document.getElementById('aiModalDataTypes').innerHTML = typesHtml;
+
+                document.getElementById('aiModalLength').innerText = `Volume : ${data.length} caractères interceptés`;
+                
+                // Confiance
+                const confEl = document.getElementById('aiModalConfidence');
+                confEl.innerText = `Indice de Confiance : ${data.confidence}/5`;
+                confEl.style.color = data.confidence >= 4 ? 'var(--color-success)' : 'var(--color-warning)';
+
+                // En-tête dynamique (Couleur selon sévérité)
+                const header = document.getElementById('aiModalHeader');
+                let color = 'var(--text-primary)';
+                let bgGradient = 'rgba(0,0,0,0.2)';
+                if (data.severity >= 5) { color = '#f43f5e'; bgGradient = 'linear-gradient(90deg, rgba(244,63,94,0.15) 0%, rgba(0,0,0,0.2) 100%)'; }
+                else if (data.severity == 4) { color = '#f59e0b'; bgGradient = 'linear-gradient(90deg, rgba(245,158,11,0.15) 0%, rgba(0,0,0,0.2) 100%)'; }
+                else if (data.severity == 3) { color = '#22d3ee'; bgGradient = 'linear-gradient(90deg, rgba(34,211,238,0.15) 0%, rgba(0,0,0,0.2) 100%)'; }
+                
+                header.style.background = bgGradient;
+                header.style.borderTop = `4px solid ${color}`;
+
+                // Liste des raisons
+                const ul = document.getElementById('aiModalReasons');
+                ul.innerHTML = '';
+                if (data.reasons && data.reasons.length > 0) {
+                    data.reasons.forEach(r => {
+                        ul.innerHTML += `<li style="margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 6px;">
+                            <i data-lucide="chevron-right" style="color: ${color}; width: 14px; margin-top: 2px;"></i>
+                            <span>${r}</span>
+                        </li>`;
+                    });
+                } else {
+                    ul.innerHTML = `<li style="color: var(--text-muted); opacity: 0.7;">Détection algorithmique standard. Aucun facteur aggravant spécifique remonté.</li>`;
+                }
+
+                // Affichage final
+                document.getElementById('aiModal').style.display = 'flex';
+                lucide.createIcons();
+            }
+
+            function closeAIModal() {
+                document.getElementById('aiModal').style.display = 'none';
+            }
+        </script>
+    </div>
+{% endif %}
+
+    {% if 'AUTH' in module_codes %}
+    <div id="tab-azk" class="tab-content" style="display: none; animation: fadeIn 0.5s ease-out;">
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px;">
+            <div class="glass-card" style="text-align: center; padding: 24px; border-top: 3px solid #f472b6; background: linear-gradient(180deg, rgba(244, 114, 182, 0.05) 0%, transparent 100%); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                <i data-lucide="key" style="color: #f472b6; width: 24px; height: 24px; margin-bottom: 12px;"></i>
+                <div style="font-size: 2.5rem; font-weight: 800; color: #f472b6; line-height: 1;">
+                    {{ azk_stats.avg_entropy }} <span style="font-size: 1.2rem; opacity: 0.6;">bits</span>
+                </div>
+                <div style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">Entropie Moyenne</div>
+            </div>
+            
+            <div class="glass-card" style="text-align: center; padding: 24px; border-top: 3px solid {% if azk_stats.breached_count > 0 %}var(--color-danger){% else %}var(--color-success){% endif %}; background: linear-gradient(180deg, {% if azk_stats.breached_count > 0 %}rgba(244, 63, 94, 0.05){% else %}rgba(16, 185, 129, 0.05){% endif %} 0%, transparent 100%); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                <i data-lucide="skull" style="color: {% if azk_stats.breached_count > 0 %}var(--color-danger){% else %}var(--color-success){% endif %}; width: 24px; height: 24px; margin-bottom: 12px;"></i>
+                <div style="font-size: 2.5rem; font-weight: 800; color: {% if azk_stats.breached_count > 0 %}var(--color-danger){% else %}var(--color-success){% endif %}; line-height: 1;">
+                    {{ azk_stats.breached_count }}
+                </div>
+                <div style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">Mots de passe compromis</div>
+            </div>
+
+            <div class="glass-card" style="text-align: center; padding: 24px; border-top: 3px solid var(--color-success); background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, transparent 100%); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                <i data-lucide="shield-check" style="color: var(--color-success); width: 24px; height: 24px; margin-bottom: 12px;"></i>
+                <div style="font-size: 2.5rem; font-weight: 800; color: var(--color-success); line-height: 1;">
+                    {% widthratio azk_stats.compliant_count azk_stats.total_audits 100 as compliance_pct %}
+                    {{ compliance_pct|default:"0" }}%
+                </div>
+                <div style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">Conformité Globale</div>
+            </div>
+        </div>
+
+        <div class="glass-card" style="border-radius: 16px; overflow: hidden;">
+            <div style="padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <div class="h5" style="margin: 0 0 12px 0; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i data-lucide="lock" style="color: #f472b6; width: 22px;"></i> Télémétrie des Audits Locaux
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">Cliquez sur un audit pour voir le profil cryptographique</span>
+                </div>
+                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(34, 211, 238, 0.1); border: 1px solid rgba(34, 211, 238, 0.2); padding: 8px 12px; border-radius: 8px; color: var(--text-muted); font-size: 0.85rem;">
+                    <i data-lucide="eye-off" style="color: #22d3ee; width: 16px;"></i>
+                    <span><strong>Zero-Knowledge :</strong> Les mots de passe et leurs empreintes (hash) ne quittent jamais la machine cible.</span>
+                </div>
+            </div>
+
+            <div style="width: 100%; overflow-x: auto;" class="custom-scrollbar">
+                <table class="data-table" style="width: 100%; min-width: 900px; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: rgba(0,0,0,0.2);">
+                            <th style="padding: 16px 24px; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Horodatage</th>
+                            <th style="padding: 16px 24px; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Agent Cible</th>
+                            <th style="padding: 16px 24px; text-align: center; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Robustesse (Entropie)</th>
+                            <th style="padding: 16px 24px; text-align: center; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Vulnérabilités</th>
+                            <th style="padding: 16px 24px; text-align: right; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in azk_records %}
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s; cursor: pointer;" 
+                            onmouseover="this.style.background='rgba(255,255,255,0.04)'" 
+                            onmouseout="this.style.background='transparent'"
+                            onclick="openAZKModal('{{ record.id }}')">
+                            
+                            <td style="padding: 16px 24px;">
+                                <div style="display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.85rem;">
+                                    <i data-lucide="clock" style="width: 14px; opacity: 0.7;"></i> {{ record.timestamp|date:"d/m/Y - H:i" }}
+                                </div>
+                            </td>
+                            
+                            <td style="padding: 16px 24px;">
+                                <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem; margin-bottom: 4px;">{{ record.agent.hostname }}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ record.agent.employee.department }}</div>
+                            </td>
+                            
+                            <td style="padding: 16px 24px; text-align: center;">
+                                <div style="font-weight: bold; font-size: 1.1rem; color: {% if record.entropy < 40 %}var(--color-danger){% elif record.entropy < 60 %}var(--color-warning){% else %}var(--color-success){% endif %};">
+                                    {{ record.entropy }} <span style="font-size: 0.75rem; font-weight: normal; opacity: 0.7;">bits</span>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ record.length }} caractères</div>
+                            </td>
+                            
+                            <td style="padding: 16px 24px; text-align: center;">
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                    {% if record.is_breached %}
+                                        <span class="badge" style="background: rgba(244, 63, 94, 0.1); color: var(--color-danger); border: 1px solid rgba(244, 63, 94, 0.2);">COMPROMIS (PWNED)</span>
+                                    {% endif %}
+                                    {% if record.has_common_pattern %}
+                                        <span class="badge" style="background: rgba(245, 158, 11, 0.1); color: var(--color-warning); border: 1px solid rgba(245, 158, 11, 0.2);">SÉQUENCE COMMUNE</span>
+                                    {% endif %}
+                                    {% if not record.is_breached and not record.has_common_pattern %}
+                                        <span style="color: var(--text-muted); font-size: 0.8rem;"><i data-lucide="minus" style="width:14px; display:inline;"></i> Aucune</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            
+                            <td style="padding: 16px 24px; text-align: right;">
+                                {% if record.is_policy_compliant %}
+                                    <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--color-success); background: rgba(16, 185, 129, 0.1); padding: 6px 12px; border-radius: 20px;">
+                                        <i data-lucide="check-circle" style="width: 14px;"></i> Conforme
+                                    </div>
+                                {% else %}
+                                    <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--color-danger); background: rgba(244, 63, 94, 0.1); padding: 6px 12px; border-radius: 20px;">
+                                        <i data-lucide="x-circle" style="width: 14px;"></i> Non Conforme
+                                    </div>
+                                {% endif %}
+                            </td>
+                            
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" style="text-align: center; padding: 50px; color: var(--text-muted);">En attente des audits locaux...</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="azkModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); z-index: 9999; justify-content: center; align-items: center; animation: fadeIn 0.3s;">
+            <div class="glass-card" style="width: 750px; max-width: 95%; border-radius: 16px; position: relative; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                
+                <div id="azkModalHeader" style="padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px;">
+                            <i data-lucide="fingerprint" style="color: var(--text-primary); width: 24px; height: 24px;"></i>
+                        </div>
+                        <div>
+                            <h3 class="h5" style="margin: 0; color: var(--text-primary);">Profil Cryptographique (AZK)</h3>
+                            <div id="azkModalTime" class="mono-text" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Date et Heure</div>
+                        </div>
+                    </div>
+                    <button onclick="closeAZKModal()" style="background: rgba(255,255,255,0.1); border: none; color: var(--text-muted); cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">✕</button>
+                </div>
+                
+                <div style="padding: 24px;">
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; margin-bottom: 24px;">
+                        
+                        <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.02); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Machine Auditée</div>
+                                <div id="azkModalAgent" style="font-weight: 600; font-size: 1rem; color: var(--text-primary);">Hostname</div>
+                                <div id="azkModalDept" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Département</div>
+                            </div>
+                            <div style="padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 16px;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Résultat Politique</div>
+                                <div id="azkModalCompliance" style="font-weight: bold; font-size: 1rem;">Conforme</div>
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.02); padding: 16px; border-radius: 12px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                                <div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Score Global</div>
+                                    <div id="azkModalScore" style="font-size: 1.5rem; font-weight: 800;">0/10</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Longueur</div>
+                                    <div id="azkModalLength" style="font-size: 1.5rem; font-weight: bold; color: var(--text-primary);">0 <span style="font-size: 0.8rem; color: var(--text-muted);">car.</span></div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px;">
+                                    <span style="color: var(--text-muted); text-transform: uppercase;">Niveau d'Entropie (Complexité)</span>
+                                    <strong id="azkModalEntropyText">0 bits</strong>
+                                </div>
+                                <div style="width: 100%; background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px; overflow: hidden;">
+                                    <div id="azkModalEntropyBar" style="width: 0%; height: 100%; background: var(--color-success); border-radius: 4px; transition: width 0.5s ease-out;"></div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;">
+                                    <span>Faible (< 40)</span>
+                                    <span>Recommandé (> 60)</span>
+                                    <span>Incrackable (> 100)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="shield-alert" style="width: 16px;"></i> Rapport de Vulnérabilités
+                        </div>
+                        <div id="azkModalVulns" style="display: flex; flex-direction: column; gap: 10px;">
+                            </div>
+                    </div>
+
+                    <div style="margin-top: 24px; text-align: center; font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px;">
+                        <i data-lucide="eye-off" style="width: 14px; display: inline; margin-bottom: -3px; color: #22d3ee;"></i> 
+                        Architecture Zero-Knowledge : L'analyse a été effectuée dans la RAM locale de l'agent. Aucun mot de passe n'a été transmis.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const azkData = {
+                {% for record in azk_records %}
+                "{{ record.id }}": {
+                    "timestamp": "{{ record.timestamp|date:'d/m/Y - H:i:s' }}",
+                    "agent": "{{ record.agent.hostname }}",
+                    "dept": "{{ record.agent.employee.department }}",
+                    "length": {{ record.length }},
+                    "entropy": {{ record.entropy }},
+                    "score": {{ record.score }},
+                    "isBreached": {{ record.is_breached|yesno:"true,false" }},
+                    "hasCommon": {{ record.has_common_pattern|yesno:"true,false" }},
+                    "isCompliant": {{ record.is_policy_compliant|yesno:"true,false" }}
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            };
+
+            function openAZKModal(id) {
+                const data = azkData[id];
+                if (!data) return;
+
+                // Contexte
+                document.getElementById('azkModalTime').innerText = data.timestamp;
+                document.getElementById('azkModalAgent').innerText = data.agent;
+                document.getElementById('azkModalDept').innerText = data.dept;
+                document.getElementById('azkModalLength').innerHTML = `${data.length} <span style="font-size: 0.8rem; color: var(--text-muted);">car.</span>`;
+                
+                // Score & Couleurs
+                const scoreEl = document.getElementById('azkModalScore');
+                scoreEl.innerText = `${data.score}/10`;
+                let scoreColor = 'var(--color-success)';
+                if (data.score <= 3) scoreColor = 'var(--color-danger)';
+                else if (data.score <= 6) scoreColor = 'var(--color-warning)';
+                scoreEl.style.color = scoreColor;
+
+                // Entropie
+                const entropyText = document.getElementById('azkModalEntropyText');
+                const entropyBar = document.getElementById('azkModalEntropyBar');
+                entropyText.innerText = `${data.entropy} bits`;
+                let entropyPct = Math.min(100, (data.entropy / 120) * 100); // 120 bits = 100% de la barre
+                entropyBar.style.width = `${entropyPct}%`;
+                
+                let entropyColor = 'var(--color-success)';
+                if (data.entropy < 40) entropyColor = 'var(--color-danger)';
+                else if (data.entropy < 60) entropyColor = 'var(--color-warning)';
+                entropyBar.style.background = entropyColor;
+                entropyText.style.color = entropyColor;
+
+                // Conformité
+                const compEl = document.getElementById('azkModalCompliance');
+                if (data.isCompliant) {
+                    compEl.innerHTML = `<i data-lucide="check-circle" style="width:16px; margin-right:4px;"></i> Conforme`;
+                    compEl.style.color = 'var(--color-success)';
+                } else {
+                    compEl.innerHTML = `<i data-lucide="x-circle" style="width:16px; margin-right:4px;"></i> Non Conforme`;
+                    compEl.style.color = 'var(--color-danger)';
+                }
+
+                // Header dynamique
+                const header = document.getElementById('azkModalHeader');
+                header.style.borderTop = `4px solid ${data.isCompliant ? 'var(--color-success)' : 'var(--color-danger)'}`;
+                header.style.background = data.isCompliant ? 'linear-gradient(90deg, rgba(16,185,129,0.1) 0%, rgba(0,0,0,0.2) 100%)' : 'linear-gradient(90deg, rgba(244,63,94,0.1) 0%, rgba(0,0,0,0.2) 100%)';
+
+                // Vulnérabilités (Génération logique locale)
+                const vulnsContainer = document.getElementById('azkModalVulns');
+                vulnsContainer.innerHTML = '';
+                let isPerfect = true;
+
+                if (data.isBreached) {
+                    isPerfect = false;
+                    vulnsContainer.innerHTML += `
+                        <div style="background: rgba(244, 63, 94, 0.1); border-left: 3px solid var(--color-danger); padding: 12px 16px; border-radius: 4px;">
+                            <div style="font-weight: bold; color: var(--color-danger); margin-bottom: 4px; font-size: 0.9rem;">Mot de passe compromis (HaveIBeenPwned)</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">L'empreinte cryptographique de ce mot de passe a été retrouvée dans des bases de données publiques de hackers. Risque de piratage imminent.</div>
+                        </div>`;
+                }
+                
+                if (data.hasCommon) {
+                    isPerfect = false;
+                    vulnsContainer.innerHTML += `
+                        <div style="background: rgba(245, 158, 11, 0.1); border-left: 3px solid var(--color-warning); padding: 12px 16px; border-radius: 4px;">
+                            <div style="font-weight: bold; color: var(--color-warning); margin-bottom: 4px; font-size: 0.9rem;">Séquence prédictible détectée</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Ce mot de passe contient des mots courants (ex: "admin", "password") ou des suites clavier (ex: "qwerty", "123456"). Vulnérable aux attaques par dictionnaire.</div>
+                        </div>`;
+                }
+
+                if (data.entropy < 50) {
+                    isPerfect = false;
+                    vulnsContainer.innerHTML += `
+                        <div style="background: rgba(34, 211, 238, 0.1); border-left: 3px solid var(--color-info); padding: 12px 16px; border-radius: 4px;">
+                            <div style="font-weight: bold; color: var(--color-info); margin-bottom: 4px; font-size: 0.9rem;">Complexité insuffisante</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Le mot de passe manque de longueur ou de diversité de caractères (majuscules, chiffres, symboles). Vulnérable au Brute-Force.</div>
+                        </div>`;
+                }
+
+                if (isPerfect) {
+                    vulnsContainer.innerHTML = `
+                        <div style="background: rgba(16, 185, 129, 0.05); border: 1px dashed rgba(16, 185, 129, 0.3); padding: 16px; border-radius: 8px; text-align: center;">
+                            <i data-lucide="shield-check" style="color: var(--color-success); width: 32px; height: 32px; margin-bottom: 8px; opacity: 0.8;"></i>
+                            <div style="font-weight: bold; color: var(--color-success);">Aucune vulnérabilité trouvée</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Le profil cryptographique de ce mot de passe est robuste.</div>
+                        </div>`;
+                }
+
+                document.getElementById('azkModal').style.display = 'flex';
+                lucide.createIcons();
+            }
+
+            function closeAZKModal() {
+                document.getElementById('azkModal').style.display = 'none';
+            }
+        </script>
+    </div>
+{% endif %}
+
+ <style>
+    .avatar-grad-1 { background: linear-gradient(135deg, #ec4899 0%, #f97316 100%); } /* Rose ➔ Orange */
+    .avatar-grad-2 { background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%); } /* Bleu ➔ Cyan */
+    .avatar-grad-3 { background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); } /* Violet ➔ Rose */
+    .avatar-grad-4 { background: linear-gradient(135deg, #10b981 0%, #059669 100%); } /* Vert Clair ➔ Émeraude */
+    .avatar-grad-5 { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); } /* Jaune ➔ Ambre */
+    .avatar-grad-6 { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); } /* Indigo ➔ Violet */
+    .avatar-grad-7 { background: linear-gradient(135deg, #14b8a6 0%, #10b981 100%); } /* Menthe ➔ Vert */
+    .avatar-grad-8 { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); } /* Framboise ➔ Rouge */
+</style>
+
+<div id="tab-agents" class="tab-content" style="display: none; animation: fadeIn 0.5s ease-out;">
+    <div class="glass-card" style="padding:0; overflow: hidden; border-radius: 16px;">
+        <div style="padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center;">
+            <div class="h6" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="users" style="color: var(--color-primary); width: 18px;"></i> Cibles de la Campagne en cours
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">{{ active_agents|length }} Agents actifs détectés</div>
+        </div>
+        
+        <div style="width: 100%; overflow-x: auto;" class="custom-scrollbar">
+            <table class="data-table" style="width: 100%; min-width: 900px; border-collapse: collapse;">
                 <thead>
-                    <tr>
-                        <th>Machine</th>
-                        <th>Employé</th>
-                        <th>Département</th>
-                        <th>Statut</th>
-                        <th>Actions Rapides</th>
+                    <tr style="background: rgba(0,0,0,0.2);">
+                        <th style="padding: 16px 24px; text-align: left; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Machine & Utilisateur</th>
+                        <th style="padding: 16px 24px; text-align: left; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Département</th>
+                        <th style="padding: 16px 24px; text-align: center; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Activité Réelle</th>
+                        <th style="padding: 16px 24px; text-align: center; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Indice de Menace</th>
+                        <th style="padding: 16px 24px; text-align: right; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Contrôle</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for agent in active_agents %}
-                    <tr>
-                        <td class="mono-text" style="font-size: 0.85rem;">{{ agent.hostname }}</td>
-                        <td>{{ agent.employee.full_name }}</td>
-                        <td>{{ agent.employee.department }}</td>
-                        <td>
-                            {% if agent.status == 'Compromised' %}
-                                <span class="badge badge-danger badge-dot">Compromis</span>
-                            {% elif agent.is_online_realtime %}
-                                <span class="badge badge-success badge-dot">En ligne</span>
-                            {% else %}
-                                <span class="badge badge-neutral">Inactif</span>
-                            {% endif %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: all 0.2s; cursor: pointer;" 
+                        onmouseover="this.style.background='rgba(255,255,255,0.04)'" 
+                        onmouseout="this.style.background='transparent'"
+                        onclick="openAgentDetailModal('{{ agent.id }}')">
+                        
+                        <td style="padding: 16px 24px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                
+                                <div style="position: relative;">
+                                    <div class="{% cycle 'avatar-grad-1' 'avatar-grad-2' 'avatar-grad-3' 'avatar-grad-4' 'avatar-grad-5' 'avatar-grad-6' 'avatar-grad-7' 'avatar-grad-8' %}" 
+                                         style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 1.1rem; text-shadow: 0 1px 2px rgba(0,0,0,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                                        {{ agent.employee.full_name|slice:":1"|upper }}
+                                    </div>
+                                    <div style="position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #13131A; background: {% if agent.is_online_realtime %}var(--color-success){% else %}var(--text-muted){% endif %};"></div>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">{{ agent.employee.full_name }}</div>
+                                    <div class="mono-text" style="font-size: 0.75rem; color: var(--text-muted);">{{ agent.hostname }}</div>
+                                </div>
+                            </div>
                         </td>
-                        <td>
-                            <button class="btn btn-ghost btn-sm" title="Ping"><i data-lucide="radio"></i></button>
-                            <button class="btn btn-ghost btn-sm" title="Voir les logs"><i data-lucide="terminal"></i></button>
+
+                        <td style="padding: 16px 24px;">
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">{{ agent.employee.department }}</span>
+                        </td>
+
+                        <td style="padding: 16px 24px; text-align: center;">
+                            <div style="display: flex; justify-content: center; gap: 8px;">
+                                {% if 'HONEYTOKEN' in module_codes %}<i data-lucide="target" style="width: 14px; opacity: 0.5;"></i>{% endif %}
+                                {% if 'AI_LEAK' in module_codes %}<i data-lucide="brain-circuit" style="width: 14px; opacity: 0.5;"></i>{% endif %}
+                                {% if 'AUTH' in module_codes %}<i data-lucide="shield-check" style="width: 14px; opacity: 0.5;"></i>{% endif %}
+                            </div>
+                        </td>
+
+                        <td style="padding: 16px 24px; text-align: center;">
+                            <span class="badge" style="background: rgba(0,0,0,0.2); border: 1px solid {{ agent.computed_risk.color }}; color: {{ agent.computed_risk.color }};">
+                                {{ agent.computed_risk.global_score }}% - {{ agent.computed_risk.global_label }}
+                            </span>
+                        </td>
+
+                        <td style="padding: 16px 24px; text-align: right;">
+                            <div style="display: flex; justify-content: flex-end; gap: 4px;">
+                                <button class="btn btn-ghost btn-sm" style="padding: 6px;" onclick="event.stopPropagation(); showCampaignNotification('Ping', 'Signal envoyé à {{ agent.hostname }}', 'info')"><i data-lucide="radio" style="width: 14px;"></i></button>
+                                <button class="btn btn-ghost btn-sm" style="padding: 6px;"><i data-lucide="chevron-right" style="width: 14px;"></i></button>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -490,31 +1312,493 @@
             </table>
         </div>
     </div>
-
-    <div id="tab-logs" class="tab-content" style="display: none;">
-        <div class="glass-card" style="display: flex; flex-direction: column; height: 500px; padding: 16px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                <div style="display: flex; gap: 8px;">
-                    <select id="logAgentFilter" class="form-select form-select-sm" style="min-width: 150px;">
-                        <option value="ALL">Tous les agents</option>
-                        {% for agent in active_agents %}
-                            <option value="{{ agent.hostname }}">{{ agent.hostname }}</option>
-                        {% endfor %}
-                    </select>
-                    <select id="logLevelFilter" class="form-select form-select-sm" style="min-width: 150px;">
-                        <option value="ALL">Toutes sévérités</option>
-                        <option value="ALERT">Alertes uniquement</option>
-                        <option value="WARNING">Warnings</option>
-                    </select>
-                </div>
-                <span class="badge badge-success badge-dot" id="logConnectionStatus">Live Stream</span>
-            </div>
+    <div id="agentDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); backdrop-filter: blur(12px); z-index: 10000; justify-content: center; align-items: center; animation: fadeIn 0.3s;">
+        <div class="glass-card" style="width: 800px; max-width: 95%; max-height: 90vh; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; padding: 0;">
             
-            <div class="code-block" style="flex: 1; overflow-y: auto;" id="globalLogStream">
-                <span class="code-comment">// Récupération du flux...</span><br>
+            <div style="padding: 24px 24px 16px 24px; background: rgba(0,0,0,0.4); border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div id="modalAgentRiskIcon" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05);">
+                            <i data-lucide="user" style="width: 24px; color: var(--text-primary);"></i>
+                        </div>
+                        <div>
+                            <h3 class="h4" id="modalAgentName" style="margin: 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                                Nom Employé <div id="modalAgentStatus" class="badge">...</div>
+                            </h3>
+                            <div id="modalAgentMeta" class="mono-text" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Hostname • Département</div>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('agentDetailModal').style.display='none'" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;">✕</button>
+                </div>
+
+                <div style="display: flex; gap: 12px;">
+                    <button id="btnTabRisk" class="btn btn-primary btn-sm" onclick="switchAgentModalTab('risk')">
+                        <i data-lucide="shield-alert" style="width: 14px;"></i> Détails du Risque
+                    </button>
+                    <button id="btnTabLogs" class="btn btn-outline btn-sm" onclick="switchAgentModalTab('logs')">
+                        <i data-lucide="terminal" style="width: 14px;"></i> Flux d'activités (Logs)
+                    </button>
+                </div>
+            </div>
+
+            <div style="flex-grow: 1; overflow-y: auto; padding: 24px; background: rgba(255,255,255,0.01);" class="custom-scrollbar">
+                
+                <div id="modalRiskView" style="display: block; animation: fadeIn 0.3s ease-out;">
+                    <div id="modalAgentExplanations" style="margin-bottom: 24px;"></div>
+                    <div id="modalAgentRiskReport" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;"></div>
+                </div>
+
+                <div id="modalLogsView" style="display: none; animation: fadeIn 0.3s ease-out;">
+                    <div id="modalAgentLogs" style="background: #09090b; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #a1a1aa; line-height: 1.6;">
+                        </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <script>
+        // 1. Récupération des données sécurisée
+        const agentsData = {{ agents_risk_json|safe|default:"{}" }};
+
+        function switchAgentModalTab(tab) {
+            // Sécurité : On vérifie que les éléments existent avant de changer leur classe
+            const btnRisk = document.getElementById('btnTabRisk');
+            const btnLogs = document.getElementById('btnTabLogs');
+            const viewRisk = document.getElementById('modalRiskView');
+            const viewLogs = document.getElementById('modalLogsView');
+
+            if (tab === 'risk') {
+                if(viewRisk) viewRisk.style.display = 'block';
+                if(viewLogs) viewLogs.style.display = 'none';
+                if(btnRisk) btnRisk.className = 'btn btn-primary btn-sm';
+                if(btnLogs) btnLogs.className = 'btn btn-outline btn-sm';
+            } else {
+                if(viewRisk) viewRisk.style.display = 'none';
+                if(viewLogs) viewLogs.style.display = 'block';
+                if(btnRisk) btnRisk.className = 'btn btn-outline btn-sm';
+                if(btnLogs) btnLogs.className = 'btn btn-primary btn-sm';
+            }
+        }
+
+        function openAgentDetailModal(agentId) {
+            const data = agentsData[agentId];
+            if (!data) {
+                console.error("Aucune donnée trouvée pour l'agent ID:", agentId);
+                return;
+            }
+
+            // Reset à l'onglet Risk par défaut
+            switchAgentModalTab('risk');
+
+            // --- EN-TÊTE (Avec sécurité) ---
+            const nameEl = document.getElementById('modalAgentName');
+            const metaEl = document.getElementById('modalAgentMeta');
+            if (nameEl) nameEl.innerHTML = `${data.name} <div id="modalAgentStatus" class="badge"></div>`;
+            if (metaEl) metaEl.innerText = `${data.hostname} • ${data.department}`;
+            
+            const badge = document.getElementById('modalAgentStatus');
+            if (badge) {
+                badge.className = "badge"; // Réinitialisation propre
+                if (data.status === 'Compromised') { 
+                    badge.classList.add('badge-danger'); badge.innerText = "Compromis"; 
+                } else if (data.is_online) { 
+                    badge.classList.add('badge-success'); badge.innerText = "En Ligne"; 
+                } else { 
+                    badge.classList.add('badge-neutral'); badge.innerText = "Hors Ligne"; 
+                }
+            }
+
+            const r = data.risk;
+            
+            // --- 1. EXPLICABILITÉ SOC (EXPLANATIONS) ---
+            const explanationsEl = document.getElementById('modalAgentExplanations');
+            if (explanationsEl) {
+                let explanationsHtml = '';
+                if (r && r.explanations && r.explanations.length > 0) {
+                    explanationsHtml = `
+                    <div style="background: rgba(0,0,0,0.3); border-left: 4px solid ${r.color}; padding: 16px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div>
+                                <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Diagnostic Analytique SOC</div>
+                                <div style="color: ${r.color}; font-size: 2rem; font-weight: 800; line-height: 1; margin-top: 4px;">${r.global_score}% <span style="font-size:1rem; font-weight:600;">${r.global_label}</span></div>
+                            </div>
+                        </div>
+                        <div style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+                            ${r.explanations.map(exp => `
+                                <div style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: flex-start; gap: 8px;">
+                                    <i data-lucide="info" style="width: 14px; color: ${r.color}; flex-shrink: 0; margin-top: 2px;"></i>
+                                    <span>${exp}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>`;
+                } else {
+                    explanationsHtml = `
+                    <div style="background: rgba(16, 185, 129, 0.05); border-left: 4px solid var(--color-success); padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Comportement Sain</div>
+                            <div style="color: var(--color-success); font-size: 2rem; font-weight: 800; line-height: 1; margin-top: 4px;">0% <span style="font-size:1rem; font-weight:600;">LOW</span></div>
+                        </div>
+                        <i data-lucide="shield-check" style="color: var(--color-success); width: 36px; height: 36px; opacity: 0.8;"></i>
+                    </div>`;
+                }
+                explanationsEl.innerHTML = explanationsHtml;
+            }
+
+            // --- 2. BARRES DE SCORE (MÉTRIQUES) ---
+            const reportEl = document.getElementById('modalAgentRiskReport');
+            if (reportEl && r) {
+                let html = '';
+                const createBar = (label, val, max=100) => `
+                    <div style="margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;">
+                            <span>${label}</span> <span class="mono-text">${val}/${max}</span>
+                        </div>
+                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+                            <div style="height: 100%; width: ${(val/max)*100}%; background: var(--color-primary);"></div>
+                        </div>
+                    </div>`;
+
+                if (r.honeytoken && r.honeytoken.score > 0) {
+                    html += `
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; color: #10b981; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">
+                            <span><i data-lucide="target" style="width: 14px; display: inline;"></i> Honeytokens</span>
+                            <span>${r.honeytoken.score}%</span>
+                        </div>
+                        ${createBar("Moyenne Sévérité", r.honeytoken.metrics.severity)}
+                        ${createBar("Agressivité (Modify/Delete)", r.honeytoken.metrics.escalation)}
+                        ${createBar("Récidive", r.honeytoken.metrics.recurrence)}
+                        ${createBar("Curiosité (Urgency)", r.honeytoken.metrics.urgency)}
+                    </div>`;
+                }
+                if (r.ai_leak && r.ai_leak.score > 0) {
+                    html += `
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; color: #3b82f6; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">
+                            <span><i data-lucide="bot" style="width: 14px; display: inline;"></i> Shadow AI (DLP)</span>
+                            <span>${r.ai_leak.score}%</span>
+                        </div>
+                        ${createBar("Criticité des données", r.ai_leak.metrics.sensitivity)}
+                        ${createBar("Répétition", r.ai_leak.metrics.repetition)}
+                        ${createBar("Certitude", r.ai_leak.metrics.confidence)}
+                        ${createBar("Volume exfiltré", r.ai_leak.metrics.volume)}
+                    </div>`;
+                }
+                if (r.azk && r.azk.score > 0) {
+                    html += `
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; color: #a78bfa; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">
+                            <span><i data-lucide="key" style="width: 14px; display: inline;"></i> Auth (AZK)</span>
+                            <span>${r.azk.score}%</span>
+                        </div>
+                        ${createBar("Faiblesse du mot de passe", r.azk.metrics.weakness)}
+                        ${createBar("Compromission Pwned", r.azk.metrics.breach)}
+                        ${createBar("Non-Conformité Politique", r.azk.metrics.compliance)}
+                    </div>`;
+                }
+                reportEl.innerHTML = html;
+            }
+
+            // --- 3. ONGLETS LOGS TERMINAL ---
+            const logsEl = document.getElementById('modalAgentLogs');
+            if (logsEl) {
+                let logsHtml = `<div style="color: #52525b; margin-bottom: 16px; border-bottom: 1px dashed #52525b; padding-bottom: 8px;">// HISTORIQUE OPÉRATIONNEL : ${data.hostname}</div>`;
+                if (data.logs.length === 0) {
+                    logsHtml += `<div style="color: #52525b; font-style: italic;">Aucun événement enregistré.</div>`;
+                } else {
+                    data.logs.forEach(log => {
+                        let lvlColor = '#a1a1aa';
+                        if (log.level === 'INFO') lvlColor = '#3b82f6';
+                        if (log.level === 'SUCCESS') lvlColor = '#10b981';
+                        if (log.level === 'WARNING') lvlColor = '#f59e0b';
+                        if (log.level === 'ERROR' || log.level === 'CRITICAL' || log.level === 'ALERT') lvlColor = '#f43f5e';
+                        
+                        logsHtml += `
+                            <div style="display: flex; gap: 12px; margin-bottom: 6px; padding-left: 8px; border-left: 2px solid transparent;" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.02)'" onmouseout="this.style.backgroundColor='transparent'">
+                                <span style="color: #52525b; min-width: 100px;">[${log.timestamp}]</span>
+                                <span style="color: ${lvlColor}; font-weight: bold; min-width: 70px;">[${log.level}]</span>
+                                <span style="color: ${log.level === 'ERROR' ? '#fecdd3' : '#e4e4e7'}; ${log.level === 'ERROR' ? 'background: rgba(244, 63, 94, 0.1); padding: 0 4px;' : ''}">${log.message}</span>
+                            </div>`;
+                    });
+                }
+                logsEl.innerHTML = logsHtml;
+            }
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            
+            const modal = document.getElementById('agentDetailModal');
+            if (modal) modal.style.display = 'flex';
+        }
+    </script>
+
+</div>
+
+<script>
+    // --- 1. COLLECTE DES DONNÉES DU TEMPLATE ---
+    const agentsData = {
+        {% for agent in active_agents %}
+        "{{ agent.id }}": {
+            "name": "{{ agent.employee.full_name|escapejs }}",
+            "hostname": "{{ agent.hostname|escapejs }}",
+            "dept": "{{ agent.employee.department|escapejs }}",
+            "online": {{ agent.is_online_realtime|yesno:"true,false" }},
+            "campaign_status": "{{ campaign.status }}",
+            
+            // Sous-résultats filtrés pour cet agent
+            "honeytokens": [
+                {% for inst in instances %}{% if inst.agent_id == agent.id %}
+                {"name": "{{ inst.template.file_name }}", "triggered": {{ inst.triggered|yesno:"true,false" }}, "actions": {{ inst.action_sequence|safe|default:"[]" }}}{% if not forloop.last %},{% endif %}
+                {% endif %}{% endfor %}
+            ],
+            "ai_leaks": [
+                {% for alert in ai_alerts %}{% if alert.agent_id == agent.id %}
+                {"type": "{{ alert.data_type_detected }}", "severity": {{ alert.severity }}, "platform": "{{ alert.ai_platform }}"}{% if not forloop.last %},{% endif %}
+                {% endif %}{% endfor %}
+            ],
+            "azk": [
+                {% for record in azk_records %}{% if record.agent_id == agent.id %}
+                {"entropy": {{ record.entropy }}, "breached": {{ record.is_breached|yesno:"true,false" }}, "compliant": {{ record.is_policy_compliant|yesno:"true,false" }}}{% if not forloop.last %},{% endif %}
+                {% endif %}{% endfor %}
+            ],
+            "logs": [
+                {% for log in logs %}{% if log.agent_id == agent.id %}
+                {"time": "{{ log.timestamp|date:'H:i' }}", "level": "{{ log.level }}", "msg": "{{ log.message|escapejs }}"}{% if not forloop.last %},{% endif %}
+                {% endif %}{% endfor %}
+            ]
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+
+    // --- 2. CALCUL DU RISQUE PAR AGENT (Logique métier) ---
+    function updateAgentBadges() {
+        for (let id in agentsData) {
+            const data = agentsData[id];
+            let score = 0;
+            let label = "FAIBLE";
+            let color = "#10b981"; // Success
+
+            if (data.honeytokens.some(h => h.triggered)) score += 50;
+            if (data.ai_leaks.some(a => a.severity >= 4)) score += 40;
+            if (data.azk.some(z => z.breached)) score += 30;
+
+            if (score >= 70) { label = "CRITIQUE"; color = "#f43f5e"; }
+            else if (score >= 30) { label = "ÉLEVÉ"; color = "#f59e0b"; }
+
+            const badge = document.getElementById(`risk-badge-${id}`);
+            if (badge) {
+                badge.innerHTML = `<span class="badge" style="background: ${color}15; color: ${color}; border: 1px solid ${color}30;">${label}</span>`;
+            }
+            agentsData[id].risk_label = label;
+            agentsData[id].risk_color = color;
+        }
+    }
+
+    function openAgentDetailModal(id) {
+        const data = agentsData[id];
+        if (!data) return;
+
+        document.getElementById('modalAgentName').innerText = data.name;
+        document.getElementById('modalAgentMeta').innerText = `${data.hostname} • ${data.dept}`;
+        
+        const statusEl = document.getElementById('modalAgentStatus');
+        statusEl.innerText = data.online ? "EN LIGNE" : "HORS-LIGNE";
+        statusEl.className = data.online ? "badge badge-success" : "badge badge-neutral";
+
+        const iconBox = document.getElementById('modalAgentRiskIcon');
+        iconBox.style.background = `${data.risk_color}15`;
+        iconBox.style.color = data.risk_color;
+
+        // Rapport de Risque
+        const report = document.getElementById('modalAgentRiskReport');
+        report.innerHTML = '';
+
+        // -- Honeytoken --
+        data.honeytokens.forEach(h => {
+            report.innerHTML += `
+                <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border-left: 3px solid ${h.triggered ? '#f43f5e' : '#10b981'};">
+                    <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-primary);">Leurre: ${h.name}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                        ${h.triggered ? `⚠️ Compromis: ${h.actions.join(' ➔ ')}` : '✅ Intact'}
+                    </div>
+                </div>`;
+        });
+
+        // -- Shadow AI --
+        data.ai_leaks.forEach(a => {
+            report.innerHTML += `
+                <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border-left: 3px solid ${a.severity >= 4 ? '#f43f5e' : '#22d3ee'};">
+                    <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-primary);">Fuite IA: ${a.platform}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                        Type détecté: ${a.type} (Sévérité ${a.severity})
+                    </div>
+                </div>`;
+        });
+
+        // -- AZK --
+        data.azk.forEach(z => {
+            report.innerHTML += `
+                <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border-left: 3px solid ${z.breached ? '#f43f5e' : '#10b981'};">
+                    <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-primary);">Audit Auth (AZK)</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                        Complexité: ${z.entropy} bits • ${z.breached ? '❌ Compromis' : '✅ Sain'}
+                    </div>
+                </div>`;
+        });
+
+        // Flux de Logs
+        const logsEl = document.getElementById('modalAgentLogs');
+        logsEl.innerHTML = '';
+        data.logs.forEach(l => {
+            let color = l.level === 'CRITICAL' || l.level === 'ALERT' ? '#f43f5e' : (l.level === 'SUCCESS' ? '#10b981' : '#a1a1aa');
+            logsEl.innerHTML += `<div><span style="color: #52525b;">[${l.time}]</span> <span style="color: ${color}; font-weight: 600;">${l.level}</span>: ${l.msg}</div>`;
+        });
+
+        if (data.logs.length === 0) logsEl.innerHTML = '<div style="opacity: 0.5; text-align: center; margin-top: 50px;">Aucun événement enregistré pour cet agent dans cette campagne.</div>';
+
+        document.getElementById('agentDetailModal').style.display = 'flex';
+        lucide.createIcons();
+    }
+
+    function closeAgentDetailModal() {
+        document.getElementById('agentDetailModal').style.display = 'none';
+    }
+
+    // Init
+    window.onload = function() {
+        updateAgentBadges();
+        lucide.createIcons();
+    }
+</script>
+
+<div id="tab-logs" class="tab-content" style="display: none; animation: fadeIn 0.5s ease-out;">
+    <div class="glass-card" style="display: flex; flex-direction: column; height: 600px; padding: 0; overflow: hidden; border-radius: 16px;">
+        
+        <div style="background: rgba(0,0,0,0.4); padding: 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+            
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px; color: var(--text-primary); font-weight: 600; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
+                    <i data-lucide="terminal-square" style="color: var(--color-primary); width: 18px;"></i> sys_log_stream
+                </div>
+                
+                <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.1); margin: 0 8px;"></div>
+                
+                <select id="logAgentFilter" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; outline: none; cursor: pointer; min-width: 150px;">
+                    <option value="ALL">Tous les agents cibles</option>
+                    {% for agent in active_agents %}
+                        <option value="{{ agent.hostname }}">{{ agent.hostname }}</option>
+                    {% endfor %}
+                </select>
+
+                <div style="display: flex; gap: 4px; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                    <button class="log-filter-btn active" data-level="ALL" style="background: rgba(255,255,255,0.1); color: white;">ALL</button>
+                    <button class="log-filter-btn" data-level="CRITICAL" style="color: #f43f5e;"><i data-lucide="flame" style="width:12px; margin-right:4px;"></i>CRIT</button>
+                    <button class="log-filter-btn" data-level="ALERT" style="color: #f43f5e;"><i data-lucide="alert-circle" style="width:12px; margin-right:4px;"></i>ALERT</button>
+                    <button class="log-filter-btn" data-level="WARNING" style="color: #f59e0b;"><i data-lucide="alert-triangle" style="width:12px; margin-right:4px;"></i>WARN</button>
+                    <button class="log-filter-btn" data-level="SUCCESS" style="color: #10b981;"><i data-lucide="check-circle-2" style="width:12px; margin-right:4px;"></i>SUCC</button>
+                    <button class="log-filter-btn" data-level="INFO" style="color: #a1a1aa;"><i data-lucide="info" style="width:12px; margin-right:4px;"></i>INFO</button>
+                </div>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button onclick="clearTerminal()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--text-muted)'">
+                    <i data-lucide="trash-2" style="width: 14px;"></i> Clear
+                </button>
+                <span style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: var(--color-success); font-size: 0.75rem; font-weight: bold; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 6px; height: 6px; background: var(--color-success); border-radius: 50%; box-shadow: 0 0 8px var(--color-success); animation: pulse 2s infinite;"></div>
+                    Live Stream
+                </span>
+            </div>
+        </div>
+        
+        <div style="flex: 1; background: #09090B; padding: 20px 24px; overflow-y: auto; font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 0.85rem; line-height: 1.6;" id="globalLogStream" class="custom-scrollbar">
+            <div style="color: #52525b; margin-bottom: 16px;">// Initialisation du flux sécurisé vers Psyche Sentinel...<br>// Connection établie. Écoute de la campagne {{ campaign.id }}...</div>
+            
+            {% for log in logs reversed %} <div class="log-entry" data-agent="{{ log.agent.hostname }}" data-level="{{ log.level }}" style="margin-bottom: 8px; display: flex; gap: 12px; font-family: monospace;">
+                    <span style="color: #52525b; min-width: 65px;">{{ log.timestamp|date:"H:i:s" }}</span>
+                    <span style="color: #71717a; min-width: 120px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">[{{ log.agent.hostname }}]</span>
+                    
+                    {% if log.level == 'CRITICAL' or log.level == 'ALERT' %}
+                        <span style="color: #f43f5e; font-weight: bold; min-width: 80px;">[{{ log.level }}]</span>
+                        <span style="color: #fecdd3;">{{ log.message }}</span>
+                    {% elif log.level == 'WARNING' %}
+                        <span style="color: #f59e0b; font-weight: bold; min-width: 80px;">[{{ log.level }}]</span>
+                        <span style="color: #fde68a;">{{ log.message }}</span>
+                    {% elif log.level == 'SUCCESS' %}
+                        <span style="color: #10b981; font-weight: bold; min-width: 80px;">[{{ log.level }}]</span>
+                        <span style="color: #a7f3d0;">{{ log.message }}</span>
+                    {% else %}
+                        <span style="color: #a1a1aa; font-weight: bold; min-width: 80px;">[INFO]</span>
+                        <span style="color: #e4e4e7;">{{ log.message }}</span>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <div style="color: #52525b; text-align: center; margin-top: 40px;">[ Aucun événement enregistré pour le moment ]</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .log-filter-btn { border: none; background: transparent; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; }
+    .log-filter-btn:hover { background: rgba(255,255,255,0.05); }
+    .log-filter-btn.active { background: rgba(255,255,255,0.1); }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Scroll automatique vers le bas au chargement
+        const terminal = document.getElementById('globalLogStream');
+        terminal.scrollTop = terminal.scrollHeight;
+
+        // Gestion des Filtres
+        const agentSelect = document.getElementById('logAgentFilter');
+        const levelButtons = document.querySelectorAll('.log-filter-btn');
+        let currentLevel = 'ALL';
+
+        function applyFilters() {
+            const selectedAgent = agentSelect.value;
+            const entries = document.querySelectorAll('.log-entry');
+            
+            entries.forEach(entry => {
+                const agentMatch = selectedAgent === 'ALL' || entry.getAttribute('data-agent') === selectedAgent;
+                const levelMatch = currentLevel === 'ALL' || entry.getAttribute('data-level') === currentLevel;
+                
+                // Tolérance : Si on filtre par ALERT, on montre aussi CRITICAL
+                const isCriticalMatch = (currentLevel === 'ALERT' && entry.getAttribute('data-level') === 'CRITICAL');
+                
+                if (agentMatch && (levelMatch || isCriticalMatch)) {
+                    entry.style.display = 'flex';
+                } else {
+                    entry.style.display = 'none';
+                }
+            });
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // Événement Select Agent
+        agentSelect.addEventListener('change', applyFilters);
+
+        // Événement Boutons Level
+        levelButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                levelButtons.forEach(b => {
+                    b.classList.remove('active');
+                    b.style.background = 'transparent';
+                });
+                this.classList.add('active');
+                this.style.background = 'rgba(255,255,255,0.1)';
+                currentLevel = this.getAttribute('data-level');
+                applyFilters();
+            });
+        });
+    });
+
+    function clearTerminal() {
+        const terminal = document.getElementById('globalLogStream');
+        terminal.innerHTML = '<div style="color: #52525b; margin-bottom: 16px;">// Terminal effacé localement. En attente de nouveaux événements...</div>';
+    }
+</script>
 
 </div>
 <div id="extendModalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
@@ -682,6 +1966,61 @@
             </div>
         </div>
     </div>
+    <div id="campaign-toast-container" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px;"></div>
+
+<script>
+    // Fonction pour déclencher une notification stylisée
+    function showCampaignNotification(title, message, type = 'info') {
+        const container = document.getElementById('campaign-toast-container');
+        
+        // Couleurs selon le type (avec une touche élégante)
+        const colors = {
+            'info': { border: '#a78bfa', bg: 'rgba(167, 139, 250, 0.15)', icon: 'info' }, // Lavande
+            'success': { border: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', icon: 'check-circle' },
+            'warning': { border: '#f43f5e', bg: 'rgba(244, 63, 94, 0.15)', icon: 'alert-triangle' } // Rose doux/Rouge
+        };
+        const style = colors[type] || colors['info'];
+
+        const toast = document.createElement('div');
+        toast.className = 'glass-card';
+        toast.style.cssText = `
+            border-left: 4px solid ${style.border};
+            background: ${style.bg};
+            backdrop-filter: blur(12px);
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-width: 300px;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        `;
+
+        toast.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                <i data-lucide="${style.icon}" style="color: ${style.border}; width: 18px;"></i>
+                <strong style="color: var(--text-primary); font-size: 0.95rem;">${title}</strong>
+            </div>
+            <div style="color: var(--text-muted); font-size: 0.85rem; margin-left: 30px;">${message}</div>
+        `;
+
+        container.appendChild(toast);
+        lucide.createIcons({ root: toast }); // Rendu de l'icône
+
+        // Animation d'entrée
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+            toast.style.opacity = '1';
+        }, 10);
+
+        // Auto-hide après 5 secondes
+        setTimeout(() => {
+            toast.style.transform = 'translateX(100%)';
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 400);
+        }, 5000);
+    }
+</script>
 <script>
     // --- SYSTÈME DE NOTIFICATIONS TOAST ---
     function showToast(msg, type="info") {

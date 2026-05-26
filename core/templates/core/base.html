@@ -200,9 +200,9 @@
                     <i data-lucide="bell"></i>
                     <span class="badge-dot" style="position: absolute; top: 8px; right: 8px; color: var(--color-danger);"></span>
                 </a>
-                <button class="btn btn-ghost btn-sm" style="padding: 8px;">
-                    <i data-lucide="help-circle"></i>
-                </button>
+                    <a href="{% url 'documentation' %}" target="_blank" class="btn btn-ghost btn-sm" style="padding: 8px; text-decoration: none;" title="Ouvrir la Documentation">
+                        <i data-lucide="book-open" style="color: var(--color-primary);"></i>
+                    </a>
             </div>
 
             <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-elevated); padding: 4px 12px 4px 4px; border-radius: var(--radius-full); border: 1px solid var(--border-subtle);">
@@ -259,6 +259,12 @@
                 </a>
                 <a class="sidenav-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}" href="{% url 'settings' %}">
                     <i data-lucide="settings-2"></i> <span class="nav-text">{% trans "Paramètres système" %}</span>
+                </a>
+            </div>
+            <div class="sidenav-section">
+                <div class="sidenav-label">Ressources</div>
+                <a class="sidenav-link" href="{% url 'documentation' %}" target="_blank">
+                    <i data-lucide="file-text"></i> <span class="nav-text">Documentation</span>
                 </a>
             </div>
         </nav>

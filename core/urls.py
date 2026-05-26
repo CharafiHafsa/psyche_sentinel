@@ -14,7 +14,8 @@ urlpatterns = [
     path('ui-kit/', views.ui_kit_view, name='ui-kit'),
     path('dataviz-kit/', views.dataviz_kit_view, name='dataviz-kit'),
     path('notifications/', views.notifications, name='notifications'),
-    path('directory/', views.employee_directory, name='directory'),
+    path('directory/', views.directory, name='directory'),
     path('ldap/management/', views.ldap_management, name='ldap_management'),
+    path('documentation/', views.documentation, name='documentation'),
     path('logout/', views.admin_logout, name='logout'),
 ]
