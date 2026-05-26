@@ -1,5 +1,6 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Avg, Count, Q
+from django.contrib import messages
 from .models import EmployeeRiskProfile
 from core.models import Employee
 
@@ -10,17 +11,30 @@ from core.models import Employee
 def campaign_dashboard_view(request):
     """
     Vue principale qui agrège les données de tous les profils pour générer
-    les métriques globales de la campagne (Spécifications de Hafsa)
-    et les recommandations automatisées par département.
+    les métriques globales de la campagne et gère l'action POST de synchronisation.
     """
+    
+    # ─── GESTION DES BOUTONS (REQUÊTES POST) ───
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'refresh':
+            # Code exécuté pour "Synchroniser la Matrice" (ex: seed_data.run())
+            messages.success(request, "La matrice cyber-cognitive a été resynchronisée avec succès.")
+            
+        # Redirection PRG (Post-Redirect-Get) pour éviter le renvoi du formulaire au rafraîchissement
+        return redirect(request.path_info)
+
+    # ─── LOGIQUE DE CHARGEMENT DU DASHBOARD (REQUÊTES GET) ───
+    
     # 1. Récupération de tous les profils de risques calculés
     profiles = EmployeeRiskProfile.objects.all()
     total_agents = profiles.count()
 
     if total_agents == 0:
-        return render(request, 'ml_engine/dashboard.html', {'empty': True})
+        return render(request, 'ml_engine/campaign_dashboard.html', {'empty': True})
 
-    # 2. Calcul des 5 variables de la Campagne Globale (Moyennes)
+    # 2. Calcul des variables de la Campagne Globale (Moyennes)
     campaign_metrics = profiles.aggregate(
         avg_honey=Avg('honeytoken_score'),
         avg_ai=Avg('ai_score'),
@@ -28,7 +42,7 @@ def campaign_dashboard_view(request):
         avg_global=Avg('global_score')
     )
 
-    global_risk_score = round(campaign_metrics['avg_global'], 2)
+    global_risk_score = round(campaign_metrics['avg_global'] or 0, 2)
 
     # Attribution du label global de la campagne
     if global_risk_score < 25.0:
@@ -43,7 +57,7 @@ def campaign_dashboard_view(request):
     # Distribution des labels pour les graphiques du Dashboard
     risk_distribution = profiles.values('risk_label').annotate(count=Count('risk_label'))
 
-    # 3. ANALYSE PAR DÉPARTEMENT & GÉNÉRATION DES RECOMMANDATIONS
+    # 3. Analyse par département & génération des recommandations
     departments_query = profiles.values('department').annotate(
         avg_score=Avg('global_score'),
         total=Count('id')
@@ -52,7 +66,7 @@ def campaign_dashboard_view(request):
     departments_summary = []
     for dept in departments_query:
         dept_name = dept['department']
-        avg_score = round(dept['avg_score'], 2)
+        avg_score = round(dept['avg_score'] or 0, 2)
         
         # Trouver le profil psychologique dominant dans ce département (Mode)
         profils_dept = profiles.filter(department=dept_name).values_list('profiling_label', flat=True)
@@ -86,13 +100,13 @@ def campaign_dashboard_view(request):
             'status_color': status_color
         })
 
-    # Context à envoyer au template HTML
+    # Context dynamique à envoyer au template HTML
     context = {
         'empty': False,
         'global_metrics': {
-            'honeytoken_risk_score': round(campaign_metrics['avg_honey'], 2),
-            'ai_risk_score': round(campaign_metrics['avg_ai'], 2),
-            'azk_risk_score': round(campaign_metrics['avg_azk'], 2),
+            'honeytoken_risk_score': round(campaign_metrics['avg_honey'] or 0, 2),
+            'ai_risk_score': round(campaign_metrics['avg_ai'] or 0, 2),
+            'azk_risk_score': round(campaign_metrics['avg_azk'] or 0, 2),
             'global_risk_score': global_risk_score,
             'global_risk_label': global_risk_label,
             'total_agents': total_agents
@@ -111,17 +125,11 @@ def campaign_dashboard_view(request):
 
 def agent_detail_view(request, agent_uuid):
     """
-    Vue détaillée affichant l'analyse complète (les 5 variables + prédiction 
-    de la sigmoïde) pour un employé spécifique via son UUID unique.
+    Vue détaillée affichant l'analyse complète pour un employé spécifique via son UUID unique.
     """
-    # Récupération du profil de risque ML
     profile = get_object_or_404(EmployeeRiskProfile, user_uuid=agent_uuid)
-    
-    # Récupération des informations de l'annuaire de base correspondant (si besoin)
-    # On fait la liaison par le biais du compte ou du département
     employee_info = Employee.objects.filter(department=profile.department).first()
 
-    # Détermination d'une couleur d'affichage dynamique suivant le niveau de risque
     color_map = {
         "LOW": "success",
         "MEDIUM": "info",

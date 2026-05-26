@@ -5,7 +5,7 @@
   
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
     <div>
-      <h1 style="font-family: var(--font-display); font-size: 1.5rem; margin: 0; color: #fff;">🧠 Moteur d'Analyse Globale Prédictive (PsycheSentinel)</h1>
+      <h1 style="font-family: var(--font-display); font-size: 1.5rem; margin: 0; color: #fff;">🧠 Moteur d'Analyse Globale Prédicitive (PsycheSentinel)</h1>
       <p style="font-size: 0.8rem; color: var(--text-muted); margin: 5px 0 0 0;">Visualisations primitives avancées — Zéro dépendance externe</p>
     </div>
     
@@ -14,12 +14,6 @@
         {% csrf_token %}
         <button type="submit" name="action" value="refresh" style="background: var(--bg-elevated); border: 1px solid var(--border-default); color: var(--text-secondary); padding: 8px 16px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; transition: all 0.2s;">
           🔄 Synchroniser la Matrice
-        </button>
-      </form>
-      <form method="POST">
-        {% csrf_token %}
-        <button type="submit" name="action" value="schedule_test" style="background: linear-gradient(135deg, var(--violet-bright), #7c3aed); border: none; color: white; padding: 8px 16px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(124,58,237,0.3);">
-          ⚡ Planifier un Test Adaptatif
         </button>
       </form>
     </div>
@@ -61,7 +55,6 @@
           </defs>
 
           <circle class="dv-gauge-track" cx="120" cy="120" r="95" stroke-dasharray="447.7 149.2" stroke-dashoffset="-74.6" />
-
           <circle class="dv-gauge-fill" id="global-gauge-fill" cx="120" cy="120" r="95" stroke="url(#gaugeGradMain)" stroke-dasharray="447.7 149.2" stroke-dashoffset="447.7" transform="rotate(135 120 120)" filter="url(#gaugeGlow)" />
 
           <circle class="dv-gauge-zone dv-gauge-zone--low" cx="120" cy="120" r="80" stroke-dasharray="134.3 462.6" stroke-dashoffset="-74.6" />
@@ -87,7 +80,6 @@
         <span class="dv-meta-stat"><span class="dv-meta-val dv-meta-val--cyan">NIST</span><span class="dv-meta-lbl">Framework</span></span>
       </div>
     </div>
-
 
     <div class="dv-card dv-card--tall">
       <div class="dv-card-header">
@@ -122,15 +114,53 @@
                 <span style="width: 10px; height: 10px; background: {% if seg.risk_label == 'CRITICAL' %}#ef4444{% elif seg.risk_label == 'HIGH' %}#f59e0b{% elif seg.risk_label == 'MEDIUM' %}#06b6d4{% else %}#10b981{% endif %}; border-radius: 50%;"></span>
                 Seuil : {{ seg.risk_label }}
               </span>
-              <strong style="font-family: var(--font-mono);">{{ seg.count }}</strong>
+              <strong style="font-family: var(--font-mono); font-weight: bold;">{{ seg.count }}</strong>
             </div>
           {% endfor %}
         </div>
       </div>
     </div>
 
+    <div class="dv-card">
+      <div class="dv-card-header">
+        <div class="dv-card-title">
+          <i data-lucide="bar-chart-2" class="dv-title-icon"></i>
+          Drill Success Rates by Department
+        </div>
+        <span class="dv-badge dv-badge--cyan">Q3 2026</span>
+      </div>
 
-    <div class="dv-card dv-card--wide">
+      <div class="dv-vbars-wrap" id="drill-bars">
+        <div class="dv-vbars-chart-area" id="drill-bars-inner">
+          <div class="dv-vbars-grid" id="drill-bars-grid">
+            <div class="dv-grid-line" style="bottom: 0%;"></div>
+            <div class="dv-grid-line" style="bottom: 25%;"></div>
+            <div class="dv-grid-line" style="bottom: 50%;"></div>
+            <div class="dv-grid-line" style="bottom: 75%;"></div>
+            <div class="dv-grid-line" style="bottom: 100%;"></div>
+          </div>
+          
+          <div class="dv-vbars-cols" id="drill-bars-cols">
+            {% for dept in departments_summary %}
+              <div class="dv-vbar-col">
+                <div class="dv-vbar-container">
+                  <div class="dv-vbar" id="vbar-{{ forloop.counter }}" data-risk-score="{{ dept.avg_score }}" style="height: 0%; background: {% if forloop.counter == 1 %}#a855f7{% elif forloop.counter == 2 %}#06b6d4{% elif forloop.counter == 3 %}#10b981{% elif forloop.counter == 4 %}#f59e0b{% else %}#ea580c{% endif %};">
+                    <span class="dv-vbar-tooltip" id="vbar-tooltip-{{ forloop.counter }}">0%</span>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="dv-vbars-xaxis" id="drill-bars-xaxis">
+          {% for dept in departments_summary %}
+            <div class="dv-xaxis-label">{{ dept.name }}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-card">
       <div class="dv-card-header">
         <div class="dv-card-title">
           <i data-lucide="bar-chart-horizontal" class="dv-title-icon"></i>
@@ -180,7 +210,6 @@
         </span>
       </div>
     </div>
-
 
     <div class="dv-card dv-card--wide" style="overflow-x: auto;">
       <div class="dv-card-header">
@@ -239,16 +268,6 @@
   </div>
 </section>
 
-<svg style="width:0; height:0; position:absolute;">
-  <defs>
-    <linearGradient id="gaugeGradMain" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7c3aed"/>
-      <stop offset="50%" stop-color="#06b6d4"/>
-      <stop offset="100%" stop-color="#f59e0b"/>
-    </linearGradient>
-  </defs>
-</svg>
-
 <style>
   .dv-grid {
     display: grid;
@@ -293,7 +312,7 @@
   .dv-badge--cyan { background: rgba(6,182,212,0.15); color: #06b6d4; border: 1px solid rgba(6,182,212,0.2); }
   .dv-badge--violet { background: rgba(124,58,237,0.15); color: #a855f7; border: 1px solid rgba(124,58,237,0.2); }
   
-  /* GAUGE STYLES */
+  /* GAUGE & DONUT STYLES */
   .dv-gauge-wrap, .dv-donut-wrap {
     position: relative;
     width: 200px;
@@ -324,9 +343,100 @@
   .dv-gl--med::before { background: #06b6d4; }
   .dv-gl--high::before { background: #ef4444; }
 
-  /* DONUT TRACK */
   .dv-donut-track { fill: none; stroke: rgba(255,255,255,0.03); stroke-width: 16; }
   .dv-donut-legend { margin-top: 25px; display: flex; flex-direction: column; gap: 6px; }
+
+  /* COMPOSANT : VBARS */
+  .dv-vbars-wrap {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    height: 240px;
+  }
+  .dv-vbars-chart-area {
+    flex: 1;
+    position: relative;
+    margin-bottom: 10px;
+  }
+  .dv-vbars-grid {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  .dv-grid-line {
+    width: 100%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+    position: absolute;
+  }
+  .dv-vbars-cols {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    z-index: 2;
+  }
+  .dv-vbar-col {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding: 0 10px;
+  }
+  .dv-vbar-container {
+    width: 35px;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+  }
+  .dv-vbar {
+    width: 100%;
+    border-radius: 6px 6px 0 0;
+    position: relative;
+    transition: height 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+  .dv-vbar:hover .dv-vbar-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-8px);
+  }
+  .dv-vbar-tooltip {
+    position: absolute;
+    top: -30px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    opacity: 0;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    white-space: nowrap;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .dv-vbars-xaxis {
+    display: flex;
+    justify-content: space-around;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 8px;
+  }
+  .dv-xaxis-label {
+    flex: 1;
+    text-align: center;
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
   /* HORIZONTAL BARS */
   .dv-hbars-wrap { display: flex; flex-direction: column; gap: 16px; padding: 10px 0; }
@@ -353,7 +463,7 @@
   document.addEventListener("DOMContentLoaded", function() {
     // 1. ANIMATION DE LA JAUGE SVG CIRCULAIRE
     const orgScore = parseFloat("{{ global_metrics.global_risk_score }}") || 0;
-    const arcTotal = 447.7; // Portion des 270 degrés de la circonférence
+    const arcTotal = 447.7;
     const computedOffset = arcTotal - ((orgScore / 100) * arcTotal);
     
     setTimeout(() => {
@@ -364,14 +474,10 @@
     // 2. CONSTRUIRE LE DONUT DE DISTRIBUTION AUTOMATIQUEMENT
     const segmentsData = [
       {% for seg in risk_distribution %}
-        { 
-          count: parseInt("{{ seg.count }}"), 
-          label: "{{ seg.risk_label }}" 
-        },
+        { count: parseInt("{{ seg.count }}"), label: "{{ seg.risk_label }}" },
       {% endfor %}
     ];
 
-    // Nuancier dynamique pour correspondre à l'UI Kit
     const colorMap = {
       'CRITICAL': '#ef4444',
       'HIGH': '#f59e0b',
@@ -381,7 +487,7 @@
     
     const totalUsers = parseInt("{{ global_metrics.total_agents }}") || 1;
     const donutGroup = document.getElementById('donut-segments-group');
-    const circumference = 534.1; // 2 * pi * r (r=85)
+    const circumference = 534.1;
     let currentOffset = 0;
 
     segmentsData.forEach(seg => {
@@ -407,7 +513,7 @@
       }
     });
 
-    // 3. ANIMATION DES BARRES DE PROGRESSION HORIZONTALES (VECTEURS DE RISQUE)
+    // 3. ANIMATION DES BARRES DE PROGRESSION HORIZONTALES
     setTimeout(() => {
       const bars = document.querySelectorAll('.dv-hbar-fill');
       bars.forEach(bar => {
@@ -415,6 +521,21 @@
         bar.style.width = targetPct + '%';
       });
     }, 300);
+
+    // 4. ANIMATION DES BARRES VERTICALES (SUCCESSRATE EN JS)
+    setTimeout(() => {
+      const vbars = document.querySelectorAll('.dv-vbar');
+      vbars.forEach((vbar, index) => {
+        const riskScore = parseFloat(vbar.getAttribute('data-risk-score')) || 0;
+        const successRate = Math.max(0, 100 - riskScore);
+        
+        vbar.style.height = successRate + '%';
+        const tooltip = document.getElementById(`vbar-tooltip-${index + 1}`);
+        if (tooltip) {
+          tooltip.innerText = successRate.toFixed(1) + '%';
+        }
+      });
+    }, 400);
   });
 </script>
 {% endblock %}
