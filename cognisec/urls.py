@@ -21,6 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('i18n/', include('django.conf.urls.i18n')),
     path('', include('core.urls')),
-    path('behavioral/', include('behavioral.urls'))
+    path('behavioral/', include('behavioral.urls')),
     path('ml-engine/', include('ml_engine.urls')),
+    path('training/', include('training.urls')),
 ]

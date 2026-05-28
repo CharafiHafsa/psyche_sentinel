@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'core',
     'behavioral'
     'ml_engine',
+    'training',
 ]
 
 MIDDLEWARE = [
@@ -111,9 +112,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'fr-fr'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Casablanca'
 
 USE_I18N = True
 
@@ -143,3 +144,12 @@ LOCALE_PATHS = [
 ]
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+#Ajouter par Aicha
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 7200  # 2 heures pour le quiz
+ 
+# Optionnel : LOGIN_URL pour les vues admin
+LOGIN_URL = '/login/'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#Fin Aicha

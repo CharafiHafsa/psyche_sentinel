@@ -9,6 +9,7 @@ from django.contrib.auth import logout
 from django.contrib.auth import update_session_auth_hash
 from behavioral.models import SystemNotification, AgentCampaignRisk, AgentLog, Agent
 from django.db.models import Avg, Max
+from training.models import Campagne
 
 def landing_view(request):
     return render(request, 'core/landing_page.html')

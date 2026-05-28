@@ -1,0 +1,205 @@
+{% extends 'core/base.html' %}
+{% load static i18n %}
+{% comment %}
+FICHIER : training/templates/training/campagnes_liste.html
+{% endcomment %}
+{% block content %}
+
+<div class="section-header" style="margin-bottom:24px;">
+    <span class="section-number"><i data-lucide="radio"></i></span>
+    <div class="section-title-group">
+        <div class="section-title">Campagnes de Sensibilisation</div>
+        <div class="section-desc">Gestion et suivi des campagnes NIST SP 800-50</div>
+    </div>
+    <div style="margin-left:auto; display:flex; gap:8px;">
+        <a href="{% url 'campagne_creer' %}" class="btn btn-primary">
+            <i data-lucide="plus"></i> Nouvelle Campagne
+        </a>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="metric-4up" style="display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+    <div class="glass-card info-card card-violet" style="flex: 1;">
+        <div class="info-card-header">
+            <div class="info-card-icon" style="background:var(--color-primary-bg);color:var(--color-primary);">
+                <i data-lucide="radio"></i>
+            </div>
+        </div>
+        <div class="info-card-title">Total Campagnes</div>
+        <div class="info-card-value">{{ total_campagnes }}</div>
+    </div>
+    <div class="glass-card info-card card-success" style="flex: 1;">
+        <div class="info-card-header">
+            <div class="info-card-icon" style="background:var(--color-success-bg);color:var(--color-success);">
+                <i data-lucide="zap"></i>
+            </div>
+        </div>
+        <div class="info-card-title">Actives</div>
+        <div class="info-card-value">{{ actives }}</div>
+    </div>
+    <div class="glass-card info-card card-cyan" style="flex: 1;">
+        <div class="info-card-header">
+            <div class="info-card-icon" style="background:var(--color-secondary-bg);color:var(--color-secondary);">
+                <i data-lucide="clock"></i>
+            </div>
+        </div>
+        <div class="info-card-title">Planifiées</div>
+        <div class="info-card-value">{{ planifiees }}</div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="glass-card" style="padding:0; overflow:hidden;">
+    <div
+        style="padding:20px 24px; border-bottom:1px solid var(--border-subtle); display:flex; align-items:center; justify-content:space-between;">
+        <span
+            style="font-family:var(--font-display); font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-secondary);">
+            Toutes les campagnes
+        </span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid var(--border-subtle);">
+                    <th
+                        style="padding:12px 24px; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; color:var(--text-muted); text-transform:uppercase;">
+                        Campagne</th>
+                    <th
+                        style="padding:12px 16px; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; color:var(--text-muted); text-transform:uppercase;">
+                        Statut</th>
+                    <th
+                        style="padding:12px 16px; text-align:left; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; color:var(--text-muted); text-transform:uppercase;">
+                        Date lancement</th>
+                    <th
+                        style="padding:12px 16px; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; color:var(--text-muted); text-transform:uppercase;">
+                        Questions</th>
+                    <th
+                        style="padding:12px 16px; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; color:var(--text-muted); text-transform:uppercase;">
+                        Passages</th>
+                    <th
+                        style="padding:12px 16px; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; color:var(--text-muted); text-transform:uppercase;">
+                        Score moy.</th>
+                    <th
+                        style="padding:12px 16px; text-align:right; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; color:var(--text-muted); text-transform:uppercase;">
+                        Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in campagnes %}
+                <tr style="border-bottom:1px solid var(--border-subtle); transition:background var(--ease-fast);"
+                    onmouseenter="this.style.background='var(--bg-elevated)'"
+                    onmouseleave="this.style.background='transparent'">
+                    <td style="padding:14px 24px;">
+                        <div style="font-weight:600; font-size:0.82rem; color:var(--text-primary);">{{ c.nom }}</div>
+                        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">{{ c.public_cible }} ·
+                            {{ c.duree_minutes }}min</div>
+                    </td>
+                    <td style="padding:14px 16px;">
+                        <span class="badge {{ c.get_statut_badge_class }} badge-dot">{{ c.get_statut_display }}</span>
+                    </td>
+                    <td
+                        style="padding:14px 16px; font-family:var(--font-mono); font-size:0.72rem; color:var(--text-secondary);">
+                        {{ c.date_lancement|date:"d/m/Y H:i" }}
+                    </td>
+                    <td
+                        style="padding:14px 16px; text-align:center; font-family:var(--font-mono); font-size:0.78rem; font-weight:700; color:var(--color-primary);">
+                        {{ c.total_questions }}
+                    </td>
+                    <td
+                        style="padding:14px 16px; text-align:center; font-family:var(--font-mono); font-size:0.78rem; font-weight:700;">
+                        {{ c.nb_passages|default:"0" }}
+                    </td>
+                    <td style="padding:14px 16px; text-align:center;">
+                        {% if c.score_moyen %}
+                        <span
+                            style="font-family:var(--font-mono); font-size:0.82rem; font-weight:700;
+                           color:{% if c.score_moyen >= 70 %}var(--color-success){% elif c.score_moyen >= 50 %}var(--color-warning){% else %}var(--color-danger){% endif %};">
+                            {{ c.score_moyen|floatformat:1 }}%
+                        </span>
+                        {% else %}
+                        <span style="color:var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                   
+                    <td style="padding:14px 16px; text-align:right; display:flex; gap:6px; justify-content:flex-end;">
+                        <a href="{% url 'passage_quiz' c.id %}" class="btn btn-outline btn-sm" title="Tester le quiz" style="color:var(--cyan); border-color:rgba(34,211,238,0.2);">
+                            <i data-lucide="play-circle" style="width:14px; height:14px;"></i>
+                        </a>
+
+                        <a href="{% url 'campagne_modifier' c.pk %}" class="btn btn-ghost btn-sm" title="Modifier">
+                            <i data-lucide="edit-3" style="width:14px; height:14px;"></i>
+                        </a>
+                        <button onclick="confirmDelete('{{ c.id }}', '{{ c.nom|escapejs }}')" 
+                                style="background: none; border: none; padding: 0; cursor: pointer; color: var(--color-danger); transition: opacity 0.2s;"
+                                onmouseenter="this.style.opacity='0.7'"
+                                onmouseleave="this.style.opacity='1'"
+                                title="Supprimer">
+                            <i data-lucide="trash-2" style="width:18px; height:18px;"></i>
+                        </button>
+
+                        <a href="{% url 'campagne_detail' c.pk %}" class="btn btn-ghost btn-sm" title="Statistiques détaillées">
+                            <i data-lucide="bar-chart-2" style="width:14px; height:14px;"></i>
+                        </a>
+                    </td>
+                    
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7"
+                        style="padding:48px; text-align:center; color:var(--text-muted); font-size:0.82rem;">
+                        Aucune campagne créée.<br>
+                        <a href="{% url 'campagne_creer' %}" class="btn btn-primary btn-sm" style="margin-top:16px;">
+                            <i data-lucide="plus"></i> Créer la première campagne
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div id="deleteModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); z-index:9999; align-items:center; justify-content:center;">
+    <div class="glass-card" style="width:420px; padding:32px; text-align:center; border:1px solid rgba(248,113,113,0.2);">
+        <div style="font-size:3.5rem; color:var(--color-danger); margin-bottom:16px; filter: drop-shadow(0 0 10px rgba(220,38,38,0.3));">⚠️</div>
+        <h3 style="font-family:var(--font-display); font-size:1.4rem; margin-bottom:12px;">Supprimer la campagne ?</h3>
+        <p style="color:var(--text-secondary); font-size:0.88rem; line-height:1.5; margin-bottom:24px;">
+            Êtes-vous sûr de vouloir supprimer <strong id="campagneName" style="color:var(--text-primary);"></strong> ? <br>
+            <span style="font-size:0.75rem; color:var(--color-danger);">⚠️ Cette action supprimera tous les résultats associés.</span>
+        </p>
+        
+        <form id="deleteForm" method="POST">
+            {% csrf_token %}
+            <div style="display:flex; gap:12px; justify-content:center;">
+                <button type="button" onclick="closeDeleteModal()" class="btn btn-outline" style="min-width:110px;">Annuler</button>
+                <button type="submit" class="btn btn-danger" style="min-width:110px; background:var(--color-danger);">Confirmer</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+function confirmDelete(id, nom) {
+    const modal = document.getElementById('deleteModal');
+    const form = document.getElementById('deleteForm');
+    const nameSpan = document.getElementById('campagneName');
+
+    nameSpan.textContent = `"${nom}"`;
+
+    form.action = `/training/campagne/${id}/delete/`;
+
+    modal.style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+
+
+window.onclick = function(event) {
+    const modal = document.getElementById('deleteModal');
+    if (event.target == modal) {
+        closeDeleteModal();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,263 @@
+{% extends 'core/base.html' %}
+{% load static i18n %}
+
+{% block content %}
+<div class="section-header" style="margin-bottom:24px;">
+  <span class="section-number"><i data-lucide="plus-circle"></i></span>
+  <div class="section-title-group">
+    <div class="section-title">{% if edit_mode %}Modifier la Campagne{% else %}Nouvelle Campagne{% endif %}</div>
+    <div class="section-desc">{% if edit_mode %}Mettre à jour les paramètres et quotas NIST{% else %}Configurer les paramètres et quotas de la campagne{% endif %}</div>
+  </div>
+  <a href="{% url 'campagnes_liste' %}" class="btn btn-ghost btn-sm" style="margin-left:auto;">
+    <i data-lucide="arrow-left"></i> Retour
+  </a>
+</div>
+
+{% if error %}
+<div class="feedback-banner show wrong" style="margin-bottom:20px; display:flex; gap:12px; padding:14px 18px; border-radius:var(--radius-md); background:var(--color-danger-bg); border:1px solid rgba(248,113,113,0.3);">
+  <i data-lucide="alert-triangle" style="color:var(--color-danger); flex-shrink:0;"></i>
+  <div style="font-size:0.8rem;">{{ error }}</div>
+</div>
+{% endif %}
+
+<form method="POST" action="{% if edit_mode %}{% url 'campagne_modifier' campagne.pk %}{% else %}{% url 'campagne_creer' %}{% endif %}">
+  {% csrf_token %}
+  <div style="display:grid; grid-template-columns:1fr 340px; gap:20px; align-items:start;">
+
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      
+      <div class="glass-card" style="padding:24px;">
+        <div style="font-family:var(--font-display); font-size:0.68rem; font-weight:700; letter-spacing:0.12em; color:var(--text-secondary); text-transform:uppercase; margin-bottom:16px;">
+          <i data-lucide="tag" style="width:12px; height:12px; margin-right:6px;"></i>Identification
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div>
+            <label style="display:block; font-size:0.72rem; font-weight:600; color:var(--text-secondary); margin-bottom:6px;">Nom de la campagne *</label>
+            <input type="text" name="nom" required
+                   value="{% if edit_mode %}{{ campagne.nom }}{% endif %}"
+                   placeholder="ex: Sensibilisation Phishing Q2 2025"
+                   style="width:100%; background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:10px 14px; color:var(--text-primary); font-size:0.82rem; outline:none;">
+          </div>
+          <div>
+            <label style="display:block; font-size:0.72rem; font-weight:600; color:var(--text-secondary); margin-bottom:6px;">Description</label>
+            <textarea name="description" rows="3" placeholder="Objectifs de la campagne..."
+                      style="width:100%; background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:10px 14px; color:var(--text-primary); font-size:0.82rem; resize:vertical; outline:none;">{% if edit_mode %}{{ campagne.description }}{% endif %}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card" style="padding:24px;">
+        <div style="font-family:var(--font-display); font-size:0.68rem; font-weight:700; letter-spacing:0.12em; color:var(--text-secondary); text-transform:uppercase; margin-bottom:16px;">
+          <i data-lucide="calendar" style="width:12px; height:12px; margin-right:6px;"></i>Planification
+        </div>
+        <div style="display:block;">
+          <div>
+            <label style="display:block; font-size:0.72rem; font-weight:600; color:var(--text-secondary); margin-bottom:6px;">Date & heure de lancement *</label>
+            <input type="datetime-local" name="date_lancement" required
+                   value="{% if edit_mode %}{{ campagne.date_lancement|date:'Y-m-d' }}T{{ campagne.date_lancement|date:'H:i' }}{% endif %}"
+                   style="width:100%; background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:10px 14px; color:var(--text-primary); font-size:0.82rem; outline:none; color-scheme:dark;">
+          </div>
+         
+        </div>
+      </div>
+
+      <div class="glass-card" style="padding:24px;">
+            <div style="font-family:var(--font-display); font-size:0.68rem; font-weight:700; letter-spacing:0.12em; color:var(--text-secondary); text-transform:uppercase; margin-bottom:16px;">
+                <i data-lucide="building-2" style="width:12px; height:12px; margin-right:6px;"></i>Divisions cibles (LDAP)
+            </div>
+            
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:var(--radius-full);">
+                    <input type="checkbox" name="divisions_cibles" value="Tout"
+                          {% if edit_mode and "Tout" in campagne.divisions_cibles %}checked{% endif %}
+                          style="accent-color:var(--color-primary); width:14px; height:14px;">
+                    <span style="font-size:0.75rem; font-weight:600; color:var(--text-primary);">Tout</span>
+                </label>
+
+                {% for div in divisions %}
+                <label style="cursor:pointer; display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:var(--radius-full);">
+                    <input type="checkbox" name="divisions_cibles" value="{{ div }}"
+                          {% if edit_mode and div in campagne.divisions_cibles %}checked{% endif %}
+                          style="accent-color:var(--color-primary); width:14px; height:14px;">
+                    <span style="font-size:0.75rem; font-weight:500;">{{ div }}</span>
+                </label>
+                {% empty %}
+                <span style="font-size:0.75rem; color:var(--text-muted);">Aucune division LDAP disponible.</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card" style="padding:24px; position:sticky; top:80px;">
+      <div style="font-family:var(--font-display); font-size:0.68rem; font-weight:700; letter-spacing:0.12em; color:var(--text-secondary); text-transform:uppercase; margin-bottom:20px;">
+        <i data-lucide="sliders" style="width:12px; height:12px; margin-right:6px;"></i>Quotas par niveau
+      </div>
+
+      <div style="margin-bottom:18px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:600;"><span style="color:var(--color-success);">●</span> Niveau 1 — Facile</span>
+          {% if dispo %}<span style="font-size:0.62rem; color:var(--text-muted);">{{ dispo.1 }} disponibles</span>{% endif %}
+        </div>
+        <input type="number" name="nb_niv1"
+               value="{% if edit_mode %}{{ campagne.nb_niv1 }}{% else %}4{% endif %}"
+               min="0" max="20"
+               style="width:100%; background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:10px 14px; color:var(--text-primary); font-size:0.9rem; font-weight:700; text-align:center; outline:none;">
+      </div>
+
+      <div style="margin-bottom:18px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:600;"><span style="color:var(--color-warning);">●</span> Niveau 2 — Moyen</span>
+          {% if dispo %}<span style="font-size:0.62rem; color:var(--text-muted);">{{ dispo.2 }} disponibles</span>{% endif %}
+        </div>
+        <input type="number" name="nb_niv2"
+               value="{% if edit_mode %}{{ campagne.nb_niv2 }}{% else %}4{% endif %}"
+               min="0" max="20"
+               style="width:100%; background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:10px 14px; color:var(--text-primary); font-size:0.9rem; font-weight:700; text-align:center; outline:none;">
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:600;"><span style="color:var(--color-danger);">●</span> Niveau 3 — Difficile</span>
+          {% if dispo %}<span style="font-size:0.62rem; color:var(--text-muted);">{{ dispo.3 }} disponibles</span>{% endif %}
+        </div>
+        <input type="number" name="nb_niv3"
+               value="{% if edit_mode %}{{ campagne.nb_niv3 }}{% else %}2{% endif %}"
+               min="0" max="20"
+               style="width:100%; background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:10px 14px; color:var(--text-primary); font-size:0.9rem; font-weight:700; text-align:center; outline:none;">
+      </div>
+
+      <div style="background:var(--color-primary-bg); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:12px; text-align:center; margin-bottom:20px;">
+        <div style="font-size:0.65rem; color:var(--text-muted); margin-bottom:4px;">TOTAL QUESTIONS</div>
+        <div style="font-family:var(--font-display); font-size:1.4rem; font-weight:700; color:var(--color-primary);" id="totalQ">
+          {% if edit_mode %}{{ campagne.total_questions }}{% else %}10{% endif %}
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+        {% if edit_mode %}
+          <i data-lucide="save"></i> Enregistrer les modifications
+        {% else %}
+          <i data-lucide="rocket"></i> Créer la campagne
+        {% endif %}
+      </button>
+    </div>
+  </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    const inputs = [
+        document.querySelector('input[name="nb_niv1"]'),
+        document.querySelector('input[name="nb_niv2"]'),
+        document.querySelector('input[name="nb_niv3"]')
+    ];
+
+    const divisionCheckboxes = document.querySelectorAll(
+        'input[name="divisions_cibles"]'
+    );
+
+    const totalDisplay = document.getElementById('totalQ');
+
+    const btn = document.querySelector('button[type="submit"]');
+
+    // Message erreur
+    const errorMsg = document.createElement('div');
+
+    errorMsg.style.fontSize = '0.75rem';
+    errorMsg.style.marginBottom = '10px';
+    errorMsg.style.fontWeight = '600';
+
+    btn.parentNode.insertBefore(errorMsg, btn);
+
+    function update() {
+
+        let total = 0;
+
+        inputs.forEach(input => {
+            total += parseInt(input.value || 0);
+        });
+
+        totalDisplay.textContent = total;
+
+        // ✅ Vérifier au moins une division
+        const divisionSelected = [...divisionCheckboxes].some(cb => cb.checked);
+
+        if (!divisionSelected) {
+
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+
+            errorMsg.style.color = "var(--color-danger)";
+            errorMsg.textContent =
+                "⚠️ Sélectionnez au moins une division cible.";
+
+            return;
+        }
+
+        // ✅ Vérifier quota max
+        if (total > 25) {
+
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+
+            errorMsg.style.color = "var(--color-danger)";
+            errorMsg.textContent =
+                "🛑 Quota max de 25 questions dépassé !";
+
+        }
+
+        // ✅ Vérifier minimum questions
+        else if (total === 0) {
+
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+
+            errorMsg.style.color = "var(--color-warning)";
+            errorMsg.textContent =
+                "⚠️ Veuillez ajouter au moins une question.";
+
+        }
+
+        // ✅ Tout est valide
+        else {
+
+            btn.disabled = false;
+            btn.style.opacity = "1";
+
+            errorMsg.textContent = "";
+        }
+    }
+
+    // Inputs questions
+    inputs.forEach(input => {
+        input.addEventListener('input', update);
+    });
+
+    // Checkboxes divisions
+    divisionCheckboxes.forEach(cb => {
+        cb.addEventListener('change', update);
+    });
+
+    // Initialisation
+    update();
+  const toutCheckbox = document.querySelector('input[value="Tout"]');
+    toutCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            divisionCheckboxes.forEach(cb => {
+                if (cb.value !== "Tout") {
+                    cb.checked = false;
+                    cb.disabled = true;
+                }
+            });
+        } else {
+            divisionCheckboxes.forEach(cb => {
+                cb.disabled = false;
+            });
+        }
+        update(); 
+    }); 
+
+});
+</script>
+{% endblock %}

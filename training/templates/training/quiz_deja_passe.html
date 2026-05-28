@@ -1,0 +1,18 @@
+{% extends 'core/base_public.html' %}
+{# ══════════════════════════════════════════════════════════════ #}
+{# FICHIER : training/templates/training/quiz_deja_passe.html #}
+{# ══════════════════════════════════════════════════════════════ #}
+{% comment %}SPLIT HERE{% endcomment %}
+{% block content %}
+<div style="max-width:480px; margin:80px auto; padding:20px; text-align:center;">
+  <div class="glass-card" style="padding:48px 32px;">
+    <i data-lucide="check-circle-2"
+      style="width:48px; height:48px; color:var(--color-success); margin-bottom:20px;"></i>
+    <div class="h3" style="margin-bottom:12px;">Quiz déjà complété</div>
+    <p style="color:var(--text-secondary); font-size:0.82rem;">
+      Vous avez déjà passé le quiz <strong>{{ campagne.nom }}</strong>.<br>
+      Votre résultat a été enregistré.
+    </p>
+  </div>
+</div>
+{% endblock %}
