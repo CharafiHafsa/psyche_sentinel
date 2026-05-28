@@ -1,0 +1,223 @@
+{% extends 'core/base.html' %}
+{% load static i18n %}
+{# ══════════════════════════════════════════════════════════════ #}
+{# FICHIER : training/templates/training/banque_questions.html #}
+{# ══════════════════════════════════════════════════════════════ #}
+{% block content %}
+
+<div class="section-header" style="margin-bottom:24px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; align-items: center; gap: 16px;">
+        <span class="section-number"><i data-lucide="database"></i></span>
+        <div class="section-title-group">
+            <div class="section-title">Banque de Questions</div>
+            <div class="section-desc">{{ total }} questions · {{ total_tous }} Tous + {{ total_it }} IT</div>
+        </div>
+    </div>
+
+    <div style="display: flex; align-items: center;">
+        <form action="{% url 'import_questions' %}" method="POST" enctype="multipart/form-data" id="importForm" style="margin: 0; padding: 0;">
+            {% csrf_token %}
+            <input type="file" name="fichier_csv" id="fileInput" accept=".csv" style="display:none;" onchange="validerEtConfirmerImport(this)">
+            <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('fileInput').click()">
+                <i data-lucide="upload-cloud"></i> Importer des Questions (CSV)
+            </button>
+        </form>
+    </div>
+</div>
+<div id="customImportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
+    <div class="glass-card" style="width: 100%; max-width: 420px; padding: 24px; text-align: center; border: 1px solid var(--border-default); box-shadow: 0 20px 40px rgba(0,0,0,0.3); background: var(--bg-surface);">
+        
+        <div style="width: 48px; height: 48px; background: rgba(var(--color-primary-rgb), 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: var(--color-primary);">
+            <i data-lucide="help-circle" style="width: 24px; height: 24px;"></i>
+        </div>
+
+        <div style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
+            Confirmer l'importation
+        </div>
+        
+        <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">
+            Vous allez ajouter les questions du fichier :<br>
+            <strong id="modalFileName" style="color: var(--color-primary); word-break: break-all;"></strong><br>
+            dans votre banque de questions. Voulez-vous continuer ?
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="annulerImportCustom()" style="min-width: 100px; padding: 8px 16px;">
+                Annuler
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="confirmerImportCustom()" style="min-width: 100px; padding: 8px 16px;">
+                <i data-lucide="check"></i> Importer
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="glass-card" style="padding:16px 20px; margin-bottom:20px;">
+    <form method="GET" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+        <input type="text" name="q" value="{{ filtres.q }}" placeholder="Rechercher..."
+            style="flex:1; min-width:200px; background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:8px 14px; color:var(--text-primary); font-size:0.8rem; outline:none;">
+        <select name="categorie"
+            style="background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:8px 14px; color:var(--text-primary); font-size:0.8rem; outline:none;">
+            <option value="">Toutes les catégories</option>
+                {% for cat in categories %}
+            <option value="{{ cat }}" {% if filtres.categorie == cat %}selected{% endif %}>
+                {{ cat }}
+            </option>{% endfor %}
+        </select>
+        <select name="difficulte"
+            style="background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:8px 14px; color:var(--text-primary); font-size:0.8rem; outline:none;">
+            <option value="">Tous niveaux</option>
+            <option value="1" {% if filtres.difficulte == "1" %}selected{% endif %}>Facile</option>
+            <option value="2" {% if filtres.difficulte == "2" %}selected{% endif %}>Moyen</option>
+            <option value="3" {% if filtres.difficulte == "3" %}selected{% endif %}>Difficile</option>
+        </select>
+        <select name="public"
+            style="background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:var(--radius-md); padding:8px 14px; color:var(--text-primary); font-size:0.8rem; outline:none;">
+            <option value="">Tous publics</option>
+            <option value="Tous" {% if filtres.public == "Tous" %}selected{% endif %}>👥 Tous</option>
+            <option value="IT uniquement" {% if filtres.public == "IT uniquement" %}selected{% endif %}>💻 IT</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm"><i data-lucide="search"></i> Filtrer</button>
+        <a href="{% url 'banque_questions' %}" class="btn btn-ghost btn-sm">Réinitialiser</a>
+    </form>
+</div>
+
+<div class="glass-card" style="padding:0; overflow:hidden;">
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid var(--border-subtle);">
+                    <th style="padding:12px 20px; text-align:left; font-size:0.62rem; letter-spacing:0.1em; color:var(--text-muted); text-transform:uppercase;">Catégorie</th>
+                    <th style="padding:12px 16px; text-align:left; font-size:0.62rem; letter-spacing:0.1em; color:var(--text-muted); text-transform:uppercase;">Question (Cliquer pour voir les choix)</th>
+                    <th style="padding:12px 12px; text-align:center; font-size:0.62rem; letter-spacing:0.1em; color:var(--text-muted); text-transform:uppercase;">Niv.</th>
+                    <th style="padding:12px 12px; text-align:center; font-size:0.62rem; letter-spacing:0.1em; color:var(--text-muted); text-transform:uppercase;">Poids</th>
+                    <th style="padding:12px 12px; text-align:center; font-size:0.62rem; letter-spacing:0.1em; color:var(--text-muted); text-transform:uppercase;">Public</th>
+                    <th style="padding:12px 12px; text-align:center; font-size:0.62rem; letter-spacing:0.1em; color:var(--text-muted); text-transform:uppercase;">Réponse</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in questions %}
+                <tr style="border-bottom:1px solid var(--border-subtle); cursor: pointer;"
+                    onclick="toggleDetails('details-{{ q.id }}')"
+                    onmouseenter="this.style.background='var(--bg-elevated)'"
+                    onmouseleave="this.style.background='transparent'">
+                    <td style="padding:12px 20px; white-space:nowrap;">
+                        <span class="badge badge-neutral" style="font-size:0.6rem;">
+                            {{ q.categorie|truncatechars:20 }}
+                        </span>
+                    </td>
+                    <td style="padding:12px 16px; font-size:0.75rem; color:var(--text-primary); max-width:400px; font-weight: 500;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <i data-lucide="chevron-right" class="arrow-icon" id="arrow-details-{{ q.id }}" style="width:14px; height:14px; transition: transform 0.2s; color:var(--text-muted);"></i>
+                            <span>{{ q.texte|truncatechars:90 }}</span>
+                        </div>
+                    </td>
+                    <td style="padding:12px 12px; text-align:center;">
+                        <span style="font-weight:700; font-size:0.75rem; color:{% if q.difficulte == 1 %}var(--color-success){% elif q.difficulte == 2 %}var(--color-warning){% else %}var(--color-danger){% endif %};">
+                            N{{ q.difficulte }}
+                        </span>
+                    </td>
+                    <td style="padding:12px 12px; text-align:center; font-family:var(--font-mono); font-size:0.72rem; color:var(--color-primary);">
+                        {{ q.poids }}
+                    </td>
+                    <td style="padding:12px 12px; text-align:center; font-size:0.72rem;">
+                        {% if q.public == "IT uniquement" %}💻{% else %}👥{% endif %}
+                    </td>
+                    <td style="padding:12px 12px; text-align:center;">
+                        <span style="font-family:var(--font-display); font-size:0.85rem; font-weight:700; color:var(--color-primary);">
+                            {{ q.reponse_correcte }}
+                        </span>
+                    </td>
+                </tr>
+
+                <tr id="details-{{ q.id }}" style="display:none; background:rgba(0, 0, 0, 0.15); border-bottom:1px solid var(--border-subtle);">
+                    <td colspan="6" style="padding:16px 24px;">
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            
+                            <div style="font-size:0.8rem; color:var(--text-primary); font-weight:600; line-height:1.4; background:var(--bg-elevated); padding:10px 14px; border-radius:var(--radius-md); border-left:3px solid var(--color-primary);">
+                                {{ q.texte }}
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 4px;">
+                                
+                                <div style="padding:10px 14px; background:var(--bg-elevated); border:1px solid {% if q.reponse_correcte == 'A' %}var(--color-success){% else %}var(--border-default){% endif %}; border-radius:var(--radius-md); font-size:0.75rem; display:flex; gap:10px; align-items:start;">
+                                    <span style="font-weight:700; color:{% if q.reponse_correcte == 'A' %}var(--color-success){% else %}var(--color-primary){% endif %};">A.</span>
+                                    <span style="color:var(--text-secondary);">{{ q.choix_a }}</span>
+                                </div>
+
+                                <div style="padding:10px 14px; background:var(--bg-elevated); border:1px solid {% if q.reponse_correcte == 'B' %}var(--color-success){% else %}var(--border-default){% endif %}; border-radius:var(--radius-md); font-size:0.75rem; display:flex; gap:10px; align-items:start;">
+                                    <span style="font-weight:700; color:{% if q.reponse_correcte == 'B' %}var(--color-success){% else %}var(--color-primary){% endif %};">B.</span>
+                                    <span style="color:var(--text-secondary);">{{ q.choix_b }}</span>
+                                </div>
+
+                                <div style="padding:10px 14px; background:var(--bg-elevated); border:1px solid {% if q.reponse_correcte == 'C' %}var(--color-success){% else %}var(--border-default){% endif %}; border-radius:var(--radius-md); font-size:0.75rem; display:flex; gap:10px; align-items:start;">
+                                    <span style="font-weight:700; color:{% if q.reponse_correcte == 'C' %}var(--color-success){% else %}var(--color-primary){% endif %};">C.</span>
+                                    <span style="color:var(--text-secondary);">{{ q.choix_c }}</span>
+                                </div>
+
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function toggleDetails(rowId) {
+    const row = document.getElementById(rowId);
+    const arrow = document.getElementById('arrow-' + rowId);
+    
+    if (row.style.display === 'none') {
+        row.style.display = 'table-row';
+        if(arrow) arrow.style.transform = 'rotate(90deg)';
+    } else {
+        row.style.display = 'none';
+        if(arrow) arrow.style.transform = 'rotate(0deg)';
+    }
+}
+
+// Variable globale 
+let currentFileInput = null;
+
+function validerEtConfirmerImport(input) {
+    if (!input.files || input.files.length === 0) return;
+
+    const fichier = input.files[0];
+    
+    // Sécurité format
+    if (!fichier.name.endsWith('.csv')) {
+        alert("Erreur : Veuillez sélectionner un fichier au format .csv uniquement.");
+        input.value = "";
+        return;
+    }
+
+    // Garder la référence de l'input
+    currentFileInput = input;
+
+    document.getElementById('modalFileName').innerText = fichier.name;
+    
+    const modal = document.getElementById('customImportModal');
+    modal.style.display = 'flex';
+    
+    // Re-render des icônes Lucide pour la modale
+    if (window.lucide) lucide.createIcons();
+}
+
+function confirmerImportCustom() {
+    if (currentFileInput) {
+        document.getElementById('importForm').submit();
+    }
+}
+
+function annulerImportCustom() {
+    if (currentFileInput) {
+        currentFileInput.value = ""; // Vider l'input
+    }
+    document.getElementById('customImportModal').style.display = 'none';
+}
+</script>
+
+{% endblock %}

@@ -80,9 +80,9 @@
                 {% blocktrans %}Déployez des formations standard de conformité en ligne et des contrôles de connaissances (QCM) sécurisés via des liens uniques par email.{% endblocktrans %}
             </p>
         </div>
-        <button class="btn btn-secondary" style="width: 100%; justify-content: center;">
+       <a href="{% url 'campagnes_liste' %}" class="btn btn-secondary" style="width: 100%; justify-content: center; text-decoration: none;">
             <i data-lucide="list-checks"></i> {% trans "Créer un questionnaire" %}
-        </button>
+       </a>
     </div>
 
 </div>
@@ -119,7 +119,8 @@
                 <td><span class="badge badge-success">{% trans "Terminé" %}</span></td>
                 <td><button class="btn btn-ghost btn-sm"><i data-lucide="bar-chart-2"></i> {% trans "Voir les statistiques" %}</button></td>
             </tr>
-        </tbody>
+        </tbody> 
+        
     </table>
 </div>
 

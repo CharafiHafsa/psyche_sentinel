@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from .utils import perform_ldap_sync
 from django.contrib.auth import logout
 from django.contrib.auth import update_session_auth_hash
+from training.models import Campagne
 
 def landing_view(request):
     return render(request, 'core/landing_page.html')
@@ -237,3 +238,4 @@ def ldap_management(request):
         'config': config,
         'logs': logs
     })
+

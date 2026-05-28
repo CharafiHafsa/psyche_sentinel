@@ -1,11 +1,12 @@
 {% load static i18n %}
 <!DOCTYPE html>
 <html lang="fr" data-theme="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Psyche Sentinel | Centre de commandement</title>
-    
+
     <link rel="stylesheet" href="{% static 'css/global.css' %}">
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -14,10 +15,10 @@
         .kit-topbar {
             background: var(--bg-void) !important;
         }
-        
+
         .kit-sidenav {
             background: var(--bg-surface) !important;
-            width: 220px !important; 
+            width: 220px !important;
             transition: width var(--ease-med);
             overflow-x: hidden;
             border-right: 1px solid var(--border-subtle);
@@ -31,12 +32,12 @@
             display: flex;
             align-items: center;
         }
-        
+
         .topbar-brand-inner {
             display: flex;
             align-items: center;
             gap: 12px;
-            overflow: hidden; 
+            overflow: hidden;
             width: 100%;
         }
 
@@ -54,12 +55,12 @@
         /* 3. The Half-Circle Toggle Arrow */
         .sidebar-toggle-btn {
             position: absolute;
-            right: 16px; 
+            right: 16px;
             background: var(--bg-elevated);
             border: 1px solid var(--border-default);
-            border-left: none; 
-            border-radius: 0 20px 20px 0; 
-            width: 14px; 
+            border-left: none;
+            border-radius: 0 20px 20px 0;
+            width: 14px;
             height: 32px;
             display: flex;
             align-items: center;
@@ -69,7 +70,7 @@
             transition: all var(--ease-fast);
             z-index: 999;
         }
-        
+
         .sidebar-toggle-btn:hover {
             border-color: var(--color-primary);
             color: var(--color-primary);
@@ -79,6 +80,7 @@
         .sidebar-toggle-btn svg {
             transition: transform var(--ease-med) !important;
         }
+
         body.sidebar-collapsed .sidebar-toggle-btn svg {
             transform: rotate(180deg) !important;
         }
@@ -92,7 +94,7 @@
         /* 5. Unified & Centered Collapse State (Desktop) */
         body.sidebar-collapsed .topbar-brand,
         body.sidebar-collapsed .kit-sidenav {
-            width: 72px !important; 
+            width: 72px !important;
         }
 
         body.sidebar-collapsed .topbar-title-text,
@@ -105,12 +107,12 @@
         body.sidebar-collapsed .sidenav-link {
             justify-content: center !important;
             padding: 0 !important;
-            width: 42px !important; 
+            width: 42px !important;
             height: 42px !important;
-            margin: 0 auto 4px auto !important; 
+            margin: 0 auto 4px auto !important;
             border-radius: var(--radius-md) !important;
         }
-        
+
         body.sidebar-collapsed .sidenav-link i,
         body.sidebar-collapsed .sidenav-link svg {
             margin: 0 !important;
@@ -123,20 +125,23 @@
             font-size: 0.75rem;
             height: 32px;
             border-radius: var(--radius-sm);
-            background-color: var(--bg-elevated); 
+            background-color: var(--bg-elevated);
             border: 1px solid var(--border-subtle);
         }
 
         /* 6. RESPONSIVE FIX (Tablets & Mobile) */
         @media (max-width: 1024px) {
+
             /* Override global.css to keep the sidebar visible but force it into the mini state */
             .kit-sidenav {
                 display: block !important;
                 width: 72px !important;
             }
+
             .topbar-brand {
                 width: 72px !important;
             }
+
             /* Hide the arrow (no room to expand) and text */
             .sidebar-toggle-btn,
             .topbar-title-text,
@@ -144,6 +149,7 @@
             .sidenav-label {
                 display: none !important;
             }
+
             /* Force the square icon buttons */
             .sidenav-link {
                 justify-content: center !important;
@@ -153,14 +159,16 @@
                 margin: 0 auto 4px auto !important;
                 border-radius: var(--radius-md) !important;
             }
-            .sidenav-link i, 
+
+            .sidenav-link i,
             .sidenav-link svg {
                 margin: 0 !important;
             }
-            
+
         }
     </style>
 </head>
+
 <body>
 
     <header class="kit-topbar">
@@ -196,30 +204,41 @@
             <div style="width: 1px; height: 24px; background: var(--border-default);"></div>
 
             <div style="display: flex; gap: 8px;">
-                <a href="{% url 'notifications' %}" class="btn btn-ghost btn-sm" style="padding: 8px; position: relative; text-decoration: none;">
+                <a href="{% url 'notifications' %}" class="btn btn-ghost btn-sm"
+                    style="padding: 8px; position: relative; text-decoration: none;">
                     <i data-lucide="bell"></i>
-                    <span class="badge-dot" style="position: absolute; top: 8px; right: 8px; color: var(--color-danger);"></span>
+                    <span class="badge-dot"
+                        style="position: absolute; top: 8px; right: 8px; color: var(--color-danger);"></span>
                 </a>
                 <button class="btn btn-ghost btn-sm" style="padding: 8px;">
                     <i data-lucide="help-circle"></i>
                 </button>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-elevated); padding: 4px 12px 4px 4px; border-radius: var(--radius-full); border: 1px solid var(--border-subtle);">
-                
-                <a href="{% url 'settings' %}" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'" title="Paramètres du compte">
-                    <div class="avatar avatar-sm av-violet" style="width: 26px; height: 26px; font-size: 0.5rem; flex-shrink: 0;">AD</div>
-                    <span style="font-family: var(--font-ui); font-size: 0.75rem; font-weight: 600; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis;">
+            <div
+                style="display: flex; align-items: center; gap: 8px; background: var(--bg-elevated); padding: 4px 12px 4px 4px; border-radius: var(--radius-full); border: 1px solid var(--border-subtle);">
+
+                <a href="{% url 'settings' %}"
+                    style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; transition: opacity 0.2s;"
+                    onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"
+                    title="Paramètres du compte">
+                    <div class="avatar avatar-sm av-violet"
+                        style="width: 26px; height: 26px; font-size: 0.5rem; flex-shrink: 0;">AD</div>
+                    <span
+                        style="font-family: var(--font-ui); font-size: 0.75rem; font-weight: 600; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis;">
                         {{ request.user.username|default:"Administrateur" }}
                     </span>
                 </a>
 
                 <div style="width: 1px; height: 16px; background: var(--border-subtle);"></div>
 
-                <a href="{% url 'logout' %}" style="color: var(--color-danger); opacity: 0.8; transition: opacity 0.2s; display: flex; align-items: center;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'" title="Déconnexion sécurisée">
+                <a href="{% url 'logout' %}"
+                    style="color: var(--color-danger); opacity: 0.8; transition: opacity 0.2s; display: flex; align-items: center;"
+                    onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'"
+                    title="Déconnexion sécurisée">
                     <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
                 </a>
-                
+
             </div>
         </div>
     </header>
@@ -228,7 +247,8 @@
         <nav class="kit-sidenav" id="kitSidenav">
             <div class="sidenav-section">
                 <div class="sidenav-label">{% trans "Opérations principales" %}</div>
-                <a class="sidenav-link {% if request.resolver_match.url_name == 'deployment' or request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'deployment' %}">
+                <a class="sidenav-link {% if request.resolver_match.url_name == 'deployment' or request.resolver_match.url_name == 'home' %}active{% endif %}"
+                    href="{% url 'deployment' %}">
                     <i data-lucide="activity"></i> <span class="nav-text">{% trans "Centre d'action" %}</span>
                 </a>
                 <a class="sidenav-link" href="#">
@@ -238,9 +258,12 @@
 
             <div class="sidenav-section">
                 <div class="sidenav-label">{% trans "Modules de menace" %}</div>
-                <a class="sidenav-link" href="#">
-                    <i data-lucide="book-open"></i> <span class="nav-text">{% trans "Tests de connaissances" %}</span>
+
+                <a class="sidenav-link {% if request.resolver_match.url_name == 'campagnes_liste' %}active{% endif %}"
+                    href="{% url 'campagnes_liste' %}">
+                    <i data-lucide="shield-check"></i> <span class="nav-text">{% trans "Sensibilisation" %}</span>
                 </a>
+
                 <a class="sidenav-link" href="#">
                     <i data-lucide="crosshair"></i> <span class="nav-text">{% trans "Scénarios d’attaque" %}</span>
                 </a>
@@ -254,10 +277,12 @@
                 <a class="sidenav-link" href="{% url 'directory' %}">
                     <i data-lucide="users"></i> <span class="nav-text">{% trans "Répertoire cible" %}</span>
                 </a>
-                <a class="sidenav-link {% if request.resolver_match.url_name == 'ldap_setup' %}active{% endif %}" href="{% url 'ldap_management' %}">
+                <a class="sidenav-link {% if request.resolver_match.url_name == 'ldap_setup' %}active{% endif %}"
+                    href="{% url 'ldap_management' %}">
                     <i data-lucide="server"></i> <span class="nav-text">{% trans "Synchronisation du répertoire" %}</span>
                 </a>
-                <a class="sidenav-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}" href="{% url 'settings' %}">
+                <a class="sidenav-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}"
+                    href="{% url 'settings' %}">
                     <i data-lucide="settings-2"></i> <span class="nav-text">{% trans "Paramètres système" %}</span>
                 </a>
             </div>
@@ -271,4 +296,5 @@
 
     <script src="{% static 'js/main.js' %}"></script>
 </body>
+
 </html>

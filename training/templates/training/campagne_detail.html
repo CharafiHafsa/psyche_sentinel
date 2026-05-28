@@ -1,0 +1,912 @@
+{% extends 'core/base.html' %}
+{% load static i18n %}
+{# ══════════════════════════════════════════════════════════════ #}
+{# FICHIER : training/templates/training/campagne_detail.html    #}
+{# Version enrichie — analyse NIST SP 800-50 complète           #}
+{# ══════════════════════════════════════════════════════════════ #}
+
+{% block content %}
+
+{# ── En-tête campagne ────────────────────────────────────────── #}
+<div class="section-header" style="margin-bottom:24px;">
+    <span class="section-number"><i data-lucide="eye"></i></span>
+    <div class="section-title-group">
+        <div class="section-title">{{ campagne.nom }}</div>
+        <div class="section-desc">{{ campagne.get_statut_display }} · Lancée le {{ campagne.date_lancement|date:"d/m/Y à H:i" }}</div>
+    </div>
+    <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+        <span class="badge {{ campagne.get_statut_badge_class }} badge-dot">{{ campagne.get_statut_display }}</span>
+
+        {% if campagne.statut == 'active' or campagne.statut == 'planifiee' %}
+            <form action="{% url 'envoyer_invitations_campagne' campagne.pk %}" method="POST" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i data-lucide="send"></i> Envoyer les invitations
+                </button>
+            </form>
+            {% if campagne.statut == 'active' %}
+            <form method="POST" action="{% url 'campagne_terminer' campagne.pk %}" style="margin:0;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline btn-sm"
+                        onclick="return confirm('Terminer cette campagne manuellement ?')">
+                    <i data-lucide="stop-circle"></i> Terminer
+                </button>
+            </form>
+            {% endif %}
+        {% endif %}
+
+        <a href="{% url 'campagnes_liste' %}" class="btn btn-ghost btn-sm">
+            <i data-lucide="arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+{# ── Bannière campagne terminée ──────────────────────────────── #}
+{% if campagne.statut == 'terminee' %}
+<div class="glass-card" style="margin-bottom:20px; padding:14px 18px;
+     border:1px solid var(--color-violet); background:var(--color-violet-bg);">
+    <div style="color:var(--color-violet); font-weight:600; display:flex; align-items:center; gap:8px; font-size:0.82rem;">
+        <i data-lucide="info"></i> Cette campagne est terminée. Les statistiques sont définitives.
+    </div>
+</div>
+{% endif %}
+
+{# ── Alerte temps suspects ────────────────────────────────────── #}
+{% if alerte_temps %}
+<div class="glass-card" style="margin-bottom:20px; padding:14px 18px;
+     border:1px solid var(--color-warning); background:var(--color-warning-bg);">
+    <div style="color:var(--color-warning); font-weight:600; display:flex; align-items:center; gap:8px; font-size:0.82rem; margin-bottom:6px;">
+        <i data-lucide="clock-alert"></i> Résultats potentiellement non représentatifs
+    </div>
+    <div style="font-size:0.75rem; color:var(--color-warning); opacity:0.9;">
+        {% for r in alerte_temps %}
+            <strong>{{ r.employe_nom }}</strong> — {{ r.temps_formate }} (quiz trop rapide, reconvocation recommandée){% if not forloop.last %} &nbsp;·&nbsp; {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{# ══════════════════════════════════════════════════════════════ #}
+{# BLOC 1 — 4 KPIs principaux                                    #}
+{# ══════════════════════════════════════════════════════════════ #}
+<div class="metric-4up" style="margin-bottom:20px;">
+    <div class="glass-card info-card card-violet">
+        <div class="info-card-header">
+            <div class="info-card-icon" style="background:var(--color-primary-bg);color:var(--color-primary);">
+                <i data-lucide="users"></i>
+            </div>
+        </div>
+        <div class="info-card-title">Passages</div>
+        <div class="info-card-value">{{ stats.total|default:"0" }}</div>
+        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:4px;">
+            sur {{ kpis_detail.total_cibles }} ciblés
+        </div>
+    </div>
+
+    <div class="glass-card info-card card-success">
+        <div class="info-card-header">
+            <div class="info-card-icon" style="background:var(--color-success-bg);color:var(--color-success);">
+                <i data-lucide="check-circle-2"></i>
+            </div>
+        </div>
+        <div class="info-card-title">Réussis</div>
+        <div class="info-card-value">{{ stats.reussis|default:"0" }}</div>
+        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:4px;">seuil ≥ 70%</div>
+    </div>
+
+    <div class="glass-card info-card card-cyan">
+        <div class="info-card-header">
+            <div class="info-card-icon" style="background:var(--color-secondary-bg);color:var(--color-secondary);">
+                <i data-lucide="trending-up"></i>
+            </div>
+        </div>
+        <div class="info-card-title">Score moyen</div>
+        <div class="info-card-value">{{ stats.score_moyen|floatformat:1|default:"—" }}%</div>
+        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:4px;">pondéré NIST</div>
+    </div>
+
+    <div class="glass-card info-card card-danger">
+        <div class="info-card-header">
+            <div class="info-card-icon" style="background:var(--color-danger-bg);color:var(--color-danger);">
+                <i data-lucide="shield-alert"></i>
+            </div>
+        </div>
+        <div class="info-card-title">Vulnérabilité</div>
+        <div class="info-card-value">{{ kpis_detail.taux_vulnerabilite }}%</div>
+        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:4px;">
+            {{ kpis_detail.nb_vulnerables }} employé{{ kpis_detail.nb_vulnerables|pluralize }} à risque
+        </div>
+    </div>
+</div>
+
+{# ══════════════════════════════════════════════════════════════ #}
+{# BLOC 2 — Indicateurs secondaires                              #}
+{# ══════════════════════════════════════════════════════════════ #}
+<div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
+    <div class="glass-card info-card" style="flex: 1; min-width: 250px;">
+        <div class="info-card-title" style="display:flex;align-items:center;gap:6px;">
+            <i data-lucide="percent" style="width:13px;height:13px;"></i> Participation
+        </div>
+        <div class="info-card-value" style="font-size:1.4rem;">{{ kpis_detail.participation }}%</div>
+        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:4px;">
+            {{ kpis_detail.total_passes }} / {{ kpis_detail.total_cibles }} ont passé
+        </div>
+    </div>
+
+   
+
+    <div class="glass-card info-card" style="flex: 1; min-width: 250px;">
+        <div class="info-card-title" style="display:flex;align-items:center;gap:6px;">
+            <i data-lucide="layers" style="width:13px;height:13px;"></i> Structure quiz
+        </div>
+        <div style="display:flex; gap:6px; margin-top:8px;">
+            <span style="flex:1; text-align:center; background:var(--color-success-bg);
+                  color:var(--color-success); border-radius:6px; padding:4px 0; font-size:0.7rem; font-weight:600;">
+                Niv.1<br>{{ kpis_detail.nb_niv1 }}q
+            </span>
+            <span style="flex:1; text-align:center; background:var(--color-warning-bg);
+                  color:var(--color-warning); border-radius:6px; padding:4px 0; font-size:0.7rem; font-weight:600;">
+                Niv.2<br>{{ kpis_detail.nb_niv2 }}q
+            </span>
+            <span style="flex:1; text-align:center; background:var(--color-danger-bg);
+                  color:var(--color-danger); border-radius:6px; padding:4px 0; font-size:0.7rem; font-weight:600;">
+                Niv.3<br>{{ kpis_detail.nb_niv3 }}q
+            </span>
+        </div>
+    </div>
+
+    <div class="glass-card info-card" style="flex: 1; min-width: 250px;">
+        <div class="info-card-title" style="display:flex;align-items:center;gap:6px;">
+            <i data-lucide="activity" style="width:13px;height:13px;"></i> Statut HRN
+        </div>
+        <div style="display:flex; gap:6px; margin-top:8px;">
+            <span style="flex:1; text-align:center; background:var(--color-success-bg);
+                  color:var(--color-success); border-radius:6px; padding:4px 0; font-size:0.7rem; font-weight:600;">
+                Clear<br>{{ kpis_detail.hrn_clear }}
+            </span>
+            <span style="flex:1; text-align:center; background:var(--color-warning-bg);
+                  color:var(--color-warning); border-radius:6px; padding:4px 0; font-size:0.7rem; font-weight:600;">
+                Watch<br>{{ kpis_detail.hrn_watch }}
+            </span>
+            <span style="flex:1; text-align:center; background:var(--color-danger-bg);
+                  color:var(--color-danger); border-radius:6px; padding:4px 0; font-size:0.7rem; font-weight:600;">
+                Alert<br>{{ kpis_detail.hrn_alert }}
+            </span>
+        </div>
+    </div>
+</div>
+
+{# ══════════════════════════════════════════════════════════════ #}
+{# BLOC 3 — Analyse par catégorie (si données disponibles)       #}
+{# ══════════════════════════════════════════════════════════════ #}
+{% if categories_data %}
+<div class="glass-card" style="margin-bottom:20px; padding:18px 24px;">
+    <div style="font-family:var(--font-display); font-size:0.7rem; font-weight:700;
+         letter-spacing:0.1em; text-transform:uppercase; color:var(--text-secondary); margin-bottom:16px;
+         display:flex; align-items:center; gap:8px;">
+        <i data-lucide="pie-chart" style="width:14px;height:14px;"></i>
+        Analyse par catégorie
+        <span style="margin-left:auto; font-size:0.65rem; font-weight:400; color:var(--text-muted); text-transform:none; letter-spacing:0;">
+            Trié par taux de réussite croissant — points critiques en haut
+        </span>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+        {% for cat in categories_data %}
+        <div style="display:flex; align-items:center; gap:12px;">
+            {# Indicateur critique #}
+            <div style="width:8px; height:8px; border-radius:50%; flex-shrink:0;
+                background:{% if cat.taux < 50 %}var(--color-danger){% elif cat.taux < 70 %}var(--color-warning){% else %}var(--color-success){% endif %};">
+            </div>
+
+            {# Nom catégorie #}
+            <div style="font-size:0.78rem; min-width:170px; color:var(--text-primary);">
+                {{ cat.categorie }}
+                {% if cat.is_critique %}
+                <span style="font-size:0.6rem; background:var(--color-danger-bg); color:var(--color-danger);
+                      padding:1px 6px; border-radius:4px; margin-left:4px; font-weight:600;">CRITIQUE</span>
+                {% endif %}
+            </div>
+
+            {# Barre de progression #}
+            <div style="flex:1; height:7px; background:var(--border-subtle); border-radius:4px; overflow:hidden;">
+                <div style="height:100%; border-radius:4px; width:{{ cat.taux }}%;
+                    background:{% if cat.taux < 50 %}var(--color-danger){% elif cat.taux < 70 %}var(--color-warning){% else %}var(--color-success){% endif %};
+                    transition:width 0.6s ease;"></div>
+            </div>
+
+            {# Score #}
+            <div style="font-family:var(--font-mono); font-size:0.82rem; font-weight:700; min-width:44px; text-align:right;
+                color:{% if cat.taux < 50 %}var(--color-danger){% elif cat.taux < 70 %}var(--color-warning){% else %}var(--color-success){% endif %};">
+                {{ cat.taux }}%
+            </div>
+
+            {# Correct/Total #}
+            <div style="font-size:0.68rem; color:var(--text-muted); min-width:50px; text-align:right;">
+                {{ cat.correct }}/{{ cat.total }}
+            </div>
+
+            {# Points NIST #}
+            {% if cat.points_max > 0 %}
+            <div style="font-size:0.68rem; color:var(--text-muted); min-width:70px; text-align:right;">
+                {{ cat.points }}/{{ cat.points_max }} pts
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    {# Recommandation auto si catégorie critique #}
+    {% if cat_critique_globale and alert_count > 0 %}
+    <div style="margin-top:14px; padding:10px 14px; background:var(--color-danger-bg); border-radius:8px; border-left:3px solid var(--color-danger);">
+        <div style="font-size:0.75rem; color:var(--color-danger); display:flex; align-items:center; gap:6px;">
+            <i data-lucide="alert-circle" style="width:13px;height:13px;"></i>
+            Point critique NIST SP 800-50 : <strong>{{ cat_critique_globale }}</strong> — 
+            prévoir une sensibilisation pour les {{ alert_count }} employés en statut Alert/Watch.
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{# ══════════════════════════════════════════════════════════════ #}
+{# BLOC 4 — Tableau des résultats employés (enrichi)             #}
+{# ══════════════════════════════════════════════════════════════ #}
+<div class="glass-card" style="padding:0; overflow:hidden;">
+    <div style="padding:16px 24px; border-bottom:1px solid var(--border-subtle);
+         display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-family:var(--font-display); font-size:0.7rem; font-weight:700;
+              letter-spacing:0.1em; text-transform:uppercase; color:var(--text-secondary);">
+            Résultats des employés
+        </span>
+        <span style="font-size:0.68rem; color:var(--text-muted);">
+            {{ stats.total|default:"0" }} passé{{ stats.total|default:0|pluralize }} ·
+            {{ kpis_detail.nb_non_passes }} en attente
+        </span>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid var(--border-subtle);">
+                    <th style="padding:11px 24px; text-align:left; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase; white-space:nowrap;">Employé</th>
+                    <th style="padding:11px 12px; text-align:left; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase;">Division</th>
+                    <th style="padding:11px 12px; text-align:center; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase;">Score</th>
+                    <th style="padding:11px 12px; text-align:center; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase;">Correctes</th>
+                    <th style="padding:11px 12px; text-align:center; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase; white-space:nowrap;">Catég. faible</th>
+                    <th style="padding:11px 12px; text-align:center; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase;">HRN</th>
+                    <th style="padding:11px 12px; text-align:center; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase;">Résultat</th>
+                    <th style="padding:11px 16px; text-align:right; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase;">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in resultats %}
+                <tr style="border-bottom:1px solid var(--border-subtle); transition:background var(--ease-fast); cursor:pointer;"
+    onmouseenter="this.style.background='var(--bg-elevated)'"
+    onmouseleave="this.style.background='transparent'"
+    onclick="ouvrirModalEmploye({
+        nom:                '{{ r.employe_nom|escapejs }}',
+        email:              '{{ r.employe_email|escapejs }}',
+        division:           '{{ r.division|escapejs }}',
+        score:              '{{ r.score_100|floatformat:1|default:0 }}',
+        hrn_statut:         '{{ r.hrn_statut|default:'' }}',
+        details_categories: {{ r.details_categories_json|default:'{}' }}
+    })">
+
+                    {# Employé #}
+                    <td style="padding:12px 24px;">
+                        <div style="font-weight:600; font-size:0.78rem; display:flex; align-items:center; gap:6px;">
+                            {{ r.employe_nom|default:r.employe_email }}
+                            {% if r.temps_suspect %}
+                            <span title="Temps de passage suspect — résultat non représentatif"
+                                  style="display:inline-flex; align-items:center;">
+                                <i data-lucide="clock-alert" style="width:12px;height:12px;color:var(--color-warning);"></i>
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div style="font-size:0.62rem; color:var(--text-muted);">{{ r.employe_email }}</div>
+                    </td>
+
+                    {# Division #}
+                    <td style="padding:12px 12px; font-size:0.75rem; color:var(--text-secondary);">
+                        {{ r.division }}
+                    </td>
+
+                    {# Score #}
+                    <td style="padding:12px 12px; text-align:center;">
+                        {% if r.statut_quiz == 'complete' %}
+                        <span style="font-family:var(--font-mono); font-size:0.85rem; font-weight:700;
+                            color:{% if r.score_100 >= 70 %}var(--color-success){% elif r.score_100 >= 50 %}var(--color-warning){% else %}var(--color-danger){% endif %};">
+                            {{ r.score_100|floatformat:1 }}%
+                        </span>
+                        {% else %}
+                        <span style="font-size:0.72rem; color:var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+
+
+                    {# Correctes #}
+                    <td style="padding:12px 12px; text-align:center; font-family:var(--font-mono); font-size:0.75rem;">
+                        {% if r.statut_quiz == 'complete' %}
+                            {% if r.nb_total_posees > 0 %}
+                                {{ r.nb_correctes }}/{{ r.nb_total_posees }}
+                            {% else %}
+                                {{ r.nb_correctes }}/{{ campagne.total_questions }}
+                            {% endif %}
+                        {% else %}
+                        <span style="color:var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+
+
+                    {# Catégorie critique individuelle #}
+                    <td style="padding:12px 12px; text-align:center;">
+                        {% if r.statut_quiz == 'non_commence' %}
+                            {# L-employé li madkhelch (En attente aw Non réalisé) #}
+                            <span style="font-size:0.72rem; color:var(--text-muted);">—</span>
+
+                        {% elif r.score_100 == 0 %}
+                            {# L-employé li dkhel u rseb (0%) #}
+                            <span style="font-size:0.65rem; background:var(--color-danger-bg); 
+                                color:var(--color-danger); padding:2px 7px; border-radius:4px; font-weight:500;">
+                                Base
+                            </span>
+
+                        {% elif r.cat_critique %}
+                            {# L-employé li 3ndou catégorie kriti9iya #}
+                            <span style="font-size:0.65rem; background:var(--color-warning-bg); 
+                                color:var(--color-warning); padding:2px 7px; border-radius:4px; font-weight:500; white-space:nowrap;">
+                                {{ r.cat_critique }}
+                            </span>
+
+                        {% else %}
+                            {# L-employé li 3ndou "Bon" (ma-3ndouch mochekil) #}
+                            <span style="font-size:0.65rem; color:var(--color-success);">✓ Bon</span>
+                        {% endif %}
+                    </td>
+
+                    {# HRN #}
+                    <td style="padding:12px 12px; text-align:center;">
+                        {% if r.hrn_statut == 'clear' %}
+                        <span class="badge badge-success" style="font-size:0.62rem;">Clear</span>
+                        {% elif r.hrn_statut == 'watch' %}
+                        <span class="badge badge-warning" style="font-size:0.62rem;">Watch</span>
+                        {% elif r.hrn_statut == 'alert' %}
+                        <span class="badge badge-danger" style="font-size:0.62rem;">Alert</span>
+                        {% else %}
+                        <span style="font-size:0.72rem; color:var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+
+                    {# Résultat #}
+                    <td style="padding:12px 12px; text-align:center;">
+                        {% if r.statut_quiz == 'non_commence' %}
+                            {% if r.campagne_terminee %}
+                                <span class="badge badge-secondary" style="background:#e0e0e0; color:#666;">Non réalisé</span>
+                            {% else %}
+                                <span class="badge badge-warning" style="background:var(--color-secondary-bg); color:var(--color-secondary);">En attente</span>
+                            {% endif %}
+                        {% elif r.score_100 == 0 %}
+                            <span class="badge badge-danger">Échoué (0%)</span>
+                        {% elif r.reussi %}
+                            <span class="badge badge-success">✓ Réussi</span>
+                        {% else %}
+                            <span class="badge badge-danger">✗ Échoué</span>
+                        {% endif %}
+                    </td>
+
+                    {# Date + lien détail #}
+                    <td style="padding:12px 16px; text-align:right;">
+                        {% if r.date_passage %}
+                        <div style="font-size:0.7rem; color:var(--text-muted);">{{ r.date_passage|date:"d/m H:i" }}</div>
+                        {% endif %}
+                    
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" style="padding:40px; text-align:center;
+                        color:var(--text-muted); font-size:0.8rem;">
+                        Aucun résultat enregistré pour cette campagne.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{# ══════════════════════════════════════════════════════════════ #}
+{# BLOC STATISTIQUES AVANCÉES — Dashboard style                  #}
+{# ══════════════════════════════════════════════════════════════ #}
+
+<div style="margin-top:32px;">
+
+    {# ── Évolution multi-lignes par département ── #}
+    <div class="glass-card" style="padding:28px; margin-bottom:20px;">
+        <div style="font-size:1rem; font-weight:700; color:var(--text-primary); margin-bottom:4px;">
+            Évolution du risque par département
+        </div>
+        <div style="position:relative; height:320px;">
+            <canvas id="chartEvolutionDept"></canvas>
+        </div>
+        <div id="chartEvolutionEmpty"
+             style="display:none; font-size:0.75rem; color:var(--text-muted); margin-top:10px;">
+            Aucune donnée disponible.
+        </div>
+    </div>
+
+    {# ── Heatmap département × catégorie ── #}
+    <div class="glass-card" style="padding:28px; margin-bottom:20px; overflow-x:auto;">
+        <div style="font-size:1rem; font-weight:700; color:var(--text-primary); margin-bottom:4px;">
+            Heatmap département × catégorie
+        </div>
+        <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:18px;">
+            Plus la cellule est chaude, plus le risque est élevé.
+        </div>
+        <div id="heatmapContainer">
+            <div style="color:var(--text-muted); font-size:0.78rem;">Chargement…</div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    const PALETTE = [
+        '#38bdf8','#f472b6','#fb923c','#facc15',
+        '#34d399','#a78bfa','#f87171','#4ade80',
+    ];
+
+    const fontColor = '#94a3b8';
+    const gridColor = 'rgba(255,255,255,0.06)';
+
+    /* ── Couleur selon RISQUE (inverse du score) ─────────────────
+       Risque élevé  (>= 50%) → rouge
+       Risque moyen  (30-49%) → orange
+       Risque faible (< 30%)  → vert
+    ── */
+    function couleurRisque(risque, alpha) {
+        alpha = alpha || 1;
+        if (risque >= 50) return `rgba(239,68,68,${alpha})`;    // rouge  = DANGER
+        if (risque >= 30) return `rgba(234,179,8,${alpha})`;    // orange = ATTENTION
+        return `rgba(34,197,94,${alpha})`;                       // vert   = OK
+    }
+
+    /* ── Heatmap : cellule chaude = risque élevé ── */
+    function heatmapBg(risque) {
+        if (risque === null || risque === undefined) return 'rgba(255,255,255,0.04)';
+        if (risque >= 50) return 'rgba(239,68,68,0.35)';    // rouge foncé
+        if (risque >= 30) return 'rgba(234,179,8,0.28)';    // orange
+        return 'rgba(34,197,94,0.18)';                       // vert clair
+    }
+    function heatmapColor(risque) {
+        if (risque === null || risque === undefined) return '#64748b';
+        if (risque >= 50) return '#f87171';
+        if (risque >= 30) return '#facc15';
+        return '#4ade80';
+    }
+
+    fetch('/training/api/stats/departements/')
+        .then(r => r.json())
+        .then(data => {
+
+            /* ═══════════════════════════════════════════════
+               1. GRAPHIQUE MULTI-LIGNES — Évolution du RISQUE
+               Axe Y : 0% = aucun risque / 100% = risque max
+            ═══════════════════════════════════════════════ */
+            const evol = data.evolution_dept || [];
+
+            if (!evol.length) {
+                document.getElementById('chartEvolutionEmpty').style.display = 'block';
+            } else {
+                const allDates = [...new Set(
+                    evol.flatMap(d => d.points.map(p => p.date))
+                )];
+
+                const datasets = evol.map((dept, i) => {
+                    const couleur = PALETTE[i % PALETTE.length];
+                    const dateMap = {};
+                    dept.points.forEach(p => { dateMap[p.date] = p.score; });
+
+                    return {
+                        label:                dept.departement,
+                        data:                 allDates.map(d => dateMap[d] ?? null),
+                        borderColor:          couleur,
+                        backgroundColor:      couleur + '22',
+                        pointBackgroundColor: couleur,
+                        pointBorderColor:     couleur,
+                        pointRadius:     5,
+                        pointHoverRadius: 7,
+                        borderWidth: 2,
+                        tension: 0.35,
+                        spanGaps: true,
+                    };
+                });
+
+                new Chart(document.getElementById('chartEvolutionDept'), {
+                    type: 'line',
+                    data: { labels: allDates, datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    color: fontColor, font: { size: 11 },
+                                    usePointStyle: true, pointStyleWidth: 18, padding: 20,
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => ` ${ctx.dataset.label} — Risque : ${ctx.parsed.y ?? '—'}%`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: fontColor, font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 12 },
+                                grid:  { color: gridColor }
+                            },
+                            y: {
+                                min: 0, max: 100,
+                                ticks: {
+                                    color: fontColor, font: { size: 11 },
+                                    callback: v => v + '%'
+                                },
+                                grid: { color: gridColor },
+                                title: {
+                                    display: true,
+                                    text: '← Risque humain (0% = sûr, 100% = critique)',
+                                    color: fontColor,
+                                    font: { size: 10 }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            /* ═══════════════════════════════════════════════
+               2. HEATMAP — dept × catégorie (% RISQUE)
+               Cellule rouge = catégorie dangereuse
+            ═══════════════════════════════════════════════ */
+            const heatmap    = data.heatmap    || {};
+            const categories = data.categories || [];
+            const depts      = Object.keys(heatmap);
+            const container  = document.getElementById('heatmapContainer');
+
+            if (!depts.length || !categories.length) {
+                container.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;">Aucune donnée disponible.</div>';
+                return;
+            }
+
+            let html = `
+            <table style="width:100%; border-collapse:separate; border-spacing:6px;">
+                <thead>
+                    <tr>
+                        <th style="width:140px;"></th>
+                        ${categories.map(cat => `
+                            <th style="padding:8px 12px; font-size:0.62rem; font-weight:700;
+                                       letter-spacing:0.08em; text-transform:uppercase;
+                                       color:var(--text-muted); text-align:center;
+                                       border:1px solid rgba(255,255,255,0.08);
+                                       border-radius:8px; background:rgba(255,255,255,0.03);">
+                                ${cat}
+                            </th>
+                        `).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${depts.map(dept => `
+                        <tr>
+                            <td style="padding:10px 16px; font-weight:700; font-size:0.8rem;
+                                       color:var(--text-primary); white-space:nowrap;">
+                                ${dept}
+                            </td>
+                            ${categories.map(cat => {
+                                const risque = heatmap[dept]?.[cat];
+                                const val    = risque !== undefined ? risque : null;
+                                return `
+                                    <td style="
+                                        padding:14px 10px; text-align:center;
+                                        background:${heatmapBg(val)};
+                                        color:${heatmapColor(val)};
+                                        font-family:var(--font-mono, monospace);
+                                        font-size:0.9rem; font-weight:700;
+                                        border-radius:10px;
+                                        border:1px solid rgba(255,255,255,0.05);
+                                        min-width:80px;" 
+                                        title="Risque ${val !== null ? val + '%' : 'N/A'} — ${cat}">
+                                        ${val !== null ? val + '%' : '—'}
+                                    </td>`;
+                            }).join('')}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>`;
+
+            container.innerHTML = html;
+
+            /* Légende heatmap */
+            container.insertAdjacentHTML('beforeend', `
+                <div style="display:flex; gap:16px; margin-top:14px; font-size:0.7rem; color:var(--text-muted);">
+                    <span style="display:flex;align-items:center;gap:5px;">
+                        <span style="width:12px;height:12px;border-radius:3px;background:rgba(34,197,94,0.3);display:inline-block;"></span>
+                        Risque faible (&lt; 30%)
+                    </span>
+                    <span style="display:flex;align-items:center;gap:5px;">
+                        <span style="width:12px;height:12px;border-radius:3px;background:rgba(234,179,8,0.3);display:inline-block;"></span>
+                        Risque moyen (30–49%)
+                    </span>
+                    <span style="display:flex;align-items:center;gap:5px;">
+                        <span style="width:12px;height:12px;border-radius:3px;background:rgba(239,68,68,0.35);display:inline-block;"></span>
+                        Risque élevé (≥ 50%)
+                    </span>
+                </div>
+            `);
+        })
+        .catch(err => {
+            console.warn('[Psyche Sentinel] Erreur stats:', err);
+            document.getElementById('heatmapContainer').innerHTML =
+                '<div style="color:var(--color-danger);font-size:0.78rem;">Erreur de chargement.</div>';
+        });
+})();
+</script>
+{# ══════════════════════════════════════════════════════════════ #}
+{# MODAL DÉTAIL EMPLOYÉ                                          #}
+{# ══════════════════════════════════════════════════════════════ #}
+
+{# ── Overlay modal ── #}
+<div id="employeModal"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75);
+            backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center;">
+
+    <div style="width:720px; max-width:95vw; max-height:90vh; overflow-y:auto;
+                background:var(--bg-card, #0f172a); border-radius:16px;
+                border:1px solid rgba(255,255,255,0.08); padding:32px; position:relative;">
+
+        {# Bouton fermer #}
+        <button onclick="fermerModal()"
+                style="position:absolute; top:16px; right:16px; background:none; border:none;
+                       color:var(--text-muted); cursor:pointer; font-size:1.2rem; line-height:1;">✕</button>
+
+        {# ── En-tête : Avatar + Nom + Email + Dept ── #}
+        <div style="display:flex; align-items:center; gap:18px; margin-bottom:28px;">
+            <div id="empAvatar"
+                 style="width:64px; height:64px; border-radius:50%; display:flex;
+                        align-items:center; justify-content:center;
+                        font-size:1.6rem; font-weight:700; color:#fff; flex-shrink:0;
+                        background:linear-gradient(135deg,#6366f1,#8b5cf6);">
+            </div>
+            <div>
+                <div id="empNom"   style="font-size:1.2rem; font-weight:700; color:var(--text-primary); margin-bottom:3px;"></div>
+                <div id="empEmail" style="font-size:0.78rem; color:var(--text-muted); margin-bottom:3px;"></div>
+                <div id="empDept"  style="font-size:0.75rem; color:var(--text-secondary);"></div>
+            </div>
+        </div>
+
+        {# ── 3 KPIs ── #}
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:28px;">
+
+            {# Tests complétés — toujours 1 par campagne #}
+            <div style="background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.2);
+                        border-radius:12px; padding:20px;">
+                <div style="width:36px; height:36px; background:rgba(99,102,241,0.2); border-radius:8px;
+                            display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                    <i data-lucide="list-checks" style="width:18px;height:18px;color:#818cf8;"></i>
+                </div>
+                <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">Tests complétés</div>
+                <div id="empTests" style="font-size:1.8rem; font-weight:700; color:var(--text-primary);">1</div>
+            </div>
+
+            {# Score total #}
+            <div style="background:rgba(14,165,233,0.1); border:1px solid rgba(14,165,233,0.2);
+                        border-radius:12px; padding:20px;">
+                <div style="width:36px; height:36px; background:rgba(14,165,233,0.2); border-radius:8px;
+                            display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                    <i data-lucide="activity" style="width:18px;height:18px;color:#38bdf8;"></i>
+                </div>
+                <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">Score total</div>
+                <div id="empScore" style="font-size:1.8rem; font-weight:700;">—</div>
+            </div>
+
+            {# Statut HRN #}
+            <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.15);
+                        border-radius:12px; padding:20px;">
+                <div style="width:36px; height:36px; background:rgba(239,68,68,0.15); border-radius:8px;
+                            display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                    <i data-lucide="shield-alert" style="width:18px;height:18px;color:#f87171;"></i>
+                </div>
+                <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">Statut</div>
+                <div id="empHrnBadge"></div>
+            </div>
+        </div>
+
+        {# ── Analyse par catégorie ── #}
+        <div style="font-size:1rem; font-weight:700; color:var(--text-primary); margin-bottom:4px;">
+            Analyse par type de menace
+        </div>
+        <div style="font-size:0.73rem; color:var(--text-muted); margin-bottom:16px;">
+            Répartition du score selon la catégorie de question.
+        </div>
+
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+                    <th style="padding:10px 12px; text-align:left; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase;">Catégorie</th>
+                    <th style="padding:10px 12px; text-align:center; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase;">Total Q.</th>
+                    <th style="padding:10px 12px; text-align:center; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase;">Sûr ✓</th>
+                    <th style="padding:10px 12px; text-align:center; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase;">Vigilance</th>
+                    <th style="padding:10px 12px; text-align:center; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase;">Risque ✗</th>
+                    <th style="padding:10px 12px; text-align:right; font-size:0.62rem; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase;">Score</th>
+                </tr>
+            </thead>
+            <tbody id="empCatBody">
+                {# Rempli dynamiquement par JS #}
+            </tbody>
+        </table>
+
+        {# Message si aucune donnée #}
+        <div id="empCatVide"
+             style="display:none; text-align:center; padding:24px; font-size:0.78rem; color:var(--text-muted);">
+            Aucune donnée de catégorie disponible pour cet employé.
+        </div>
+
+    </div>
+</div>
+
+{# ── Script modal employé ── #}
+<script>
+(function () {
+
+    /* Couleur selon score de réussite (score = % bonnes réponses par catégorie) */
+    function couleurScore(score) {
+        if (score >= 70) return 'var(--color-success, #22c55e)';
+        if (score >= 50) return 'var(--color-warning, #eab308)';
+        return 'var(--color-danger, #ef4444)';
+    }
+
+    /* Couleur avatar aléatoire mais stable selon initiale */
+    const AVATAR_COLORS = [
+        'linear-gradient(135deg,#6366f1,#8b5cf6)',
+        'linear-gradient(135deg,#0ea5e9,#6366f1)',
+        'linear-gradient(135deg,#f59e0b,#ef4444)',
+        'linear-gradient(135deg,#10b981,#0ea5e9)',
+        'linear-gradient(135deg,#ec4899,#8b5cf6)',
+    ];
+    function avatarColor(nom) {
+        const code = (nom || 'A').charCodeAt(0);
+        return AVATAR_COLORS[code % AVATAR_COLORS.length];
+    }
+
+    /* Badge HRN */
+    function hrnBadge(statut) {
+        const map = {
+            'clear': { label: 'CLEAR',        bg: 'rgba(34,197,94,0.15)',  color: '#4ade80',  border: 'rgba(34,197,94,0.3)' },
+            'watch': { label: 'RISQUE MODÉRÉ', bg: 'rgba(234,179,8,0.15)', color: '#facc15',  border: 'rgba(234,179,8,0.3)' },
+            'alert': { label: 'RISQUE ÉLEVÉ',  bg: 'rgba(239,68,68,0.15)', color: '#f87171',  border: 'rgba(239,68,68,0.3)' },
+        };
+        const s = map[statut] || { label: '—', bg: 'rgba(255,255,255,0.05)', color: '#94a3b8', border: 'rgba(255,255,255,0.1)' };
+        return `<span style="display:inline-block; padding:6px 14px; border-radius:20px;
+                    background:${s.bg}; color:${s.color}; border:1px solid ${s.border};
+                    font-size:0.72rem; font-weight:700; letter-spacing:0.06em;">
+                    ${s.label}
+                </span>`;
+    }
+
+    /* Construire les lignes du tableau par catégorie */
+    function buildCategories(details) {
+        /*
+          details_categories format (depuis le modèle Resultat) :
+          { "Phishing & Email": { "correct": 3, "total": 4, "points": 18, "points_max": 24 }, ... }
+
+          - Sûr      = correct (bonne réponse)
+          - Vigilance = questions partiellement comprises (on calcule via ratio)
+          - Risque   = incorrect (mauvaise réponse)
+
+          Logique : on n'a pas "vigilance" séparé dans le modèle.
+          On utilise : Sûr = correct, Risque = (total - correct)
+          Score catégorie = (correct / total) * 100
+        */
+        if (!details || Object.keys(details).length === 0) return null;
+
+        return Object.entries(details).map(([cat, d]) => {
+            const total   = d.total   || 0;
+            const correct = d.correct || 0;
+            const raté    = total - correct;
+            // "Vigilance" = questions où l'employé a quand même eu des points partiels
+            // Dans ce modèle c'est binaire (correct ou non), donc on met 0 vigilance
+            const vigilance = 0;
+            const score = total > 0 ? Math.round((correct / total) * 100) : 0;
+            const couleur = couleurScore(score);
+
+            return `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);"
+                    onmouseenter="this.style.background='rgba(255,255,255,0.03)'"
+                    onmouseleave="this.style.background='transparent'">
+                    <td style="padding:14px 12px; display:flex; align-items:center; gap:10px;">
+                        <div style="width:32px; height:32px; border-radius:8px;
+                                    background:rgba(99,102,241,0.15); display:flex;
+                                    align-items:center; justify-content:center; flex-shrink:0;">
+                            <i data-lucide="shield" style="width:14px;height:14px;color:#818cf8;"></i>
+                        </div>
+                        <span style="font-size:0.78rem; color:var(--text-primary); font-weight:500;">${cat}</span>
+                    </td>
+                    <td style="padding:14px 12px; text-align:center; font-family:monospace; font-size:0.82rem; color:var(--text-secondary);">${total}</td>
+                    <td style="padding:14px 12px; text-align:center; font-family:monospace; font-size:0.82rem; color:var(--color-success, #22c55e);">${correct}</td>
+                    <td style="padding:14px 12px; text-align:center; font-family:monospace; font-size:0.82rem; color:var(--color-warning, #eab308);">${vigilance}</td>
+                    <td style="padding:14px 12px; text-align:center; font-family:monospace; font-size:0.82rem; color:var(--color-danger, #ef4444);">${raté}</td>
+                    <td style="padding:14px 16px; text-align:right; font-family:monospace; font-size:0.9rem; font-weight:700; color:${couleur};">${score}</td>
+                </tr>`;
+        }).join('');
+    }
+
+    /* Fonction globale appelée par onclick des lignes du tableau */
+    window.ouvrirModalEmploye = function(data) {
+        const nom    = data.nom   || data.email || '—';
+        const initiale = nom.trim().charAt(0).toUpperCase();
+
+        /* Avatar */
+        const avatar = document.getElementById('empAvatar');
+        avatar.textContent  = initiale;
+        avatar.style.background = avatarColor(nom);
+
+        /* Infos texte */
+        document.getElementById('empNom').textContent   = nom;
+        document.getElementById('empEmail').textContent = data.email || '';
+        document.getElementById('empDept').textContent  = data.division ? 'Département : ' + data.division : '';
+
+        /* Score — couleur selon niveau */
+        const scoreEl = document.getElementById('empScore');
+        const score   = parseFloat(data.score) || 0;
+        scoreEl.textContent  = score.toFixed(1);
+        scoreEl.style.color  = couleurScore(score);
+
+        /* HRN badge */
+        document.getElementById('empHrnBadge').innerHTML = hrnBadge(data.hrn_statut);
+
+        /* Tableau catégories */
+        const body  = document.getElementById('empCatBody');
+        const vide  = document.getElementById('empCatVide');
+        const lignes = buildCategories(data.details_categories);
+
+        if (lignes) {
+            body.innerHTML = lignes;
+            vide.style.display = 'none';
+            /* Rafraîchir les icônes Lucide dans le nouveau contenu */
+            if (window.lucide) window.lucide.createIcons();
+        } else {
+            body.innerHTML = '';
+            vide.style.display = 'block';
+        }
+
+        /* Afficher la modal */
+        const modal = document.getElementById('employeModal');
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.fermerModal = function() {
+        document.getElementById('employeModal').style.display = 'none';
+        document.body.style.overflow = '';
+    };
+
+    /* Fermer en cliquant sur l'overlay */
+    document.getElementById('employeModal').addEventListener('click', function(e) {
+        if (e.target === this) fermerModal();
+    });
+
+    /* Fermer avec Échap */
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') fermerModal();
+    });
+
+})();
+</script>
+{% endblock %}

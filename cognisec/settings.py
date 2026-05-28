@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
+    'training',
 ]
 
 MIDDLEWARE = [
@@ -79,8 +80,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'cognisec_db',
-        'USER' : 'postgres',
-        'PASSWORD': 'P@$$w0rd',
+        'USER' : 'Apple',
+        'PASSWORD': '',
         'HOST': 'localhost',
         'PORT' : '5432',
     }
@@ -109,9 +110,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'fr-fr'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Casablanca'
 
 USE_I18N = True
 
@@ -139,3 +140,13 @@ import os
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
 ]
+
+#Ajouter par Aicha
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 7200  # 2 heures pour le quiz
+ 
+# Optionnel : LOGIN_URL pour les vues admin
+LOGIN_URL = '/login/'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#Fin Aicha
