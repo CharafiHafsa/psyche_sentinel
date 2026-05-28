@@ -70,3 +70,4 @@ class AdminConsentLog(models.Model):
     def __str__(self):
         return f"Consent by {self.admin.email} at {self.timestamp}"
     
+    

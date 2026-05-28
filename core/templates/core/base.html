@@ -231,7 +231,7 @@
                 <a class="sidenav-link {% if request.resolver_match.url_name == 'deployment' or request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'deployment' %}">
                     <i data-lucide="activity"></i> <span class="nav-text">{% trans "Centre d'action" %}</span>
                 </a>
-                <a class="sidenav-link" href="#">
+                <a class="sidenav-link {% if request.resolver_match.url_name == 'ml_dashboard' %}active{% endif %}" href="{% url 'ml_dashboard' %}">
                     <i data-lucide="layout-dashboard"></i> <span class="nav-text">{% trans "Tableau de bord global" %}</span>
                 </a>
             </div>

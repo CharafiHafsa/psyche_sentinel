@@ -105,12 +105,26 @@ Go to the repository on GitHub.
 You will see a green button that says "Compare & pull request". Click it.
 Add a brief description of what you built and request a review from a teammate before merging it into main.
 
+## Keeping Your Branch Up to Date
+As development progresses, the `main` branch will be frequently updated with core UI components and system architecture. **Do not push directly to main.** 
+To get the latest updates from `main` into your personal feature branch, run the following commands in your terminal:
+1. **Commit your current work** so you don't lose any progress:
+   ```bash
+   git add .
+   git commit -m "Save current progress before pulling main"
+   ```
+2. **Pull the latest changes** from the main branch directly into your active branch:
+   ```bash
+   git pull origin main
+   ```
+3. If there are merge conflicts, resolve them in your code editor, save the files, and commit the resolved changes.
+   
 ## Start the development server
 ```bash
 python manage.py runserver
 ```
 Visit http://127.0.0.1:8000/ in your browser to see the Landing Page.
-Visit http://127.0.0.1:8000/ui-kit/ to access the Master Component Catalog.
+Visit http://127.0.0.1:8000/ui-kit/ and http://127.0.0.1:8000/dataviz-kit to access the Master Component Catalog.
 
 
 ## Team Architecture & Workflow
@@ -152,3 +166,11 @@ we may need to chnage the name of the tests to :
 - Évaluations de connaissances 
 - Scénarios d’attaque simulée 
 - Évaluations comportementales non prédictibles
+
+# Local Database: Loading Employee Test Data
+To make development faster, **you do not need to run the LDAP synchronization locally.** We have provided a database fixture containing a fully populated employee directory.
+**Inject the employee data into your local database:**
+```bash
+python manage.py loaddata initial_employees.json
+```
+
