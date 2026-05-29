@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
-    'behavioral'
+    'behavioral',
     'ml_engine',
     'training',
 ]
@@ -83,7 +83,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'cognisec_db',
         'USER' : 'postgres',
-        'PASSWORD': '1234',
+        'PASSWORD': 'P@$$w0rd',
         'HOST': 'localhost',
         'PORT' : '5432',
     }
