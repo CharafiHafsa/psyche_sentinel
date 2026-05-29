@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'noreply@exemple.ma'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -79,9 +81,9 @@ WSGI_APPLICATION = 'cognisec.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'cognisec1_db',
+        'NAME': 'cognisec_db',
         'USER' : 'postgres',
-        'PASSWORD': 'P@$$w0rd',
+        'PASSWORD': 'azerty',
         'HOST': 'localhost',
         'PORT' : '5432',
     }

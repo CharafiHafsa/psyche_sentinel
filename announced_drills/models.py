@@ -1,6 +1,5 @@
 from django.db import models
 
-
 class Scenario(models.Model):
     SCENARIO_TYPES = [
         ('phishing', 'Phishing'),
@@ -36,6 +35,7 @@ class Scenario(models.Model):
 
     scenario_type = models.CharField(max_length=30, choices=SCENARIO_TYPES)
     variant_level = models.CharField(max_length=20, choices=VARIANT_LEVELS)
+    target_departments = models.JSONField(default=list, blank=True)
 
     ui_mode = models.CharField(max_length=30, choices=UI_MODES)
     sender_name = models.CharField(max_length=150, blank=True)
@@ -46,7 +46,6 @@ class Scenario(models.Model):
 
     content_primary = models.TextField()
     content_secondary = models.TextField(blank=True)
-    
     risk_items = models.TextField(blank=True)
     warning_items = models.TextField(blank=True)
 
@@ -81,12 +80,44 @@ class ScenarioAction(models.Model):
         return f"{self.scenario.title} - {self.label}"
 class CampaignRun(models.Model):
     campaign_name = models.CharField(max_length=200)
-    target_department = models.CharField(max_length=100, default='all')
+    # target_department = models.CharField(max_length=100, default='all')
+    DELIVERY_MODE_CHOICES = [
+        ('manual', 'Partage manuel'),
+        ('scheduled', 'Envoi programmé'),
+    ]
+
+    STATUS_CHOICES = [
+        ('ready', 'Prête'),
+        ('scheduled', 'Programmée'),
+        ('sent', 'Envoyée'),
+        ('running', 'En cours'),
+        ('expired', 'Expirée'),
+        ('completed', 'Terminée'),
+    ]
+
+    delivery_mode = models.CharField(
+        max_length=20,
+        choices=DELIVERY_MODE_CHOICES,
+        default='manual'
+    )
+
+    scheduled_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    reminder_sent_at = models.DateTimeField(null=True, blank=True)
+
+    validity_days = models.PositiveIntegerField(default=7)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='ready'
+    )
+    target_departments = models.JSONField(default=list, blank=True)
     question_count = models.PositiveIntegerField(default=10)
     start_link = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, default='created')
-
+    # status = models.CharField(max_length=20, default='created')
     def __str__(self):
         return f"{self.campaign_name} - Run #{self.id}"
 
@@ -112,10 +143,86 @@ class ScenarioResponse(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     submitted_text = models.TextField(blank=True)
     attached_file_name = models.CharField(max_length=255, blank=True)
+    employee = models.ForeignKey(
+        'core.Employee',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
 
     def __str__(self):
         return f"Response for run {self.campaign_run.id} / {self.scenario.title}"
     
+class CampaignEmployeeResult(models.Model):
+    campaign_run = models.ForeignKey(CampaignRun, on_delete=models.CASCADE)
+    employee = models.ForeignKey('core.Employee', on_delete=models.CASCADE)
+
+    total_count = models.PositiveIntegerField(default=0)
+    safe_count = models.PositiveIntegerField(default=0)
+    warning_count = models.PositiveIntegerField(default=0)
+    risk_count = models.PositiveIntegerField(default=0)
+
+    score = models.PositiveIntegerField(default=0)
+    status_label = models.CharField(max_length=50, blank=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('campaign_run', 'employee')
+
+    def __str__(self):
+        return f"{self.employee} - {self.campaign_run} - {self.score}"
+    
+
+class CampaignEmployeeTypeResult(models.Model):
+
+    SCENARIO_TYPE_CHOICES = [
+        ('phishing', 'Phishing'),
+        ('ai_leak', 'Fuite IA'),
+        ('document', 'Document'),
+        ('internal_chat', 'Chat interne'),
+        ('sharing', 'Partage'),
+        ('password', 'Mot de passe'),
+    ]
+
+    campaign_run = models.ForeignKey(
+        CampaignRun,
+        on_delete=models.CASCADE
+    )
+
+    employee = models.ForeignKey(
+        'core.Employee',
+        on_delete=models.CASCADE
+    )
+
+    scenario_type = models.CharField(
+        max_length=30,
+        choices=SCENARIO_TYPE_CHOICES
+    )
+
+    total_count = models.PositiveIntegerField(default=0)
+
+    safe_count = models.PositiveIntegerField(default=0)
+    warning_count = models.PositiveIntegerField(default=0)
+    risk_count = models.PositiveIntegerField(default=0)
+
+    score = models.PositiveIntegerField(default=0)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = (
+            'campaign_run',
+            'employee',
+            'scenario_type'
+        )
+
+    def __str__(self):
+        return (
+            f"{self.employee} - "
+            f"{self.scenario_type} - "
+            f"{self.score}"
+        )
 class ScenarioSensitiveItem(models.Model):
     LEVEL_CHOICES = [
         ('risk', 'Risk'),

@@ -10,7 +10,6 @@
         </div>
     </div>
 </div>
-
 <div class="glass-card info-card" style="max-width: 900px;">
     <div class="info-card-header">
         <div class="info-card-icon" style="background:var(--color-primary-bg);color:var(--color-primary);">
@@ -48,28 +47,149 @@
     <form method="POST">
         {% csrf_token %}
 
-        <div class="form-grid" style="margin-bottom: 20px;">
-            <div class="form-group">
-                <label class="form-label">Nom de la campagne</label>
-                <input type="text" name="campaign_name" class="form-input" placeholder="Ex : Campagne Finance Avril 2026" required>
-            </div>
+        <div class="form-grid" style="margin-bottom: 24px; align-items:start;">
 
-            <div class="form-group">
-                <label class="form-label">Département ciblé</label>
-                <select name="target_department" class="form-select">
-                    {% for value, label in departments %}
-                    <option value="{{ value }}">{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+    <!-- Colonne gauche -->
+    <div>
+        <div class="form-group" style="margin-bottom: 24px;">
+            <label class="form-label">Nom de la campagne</label>
+            <input
+                type="text"
+                name="campaign_name"
+                class="form-input"
+                placeholder="Nom généré automatiquement si vide"
+                value="{{ form_campaign_name|default:'' }}"
+                style="max-width:360px;"
+            >
         </div>
 
-        <div class="form-group" style="margin-bottom: 24px; max-width: 260px;">
-            <label class="form-label">Nombre de tests</label>
-            <input type="number" name="question_count" class="form-input" value="10" min="1">
-            <span class="form-hint">Par défaut : 10 scénarios</span>
+        <div class="form-group">
+            <label class="form-label">Nombre maximum de tests</label>
+            <input
+                type="number"
+                name="question_count"
+                class="form-input"
+                value="{{ form_question_count|default:'10' }}"
+                min="1"
+                style="max-width:360px;"
+            >
+            <span class="form-hint">
+                L’employé recevra jusqu’à ce nombre de scénarios, selon son département.
+            </span>
+        </div>
+    </div>
+
+    <!-- Colonne droite -->
+    <div class="form-group">
+        <label class="form-label">Départements ciblés</label>
+
+        <div class="glass-card" style="
+            padding:14px;
+            display:grid;
+            grid-template-columns: 1fr 1fr;
+            gap:10px 24px;
+        ">
+            {% for value, label in departments %}
+            <label class="body-sm" style="display:flex; align-items:center; gap:8px; margin-bottom:0;">
+                <input
+                    type="checkbox"
+                    name="target_departments"
+                    value="{{ value }}"
+                    style="flex-shrink:0; width:15px; height:15px;"
+                    {% if value in form_target_departments %}checked{% endif %}
+                >
+                {{ label }}
+            </label>
+            {% endfor %}
         </div>
 
+        <span class="form-hint">
+            Choisissez “Tous les employés” ou un / plusieurs départements.
+        </span>
+    </div>
+
+</div>
+<div class="form-grid" style="margin-bottom:24px; align-items:start;">
+
+    <div class="form-group">
+        <label class="form-label">Mode de diffusion</label>
+
+        <select
+            name="delivery_mode"
+            class="form-input"
+            id="deliveryMode"
+            style="max-width:360px;"
+        >
+            <option
+                value="manual"
+                {% if form_delivery_mode == 'manual' or not form_delivery_mode %}selected{% endif %}
+            >
+                Partage manuel
+            </option>
+
+            <option
+                value="scheduled"
+                {% if form_delivery_mode == 'scheduled' %}selected{% endif %}
+            >
+                Envoi programmé
+            </option>
+        </select>
+
+        <span class="form-hint">
+            Manuel : l’administrateur partage la campagne lui-même.
+            Programmé : le système l’enverra automatiquement plus tard.
+        </span>
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">Durée de validité</label>
+
+        <div style="display:flex; gap:12px; align-items:center;">
+            <input
+                type="number"
+                name="validity_value"
+                class="form-input"
+                value="7"
+                min="1"
+                style="max-width:160px;"
+            >
+
+            <select name="validity_unit" class="form-input" style="max-width:180px;">
+                <option value="minutes">Minutes</option>
+                <option value="hours">Heures</option>
+                <option value="days" selected>Jours</option>
+            </select>
+        </div>
+
+        <span class="form-hint">
+            Après cette durée, le lien devient invalide.
+        </span>
+    </div>
+<div
+    id="scheduledBlock"
+    style="
+        display:none;
+        margin-bottom:24px;
+    "
+>
+    <div class="form-group">
+        <label class="form-label">Date et heure d’envoi</label>
+
+        <input
+            type="datetime-local"
+            name="scheduled_at"
+            class="form-input"
+            style="max-width:360px;"
+            value="{{ form_scheduled_at|default:'' }}"
+        >
+
+        <span class="form-hint">
+            La campagne sera envoyée automatiquement à cette date.
+        </span>
+    </div>
+</div>
+
+</div>
         <button type="submit" class="btn btn-primary">
             <i data-lucide="play"></i> Générer la campagne
         </button>
@@ -84,7 +204,7 @@
         <strong>Nom :</strong> {{ generated_run.campaign_name }}
     </div>
     <div class="body-sm" style="color: var(--text-muted); margin-bottom: 8px;">
-        <strong>Département :</strong> {{ generated_run.target_department }}
+        <strong>Départements :</strong> {{ generated_run.target_departments|join:", " }}    
     </div>
     <div class="body-sm" style="color: var(--text-muted); margin-bottom: 16px;">
         <strong>Nombre de tests :</strong> {{ generated_run.question_count }}
@@ -100,10 +220,42 @@
         </div>
     </div>
 
-    <a href="{% url 'announced-campaign-start' generated_run.id %}" class="btn btn-outline">
+    <!-- <a href="{{ generated_run.start_link }}" class="btn btn-outline">
         <i data-lucide="eye"></i> Prévisualiser la page employé
+    </a> -->
+    {% if generated_run.delivery_mode == 'manual' %}
+    <a href="{% url 'announced-campaign-send' generated_run.id %}" class="btn btn-primary">
+        <i data-lucide="mail"></i>
+        Envoyer aux employés
     </a>
+{% else %}
+    <div class="alert alert-info" style="margin-top: 16px;">
+        <i data-lucide="clock"></i>
+        <div class="alert-body">
+            <div class="alert-title">Envoi programmé</div>
+            <div class="alert-msg">
+                Cette campagne sera envoyée automatiquement à la date programmée.
+            </div>
+        </div>
+    </div>
+{% endif %}
 </div>
 {% endif %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const deliveryMode = document.getElementById('deliveryMode');
+    const scheduledBlock = document.getElementById('scheduledBlock');
 
+    function toggleScheduledBlock() {
+        if (deliveryMode.value === 'scheduled') {
+            scheduledBlock.style.display = 'block';
+        } else {
+            scheduledBlock.style.display = 'none';
+        }
+    }
+
+    deliveryMode.addEventListener('change', toggleScheduledBlock);
+    toggleScheduledBlock();
+});
+</script>
 {% endblock %}

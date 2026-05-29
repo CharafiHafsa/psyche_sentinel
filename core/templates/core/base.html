@@ -241,8 +241,9 @@
                 <a class="sidenav-link" href="#">
                     <i data-lucide="book-open"></i> <span class="nav-text">{% trans "Tests de connaissances" %}</span>
                 </a>
-                <a class="sidenav-link" href="#">
-                    <i data-lucide="crosshair"></i> <span class="nav-text">{% trans "Scénarios d’attaque" %}</span>
+                <a class="sidenav-link {% if request.resolver_match.url_name == 'announced-attacks-dashboard' %}active{% endif %}" href="{% url 'announced-attacks-dashboard' %}">
+                    <i data-lucide="crosshair"></i>
+                    <span class="nav-text">Scénarios d’attaque</span>
                 </a>
                 <a class="sidenav-link" href="#">
                     <i data-lucide="fingerprint"></i> <span class="nav-text">{% trans "Évaluations comportementales" %}</span>

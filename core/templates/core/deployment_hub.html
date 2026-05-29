@@ -62,9 +62,13 @@
                 {% blocktrans %}Tests réseau actifs. Génère et envoie des charges utiles de spear-phishing hyper-réalistes et personnalisées par IA vers les boîtes de réception cibles.{% endblocktrans %}
             </p>
         </div>
-        <button class="btn btn-primary" style="width: 100%; justify-content: center;">
+        <a
+            href="{% url 'announced-campaign-home' %}"
+            class="btn btn-primary"
+            style="width: 100%; justify-content: center;"
+        >
             <i data-lucide="target"></i> {% trans "Lancer le scénario" %}
-        </button>
+        </a>
     </div>
 
     <div class="glass-card info-card card-cyan" style="display: flex; flex-direction: column; justify-content: space-between;">

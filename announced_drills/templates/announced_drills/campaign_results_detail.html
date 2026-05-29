@@ -1,0 +1,570 @@
+{% extends 'core/base.html' %}
+{% block content %}
+
+<div class="section-header" style="margin-bottom: 24px; display:flex; justify-content:space-between; align-items:flex-end;">
+    <div class="section-title-group">
+        <div class="section-title" style="color:var(--color-primary);">{{ campaign.campaign_name }}</div>
+    </div>
+
+    <a href="{% url 'announced-attacks-dashboard' %}" class="btn btn-outline">
+        <i data-lucide="arrow-left"></i> Retour
+    </a>
+</div>
+<div style="margin-bottom:32px;">
+
+    <div style="margin-bottom: 18px;">
+        <div class="section-title-group">
+            <div class="section-title" style="font-size:1.1rem;">
+                Niveau de risque par département
+            </div>
+        </div>
+    </div>
+
+    <div style="
+        display:grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 320px));
+        gap:18px;
+    ">
+
+        {% for row in department_rows %}
+        <div
+            class="glass-card info-card department-card"
+            data-department="{{ row.department }}"
+            style="cursor:pointer;"
+        >
+            <div class="info-card-header" style="align-items:flex-start;">
+                <div class="info-card-icon"
+                    style="background:var(--color-primary-bg); color:var(--color-primary);">
+                    <i data-lucide="building-2"></i>
+                </div>
+
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+                    <span class="badge badge-neutral">
+                        {{ row.department }}
+                    </span>
+
+                    <span class="badge {{ row.badge_class }}">
+                        {{ row.status_label }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="info-card-title">
+                {{ row.participants }} participant{{ row.participants|pluralize }} / {{ row.total_employees }}
+            </div>
+
+            <div
+                class="info-card-value"
+                style="color:
+                        {% if row.score == 0 %}
+                            var(--color-success)
+                        {% elif row.score <= 33 %}
+                            var(--color-info)
+                        {% elif row.score <= 66 %}
+                            var(--color-warning)
+                        {% else %}
+                            var(--color-danger)
+                        {% endif %};"
+            >
+                {{ row.score }}
+            </div>
+            <div class="body-xs" style="
+                margin-top:10px;
+                display:flex;
+                align-items:center;
+                gap:6px;
+                color:var(--text-muted);
+            ">
+                <span>Risque dominant :</span>
+
+                <span class="badge badge-neutral">
+                    {{ row.dominant_risk }}
+                </span>
+            </div>
+        </div>
+
+        {% empty %}
+
+        <div class="glass-card" style="padding:24px;">
+            <div class="body-sm" style="color:var(--text-muted);">
+                Aucune donnée département disponible.
+            </div>
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+<div style="margin-bottom: 16px;">
+    <div class="section-title-group">
+        <!-- <div class="section-title" style="font-size:1.1rem;">
+            Résultats par employé
+        </div> -->
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin: 20px 0;
+        ">
+
+            <div class="h3">
+                Résultats par employé
+            </div>
+
+            <a
+                href="{% url 'announced-campaign-remind' campaign.id %}"
+                class="btn btn-primary"
+            >
+                Relancer les non participants
+            </a>
+
+        </div>
+    </div>
+</div>
+<div class="data-table-wrap" style="border-radius:var(--radius-lg); border:none;">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Employé</th>
+                <th>Département</th>
+                <th>Tests complétés</th>
+                <th>Sûr</th>
+                <th>Vigilance</th>
+                <th>Risque</th>
+                <th>
+                    <a
+                        href="?sort_score={% if sort_score == 'desc' %}asc{% else %}desc{% endif %}"
+                        style="
+                            color: var(--text-primary);
+                            text-decoration:none;
+                            display:flex;
+                            align-items:center;
+                            gap:6px;
+                            font-weight:600;
+                        "
+                    >
+                        <span>SCORE</span>
+
+                        {% if sort_score == 'desc' %}
+                            <span style="
+                                color:#ff6b6b;
+                                font-size:15px;
+                                font-weight:700;
+                            ">
+                                ↓
+                            </span>
+                        {% else %}
+                            <span style="
+                                color:#35d36a;
+                                font-size:15px;
+                                font-weight:700;
+                            ">
+                                ↑
+                            </span>
+                        {% endif %}
+                    </a>
+                </th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for row in rows %}
+            <tr class="employee-row" data-department="{{ row.employee.department|default:'Non assigné' }}">
+                <td>
+                    <div class="table-user-cell">
+                        <div class="table-avatar">
+                            {{ row.employee.full_name.0|upper }}
+                        </div>
+                        <div>
+                            <div
+                                class="table-user-name employee-name-click"
+                                style="cursor:pointer; color:var(--color-primary);"
+                                onclick="openEmployeeModal(this)"
+                                data-employee-id="{{ row.employee.id }}"
+                                data-name="{{ row.employee.full_name }}"
+                                data-email="{{ row.employee.email|default:'Non spécifié' }}"
+                                data-department="{{ row.employee.department|default:'Non assigné' }}"
+                                data-total="{{ row.total }}"
+                                data-score="{% if row.score != None %}{{ row.score }}{% else %}—{% endif %}"
+                                data-status="{{ row.status_label }}"
+                                data-badge="{{ row.badge_class }}"
+                                >
+                                {{ row.employee.full_name }}
+                                
+
+                            </div>
+                            <div class="table-user-email">{{ row.employee.email|default:"Non spécifié" }}</div>
+                        </div>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge badge-neutral">
+                        {{ row.employee.department|default:"Non assigné" }}
+                    </span>
+                </td>
+
+                <td>{{ row.total }}</td>
+                <td>{{ row.safe_count }}</td>
+                <td>{{ row.warning_count }}</td>
+                <td>{{ row.risk_count }}</td>
+
+                <!-- <td>
+                    <span class="risk-score {% if row.score >= 71 %}risk-high{% elif row.score >= 41 %}risk-medium{% else %}risk-low{% endif %}">
+                        {{ row.score }}
+                    </span>
+                </td> -->
+                <td>
+
+                    {% if row.score != None %}
+                        <span
+                            class="risk-score"
+                            style="
+                                color:
+                                {% if row.score == 0 %}
+                                    var(--color-success)
+                                {% elif row.score <= 33 %}
+                                    var(--color-info)
+                                {% elif row.score <= 66 %}
+                                    var(--color-warning)
+                                {% else %}
+                                    var(--color-danger)
+                                {% endif %};
+                            "
+                        >
+                            {{ row.score }}
+                        </span>
+                        <!-- <span class="risk-score
+                                {% if row.score == 0 %}
+                                    text-success
+
+                                {% elif row.score <= 33 %}
+                                    text-info
+
+                                {% elif row.score <= 66 %}
+                                    text-warning
+
+                                {% elif row.score <= 99 %}
+                                    text-danger
+
+                                {% else %}
+                                    text-danger
+                                {% endif %}
+                                ">
+                            {{ row.score }}
+                        </span> -->
+
+                    {% else %}
+
+                        <span
+                            class="risk-score"
+                            style="
+                                color:
+                                {% if row.badge_class == 'badge-warning' %}
+                                    var(--color-warning)
+
+                                {% elif row.badge_class == 'badge-info' %}
+                                    var(--color-info)
+
+                                {% elif row.badge_class == 'badge-neutral' %}
+                                    var(--text-muted)
+
+                                {% else %}
+                                    var(--text-muted)
+                                {% endif %};
+                            "
+                        >
+                            —
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+                <td>
+                    <span class="badge {{ row.badge_class }}">
+                        {{ row.status_label }}
+                    </span>
+                </td>
+            </tr>
+            <script type="application/json" id="typeStats{{ row.employee.id }}">
+                [
+                    {% for type in row.type_stats %}
+                    {
+                        "label": "{{ type.label }}",
+                        "total": "{{ type.total }}",
+                        "safe": "{{ type.safe }}",
+                        "warning": "{{ type.warning }}",
+                        "risk": "{{ type.risk }}",
+                        "score": "{% if type.score != None %}{{ type.score }}{% else %}—{% endif %}"
+                    }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ]
+            </script>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align:center; padding:40px; color:var(--text-muted);">
+                    Aucun employé n’a encore terminé cette campagne.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div id="employeeModal" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    background:rgba(0,0,0,.65);
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+">
+    <div class="glass-card info-card" style="
+        width:min(980px,100%);
+        max-height:90vh;
+        overflow-y:auto;
+        padding:28px;
+    ">
+
+        <div class="info-card-header" style="margin-bottom:24px; align-items:flex-start;">
+
+    <div style="display:flex; align-items:center; gap:16px;">
+        <div class="table-avatar" style="width:58px; height:58px; font-size:20px;">
+            <span id="modalEmployeeInitial">?</span>
+        </div>
+
+        <div>
+            <div id="modalEmployeeName" class="h3" style="margin-bottom:6px;"></div>
+            <div id="modalEmployeeEmail" class="body-sm" style="color:var(--text-muted);"></div>
+            <div id="modalEmployeeDepartment" class="body-sm" style="color:var(--text-muted); margin-top:4px;"></div>
+        </div>
+    </div>
+
+    <button type="button" class="btn btn-ghost" onclick="closeEmployeeModal()">
+        ✕
+    </button>
+</div>
+
+
+<div style="
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:14px;
+    margin-bottom:26px;
+">
+    <div class="glass-card" style="padding:18px;">
+        <div class="info-card-icon" style="background:var(--color-primary-bg); color:var(--color-primary); margin-bottom:14px;">
+            <i data-lucide="list-checks"></i>
+        </div>
+        <div class="body-sm" style="color:var(--text-muted);">Tests complétés</div>
+        <div id="modalTests" class="h3"></div>
+    </div>
+
+    <div class="glass-card" style="padding:18px;">
+        <div class="info-card-icon" style="background:var(--color-info-bg); color:var(--color-info); margin-bottom:14px;">
+            <i data-lucide="activity"></i>
+        </div>
+        <div class="body-sm" style="color:var(--text-muted);">Score total</div>
+        <div
+            id="modalScore"
+            class="h3"
+            
+        ></div>
+    </div>
+
+    <div class="glass-card" style="padding:18px;">
+        <div class="info-card-icon" style="background:var(--color-danger-bg); color:var(--color-danger); margin-bottom:14px;">
+            <i data-lucide="shield-alert"></i>
+        </div>
+        <div class="body-sm" style="color:var(--text-muted); margin-bottom:8px;">Statut</div>
+        <span id="modalStatus" class="badge"></span>
+    </div>
+</div>
+
+<div class="section-title-group" style="margin-bottom:16px;">
+    <div class="section-title" style="font-size:1.1rem;">
+        Analyse par type de menace
+    </div>
+    <div class="section-desc">
+        Répartition du score selon le type de simulation.
+    </div>
+</div>
+
+<div class="data-table-wrap" style="border:none;">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Catégorie</th>
+                <th>Tests</th>
+                <th>Sûr</th>
+                <th>Vigilance</th>
+                <th>Risque</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody id="modalTypeStats"></tbody>
+    </table>
+</div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const cards = document.querySelectorAll('.department-card');
+    const rows = document.querySelectorAll('.employee-row');
+
+    let activeDepartment = null;
+
+    cards.forEach(card => {
+
+        card.addEventListener('click', function () {
+
+            const department = this.dataset.department;
+
+            if (activeDepartment === department) {
+
+                rows.forEach(row => {
+                    row.style.display = '';
+                });
+
+                cards.forEach(c => {
+                    c.style.borderColor = '';
+                    c.style.boxShadow = '';
+                });
+
+                activeDepartment = null;
+
+                return;
+            }
+
+            activeDepartment = department;
+
+            cards.forEach(c => {
+                c.style.borderColor = '';
+                c.style.boxShadow = '';
+            });
+
+            this.style.borderColor = 'var(--color-primary)';
+            this.style.boxShadow = '0 0 0 2px rgba(139,92,246,0.25)';
+
+            rows.forEach(row => {
+
+                if (row.dataset.department === department) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+
+            });
+
+        });
+
+    });
+
+}); // ← IMPORTANT
+function getScoreColor(score) {
+    if (score === '—') return 'var(--text-muted)';
+
+    score = Number(score);
+
+    if (score === 0) return 'var(--color-success)';
+    if (score <= 33) return 'var(--color-info)';
+    if (score <= 66) return 'var(--color-warning)';
+    return 'var(--color-danger)';
+}
+function openEmployeeModal(el) {
+    const modal = document.getElementById('employeeModal');
+
+    document.getElementById('modalEmployeeName').innerText = el.dataset.name;
+    document.getElementById('modalEmployeeInitial').innerText = el.dataset.name.charAt(0).toUpperCase();
+    document.getElementById('modalEmployeeEmail').innerText = el.dataset.email;
+    document.getElementById('modalEmployeeDepartment').innerText = 'Département : ' + el.dataset.department;
+    document.getElementById('modalTests').innerText = el.dataset.total;
+    const modalScore = document.getElementById('modalScore');
+    modalScore.innerText = el.dataset.score;
+    modalScore.style.color = getScoreColor(el.dataset.score);
+
+    const status = document.getElementById('modalStatus');
+    status.className = 'badge ' + el.dataset.badge;
+    status.innerText = el.dataset.status;
+    const statsSource = document.getElementById(
+    'typeStats' + el.dataset.employeeId
+);
+
+const statsTarget = document.getElementById('modalTypeStats');
+
+if (statsSource && statsTarget) {
+
+    const stats = JSON.parse(statsSource.textContent);
+
+    let html = '';
+
+    stats.forEach(type => {
+        let icon = 'target';
+        let iconBg = 'var(--color-primary-bg)';
+        let iconColor = 'var(--color-primary)';
+
+        if (type.label === 'Phishing email') {
+            icon = 'fish';
+            iconBg = 'var(--color-primary-bg)';
+            iconColor = 'var(--color-primary)';
+        }
+
+        if (type.label === 'Simulation de messagerie interne') {
+            icon = 'message-square';
+            iconBg = 'var(--color-info-bg)';
+            iconColor = 'var(--color-info)';
+        }
+
+        if (type.label === 'Fuite de données via IA') {
+            icon = 'bot';
+            iconBg = 'var(--color-danger-bg)';
+            iconColor = 'var(--color-danger)';
+        }
+        html += `
+            <tr>
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div class="info-card-icon" style="
+                            width:34px;
+                            height:34px;
+                            min-width:34px;
+                            background:${iconBg};
+                            color:${iconColor};
+                        ">
+                            <i data-lucide="${icon}"></i>
+                        </div>
+                        <span>${type.label}</span>
+                    </div>
+                </td>
+                <td>${type.total}</td>
+                <td>${type.safe}</td>
+                <td>${type.warning}</td>
+                <td>${type.risk}</td>
+                <td>
+                    <span class="risk-score" style="color:${getScoreColor(type.score)};">
+                        ${type.score}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+
+    statsTarget.innerHTML = html;
+    if (window.lucide) {
+    lucide.createIcons();
+}
+}
+    modal.style.display = 'flex';
+}
+
+function closeEmployeeModal() {
+    document.getElementById('employeeModal').style.display = 'none';
+}
+
+</script>
+
+{% endblock %}

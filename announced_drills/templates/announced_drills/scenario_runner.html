@@ -16,7 +16,7 @@
     </div>
 
     <!-- Zone centrale -->
-    <div class="glass-card info-card" style="max-width: 900px; margin: 0 auto; padding: 28px;">
+    <div class="glass-card info-card" style="max-width: 100%; margin: 0 auto; padding: 28px;">
         <div class="info-card-header" style="margin-bottom: 20px;">
             <div class="info-card-icon" style="background:var(--color-secondary-bg);color:var(--color-secondary);">
                 <i data-lucide="shield"></i>
@@ -38,6 +38,22 @@
             <input type="hidden" name="attached_file_name" id="attached_file_name_input">
             <!-- Zone d’interaction variable -->
             {% if scenario.ui_mode == 'email' %}
+            <div class="alert alert-warning" style="margin-bottom:16px;">
+
+                <div class="alert-icon">
+                    <i data-lucide="triangle-alert"></i>
+                </div>
+
+                <div class="alert-content">
+                    <div class="body-sm">
+                        <strong>CONTEXTE - NEXORA (nexora.ma)</strong><br>
+                        Pour chaque email, choisissez l'action la plus appropriée.<br>
+                        Pas de "bonne" ou "mauvaise" réponse absolue.<br>
+                        Répondez comme dans la vraie vie.
+                    </div>
+                </div>
+
+            </div>
     <div class="glass-card" style="padding:24px; margin-bottom:24px;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; gap:12px; flex-wrap:wrap;">
             <div>
@@ -108,7 +124,7 @@
 
             {% elif scenario.ui_mode == 'ai_prompt' %}
 
-                <div class="glass-card" style="padding:24px; margin-bottom:24px;">
+                <!-- <div class="glass-card" style="padding:24px; margin-bottom:24px;"> -->
 
                     <!-- CONTENU SOURCE D'ABORD -->
                     <div class="glass-card" style="padding:16px; margin-bottom:20px;">
@@ -177,7 +193,7 @@
 
             {% elif scenario.ui_mode == 'chat' %}
 
-                <div class="glass-card" style="padding:24px; margin-bottom:14px;">
+                <div style="margin-bottom:14px;">
 
                     <!-- Consigne -->
                     <div class="alert alert-warning" style="margin-bottom:16px;">
@@ -188,6 +204,7 @@
 
                         <div class="alert-content">
                             <div class="body-sm">
+                                SIMULATION DE CHAT (Teams/Slack/WhatsApp) <br>
                                 Vous êtes positionné dans le contexte ci-dessous. <br> 
                                 Répondez uniquement avec les informations fournies (pas de données personnelles). <br>
                                 Attention : un seul envoi, non modifiable.
@@ -355,39 +372,6 @@
 
                         </div>
 
-                        <!-- Composer -->
-                        <!-- <div style="
-                            border-top:1px solid var(--border-default);
-                            padding:16px 22px 18px 22px;
-                        ">
-                            <div class="glass-card" style="padding:12px 14px;">
-                                <div style="display:flex; align-items:flex-end; gap:12px;">
-                                    <textarea
-                                        id="chatTextArea"
-                                        class="form-textarea"
-                                        name="chat_text"
-                                        placeholder="Répondez à {{ scenario.sender_name }}..."
-                                        rows="1"
-                                        style="
-                                            min-height:24px;
-                                            max-height:140px;
-                                            border:none;
-                                            background:transparent;
-                                            padding:0;
-                                            resize:none;
-                                            box-shadow:none;
-                                            overflow-y:auto;
-                                            line-height:1.6;
-                                            flex:1;
-                                        "></textarea>
-
-                                    <button type="button" id="chatSendBtn" class="btn btn-primary" style="flex-shrink:0;">
-                                        Envoyer
-                                    </button>
-                                </div>
-                            </div> -->
-                            <!-- Composer -->
-                            <!-- Composer style moderne -->
                             <!-- Composer style moderne avec pièce jointe simulée -->
                             <div style="
                                 border-top:1px solid var(--border-default);
@@ -530,16 +514,6 @@
                     </button>
                 {% endfor %}
             </div>
-
-            <div style="display:flex; justify-content:flex-end; gap:12px; flex-wrap:wrap;">
-                <button type="submit" id="nextBtn" class="btn btn-primary" disabled>
-                    {% if position == total %}
-                        Soumettre
-                    {% else %}
-                        Suivant
-                    {% endif %}
-                </button>
-            </div>
         </form>
     </div>
 </div>
@@ -556,16 +530,14 @@
 document.addEventListener('DOMContentLoaded', function () {
     const actionButtons = document.querySelectorAll('.scenario-action-btn');
     const actionInput = document.getElementById('action_taken_input');
-    const nextBtn = document.getElementById('nextBtn');
     const aiSendBtn = document.getElementById('aiSendBtn');
     const aiTextArea = document.getElementById('aiTextArea');
 
     console.log("Nb boutons action :", actionButtons.length);
     console.log("Champ action :", actionInput);
-    console.log("Bouton suivant :", nextBtn);
 
-    if (!actionInput || !nextBtn) {
-        console.error("Champ caché ou bouton suivant introuvable.");
+    if (!actionInput) {
+        console.error("Champ action introuvable.");
         return;
     }
 
@@ -576,10 +548,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             actionInput.value = selectedAction;
 
-            actionButtons.forEach(b => b.classList.remove('btn-selected'));
+            actionButtons.forEach(b => b.disabled = true);
             this.classList.add('btn-selected');
 
-            nextBtn.disabled = false;
+            document.getElementById('scenario-form').submit();
         });
     });
 
@@ -604,7 +576,8 @@ document.addEventListener('DOMContentLoaded', function () {
             aiSendBtn.innerText = "Envoyé";
 
             // bouton suivant activé
-            nextBtn.disabled = false;
+            document.getElementById('scenario-form').submit();
+
         });
     }
 const chatSendBtn = document.getElementById('chatSendBtn');
@@ -676,9 +649,15 @@ if (chatSendBtn && chatTextArea) {
             chatUserBubbleAttachment.style.display = "block";
         }
 
-        nextBtn.disabled = false;
+        document.getElementById('scenario-form').submit();
     });
 }
+history.pushState(null, null, location.href);
+
+window.onpopstate = function () {
+    history.go(1);
+};
+
 });
 
 </script>

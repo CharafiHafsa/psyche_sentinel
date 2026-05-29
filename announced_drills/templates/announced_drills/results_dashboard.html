@@ -1,0 +1,78 @@
+{% extends 'core/base.html' %}
+{% block content %}
+
+<div class="section-header" style="margin-bottom: 32px;">
+    <span class="section-number">RS</span>
+    <div class="section-title-group">
+        <div class="section-title">Résultats des campagnes annoncées</div>
+        <div class="section-desc">
+            Analyse du score de risque par employé, calculé à partir des réponses enregistrées.
+        </div>
+    </div>
+</div>
+
+<div class="data-table-wrap" style="border-radius:var(--radius-lg); border:none;">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Employé</th>
+                <th>Département</th>
+                <th>Tests</th>
+                <th>Safe</th>
+                <th>Warning</th>
+                <th>Risk</th>
+                <th>Risk Score</th>
+                <th>Niveau</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>
+                    <div class="table-user-cell">
+                        <div class="table-avatar">
+                            {{ row.employee.full_name.0|upper }}
+                        </div>
+                        <div>
+                            <div class="table-user-name">{{ row.employee.full_name }}</div>
+                            <div class="table-user-email">{{ row.employee.email|default:"Non spécifié" }}</div>
+                        </div>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge badge-neutral">
+                        {{ row.employee.department|default:"Non assigné" }}
+                    </span>
+                </td>
+
+                <td>{{ row.total }}</td>
+                <td>{{ row.safe_count }}</td>
+                <td>{{ row.warning_count }}</td>
+                <td>{{ row.risk_count }}</td>
+
+                <td>
+                    <span class="risk-score {% if row.risk_score >= 75 %}risk-high{% elif row.risk_score >= 40 %}risk-medium{% else %}risk-low{% endif %}">
+                        {{ row.risk_score }}
+                    </span>
+                </td>
+
+                <td>
+                    <span class="badge {{ row.badge_class }}">
+                        {{ row.risk_label }}
+                    </span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align:center; padding:40px; color:var(--text-muted);">
+                    Aucun résultat disponible.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
